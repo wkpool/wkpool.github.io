@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – WK Pool 2026</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f4f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a7a3a;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    header h1 { font-size: 1.5rem; }
+    header p { font-size: 0.85rem; opacity: 0.8; margin-top: 0.2rem; }
+
+    main { max-width: 640px; margin: 0 auto; padding: 1rem; }
+
+    .hidden { display: none !important; }
+
+    /* Wachtwoord */
+    #login-section {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+
+    #login-section h2 { margin-bottom: 1.5rem; }
+
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    input[type="password"], input[type="text"] {
+      flex: 1;
+      padding: 0.6rem 0.8rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input[type="password"]:focus, input[type="text"]:focus {
+      border-color: #1a7a3a;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      background: #1a7a3a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn:hover { background: #155d2e; }
+    .btn.danger { background: #e53935; }
+    .btn.danger:hover { background: #b71c1c; }
+
+    .error-msg {
+      color: #e53935;
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+    }
+
+    /* Nieuw formulier */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      color: #1a7a3a;
+    }
+
+    .add-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Deelnemerslijst */
+    .deelnemer-row {
+      background: white;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .deelnemer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.4rem;
+    }
+
+    .deelnemer-naam { font-weight: 600; font-size: 1rem; }
+
+    .link-box {
+      font-size: 0.75rem;
+      color: #666;
+      background: #f5f5f5;
+      border-radius: 6px;
+      padding: 0.4rem 0.6rem;
+      word-break: break-all;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .link-box:hover { background: #e8f5e9; }
+
+    .copy-hint {
+      font-size: 0.7rem;
+      color: #1a7a3a;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+      margin: 1.25rem 0 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚽ WK Pool 2026 – Admin</h1>
+</header>
+
+<!-- Wachtwoord -->
+<div id="login-section">
+  <main>
+    <h2>Toegang vereist</h2>
+    <div class="input-row">
+      <input type="password" id="wachtwoord-input" placeholder="Wachtwoord" />
+      <button class="btn" id="login-btn">Inloggen</button>
+    </div>
+    <p class="error-msg hidden" id="login-error">Onjuist wachtwoord.</p>
+  </main>
+</div>
+
+<!-- Admin app -->
+<div id="admin-section" class="hidden">
+  <main>
+
+    <div class="card" style="margin-top:1rem">
+      <h3>Nieuwe deelnemer toevoegen</h3>
+      <div class="add-form">
+        <input type="text" id="naam-input" placeholder="Naam" />
+        <button class="btn" id="toevoegen-btn">Toevoegen</button>
+      </div>
+    </div>
+
+    <div class="section-title">Deelnemers</div>
+    <div id="deelnemers-lijst"></div>
+
+  </main>
+</div>
+
+<script type="module">
+  import { supabase } from './supabase.js'
+
+  const WACHTWOORD = 'afblijven'
+  const BASE_URL = window.location.origin + window.location.pathname.replace('admin.html', '')
+
+  // Login
+  document.getElementById('login-btn').addEventListener('click', checkWachtwoord)
+  document.getElementById('wachtwoord-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkWachtwoord()
+  })
+
+  function checkWachtwoord() {
+    const val = document.getElementById('wachtwoord-input').value
+    if (val === WACHTWOORD) {
+      sessionStorage.setItem('admin_auth', '1')
+      toonAdmin()
+    } else {
+      document.getElementById('login-error').classList.remove('hidden')
+    }
+  }
+
+  function toonAdmin() {
+    document.getElementById('login-section').classList.add('hidden')
+    document.getElementById('admin-section').classList.remove('hidden')
+    laadDeelnemers()
+  }
+
+  if (sessionStorage.getItem('admin_auth') === '1') toonAdmin()
+
+  // Deelnemers laden
+  async function laadDeelnemers() {
+    const { data } = await supabase.from('participants').select('*').order('name')
+    const lijst = document.getElementById('deelnemers-lijst')
+    lijst.innerHTML = ''
+
+    if (!data || data.length === 0) {
+      lijst.innerHTML = '<p style="color:#bbb;text-align:center;padding:1rem">Nog geen deelnemers.</p>'
+      return
+    }
+
+    data.forEach(d => lijst.appendChild(maakRij(d)))
+  }
+
+  function maakRij(deelnemer) {
+    const link = `${BASE_URL}?token=${deelnemer.token}`
+    const row = document.createElement('div')
+    row.className = 'deelnemer-row'
+    row.id = `rij-${deelnemer.id}`
+    row.innerHTML = `
+      <div class="deelnemer-top">
+        <span class="deelnemer-naam">${deelnemer.name}</span>
+        <button class="btn danger" data-id="${deelnemer.id}" style="padding:0.3rem 0.7rem;font-size:0.8rem">Verwijder</button>
+      </div>
+      <div class="link-box" data-link="${link}">
+        <span>${link}</span>
+        <span class="copy-hint">Kopieer</span>
+      </div>
+    `
+    row.querySelector('.link-box').addEventListener('click', () => kopieerLink(link, row))
+    row.querySelector('.btn.danger').addEventListener('click', () => verwijder(deelnemer.id))
+    return row
+  }
+
+  async function kopieerLink(link, row) {
+    await navigator.clipboard.writeText(link)
+    const hint = row.querySelector('.copy-hint')
+    hint.textContent = 'Gekopieerd!'
+    setTimeout(() => hint.textContent = 'Kopieer', 1500)
+  }
+
+  // Toevoegen
+  document.getElementById('toevoegen-btn').addEventListener('click', voegToe)
+  document.getElementById('naam-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') voegToe()
+  })
+
+  async function voegToe() {
+    const naam = document.getElementById('naam-input').value.trim()
+    if (!naam) return
+
+    const token = naam.toLowerCase().replace(/\s+/g, '-') + '-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36)
+
+    const { data, error } = await supabase
+      .from('participants')
+      .insert({ name: naam, token })
+      .select()
+      .single()
+
+    if (error) {
+      alert('Fout: ' + error.message)
+      return
+    }
+    document.getElementById('naam-input').value = ''
+    document.getElementById('deelnemers-lijst').prepend(maakRij(data))
+  }
+
+  // Verwijderen
+  async function verwijder(id) {
+    if (!confirm('Deelnemer verwijderen?')) return
+    await supabase.from('participants').delete().eq('id', id)
+    document.getElementById(`rij-${id}`)?.remove()
+  }
+</script>
+</body>
+</html>

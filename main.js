@@ -94,7 +94,7 @@ async function loadPredictions() {
 
     const alleBtn = document.createElement('button')
     alleBtn.className = `filter-btn${actieveFilter === null ? ' active' : ''}`
-    alleBtn.textContent = 'Alle'
+    alleBtn.textContent = 'Alle groepen'
     alleBtn.addEventListener('click', () => { actieveFilter = null; renderMatches() })
     filterBar.appendChild(alleBtn)
 
