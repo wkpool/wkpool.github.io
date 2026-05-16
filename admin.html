@@ -9,20 +9,47 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f0f4f0;
-      color: #1a1a1a;
+      background: #1a1a1a;
+      color: #f0f0f0;
       min-height: 100vh;
     }
 
     header {
-      background: #1a7a3a;
+      background: #111;
       color: white;
       padding: 1rem;
       text-align: center;
+      border-bottom: 2px solid #333;
     }
 
     header h1 { font-size: 1.5rem; }
-    header p { font-size: 0.85rem; opacity: 0.8; margin-top: 0.2rem; }
+
+    nav {
+      background: #222;
+      display: flex;
+      border-bottom: 2px solid #333;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.85rem;
+      border: none;
+      background: none;
+      font-size: 0.95rem;
+      cursor: pointer;
+      color: #888;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: #4caf50;
+      border-bottom-color: #4caf50;
+      font-weight: 600;
+    }
 
     main { max-width: 640px; margin: 0 auto; padding: 1rem; }
 
@@ -43,22 +70,24 @@
       margin: 0 auto;
     }
 
-    input[type="password"], input[type="text"] {
+    input[type="password"], input[type="text"], input[type="number"] {
       flex: 1;
       padding: 0.6rem 0.8rem;
-      border: 2px solid #ddd;
+      border: 2px solid #444;
       border-radius: 8px;
       font-size: 1rem;
       outline: none;
+      background: #2a2a2a;
+      color: #f0f0f0;
     }
 
-    input[type="password"]:focus, input[type="text"]:focus {
-      border-color: #1a7a3a;
+    input[type="password"]:focus, input[type="text"]:focus, input[type="number"]:focus {
+      border-color: #4caf50;
     }
 
     .btn {
       padding: 0.6rem 1.2rem;
-      background: #1a7a3a;
+      background: #4caf50;
       color: white;
       border: none;
       border-radius: 8px;
@@ -67,43 +96,40 @@
       white-space: nowrap;
     }
 
-    .btn:hover { background: #155d2e; }
+    .btn:hover { background: #388e3c; }
     .btn.danger { background: #e53935; }
     .btn.danger:hover { background: #b71c1c; }
+    .btn.saved { background: #2e7d32; }
 
     .error-msg {
-      color: #e53935;
+      color: #ef9a9a;
       font-size: 0.85rem;
       margin-top: 0.75rem;
     }
 
-    /* Nieuw formulier */
     .card {
-      background: white;
+      background: #2a2a2a;
       border-radius: 12px;
       padding: 1rem;
       margin-bottom: 1rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
 
     .card h3 {
       font-size: 1rem;
       margin-bottom: 0.75rem;
-      color: #1a7a3a;
+      color: #4caf50;
     }
 
-    .add-form {
-      display: flex;
-      gap: 0.5rem;
-    }
+    .add-form { display: flex; gap: 0.5rem; }
 
-    /* Deelnemerslijst */
+    /* Deelnemers */
     .deelnemer-row {
-      background: white;
+      background: #2a2a2a;
       border-radius: 12px;
       padding: 0.85rem 1rem;
       margin-bottom: 0.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
 
     .deelnemer-top {
@@ -117,8 +143,8 @@
 
     .link-box {
       font-size: 0.75rem;
-      color: #666;
-      background: #f5f5f5;
+      color: #aaa;
+      background: #333;
       border-radius: 6px;
       padding: 0.4rem 0.6rem;
       word-break: break-all;
@@ -129,11 +155,11 @@
       gap: 0.5rem;
     }
 
-    .link-box:hover { background: #e8f5e9; }
+    .link-box:hover { background: #3a3a3a; }
 
     .copy-hint {
       font-size: 0.7rem;
-      color: #1a7a3a;
+      color: #4caf50;
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -143,9 +169,54 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #888;
+      color: #666;
       margin: 1.25rem 0 0.5rem;
     }
+
+    .section-title:first-child { margin-top: 0; }
+
+    /* Uitslagen */
+    .match-card {
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .match-teams {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .match-date {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 0.6rem;
+    }
+
+    .score-form {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .score-input {
+      width: 52px;
+      height: 40px;
+      text-align: center;
+      font-size: 1.1rem;
+      border: 2px solid #444;
+      border-radius: 8px;
+      outline: none;
+      padding: 0;
+      background: #333;
+      color: #f0f0f0;
+    }
+
+    .score-input:focus { border-color: #4caf50; }
+
+    .score-form span { color: #666; }
   </style>
 </head>
 <body>
@@ -168,19 +239,29 @@
 
 <!-- Admin app -->
 <div id="admin-section" class="hidden">
-  <main>
+  <nav>
+    <button class="tab-btn active" data-tab="deelnemers">Deelnemers</button>
+    <button class="tab-btn" data-tab="uitslagen">Uitslagen</button>
+  </nav>
 
-    <div class="card" style="margin-top:1rem">
-      <h3>Nieuwe deelnemer toevoegen</h3>
-      <div class="add-form">
-        <input type="text" id="naam-input" placeholder="Naam" />
-        <button class="btn" id="toevoegen-btn">Toevoegen</button>
+  <main>
+    <!-- Tab: Deelnemers -->
+    <div id="tab-deelnemers" class="tab-content">
+      <div class="card" style="margin-top:1rem">
+        <h3>Nieuwe deelnemer toevoegen</h3>
+        <div class="add-form">
+          <input type="text" id="naam-input" placeholder="Naam" />
+          <button class="btn" id="toevoegen-btn">Toevoegen</button>
+        </div>
       </div>
+      <div class="section-title">Deelnemers</div>
+      <div id="deelnemers-lijst"></div>
     </div>
 
-    <div class="section-title">Deelnemers</div>
-    <div id="deelnemers-lijst"></div>
-
+    <!-- Tab: Uitslagen -->
+    <div id="tab-uitslagen" class="tab-content hidden">
+      <div id="uitslagen-lijst"></div>
+    </div>
   </main>
 </div>
 
@@ -197,8 +278,7 @@
   })
 
   function checkWachtwoord() {
-    const val = document.getElementById('wachtwoord-input').value
-    if (val === WACHTWOORD) {
+    if (document.getElementById('wachtwoord-input').value === WACHTWOORD) {
       sessionStorage.setItem('admin_auth', '1')
       toonAdmin()
     } else {
@@ -209,26 +289,38 @@
   function toonAdmin() {
     document.getElementById('login-section').classList.add('hidden')
     document.getElementById('admin-section').classList.remove('hidden')
-    laadDeelnemers()
+    toonTab('deelnemers')
   }
 
   if (sessionStorage.getItem('admin_auth') === '1') toonAdmin()
 
-  // Deelnemers laden
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => toonTab(btn.dataset.tab))
+  })
+
+  function toonTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'))
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'))
+    document.getElementById(`tab-${tab}`).classList.remove('hidden')
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active')
+    if (tab === 'deelnemers') laadDeelnemers()
+    if (tab === 'uitslagen') laadUitslagen()
+  }
+
+  // ── Deelnemers ──────────────────────────────────────────
   async function laadDeelnemers() {
     const { data } = await supabase.from('participants').select('*').order('name')
     const lijst = document.getElementById('deelnemers-lijst')
     lijst.innerHTML = ''
-
     if (!data || data.length === 0) {
       lijst.innerHTML = '<p style="color:#bbb;text-align:center;padding:1rem">Nog geen deelnemers.</p>'
       return
     }
-
-    data.forEach(d => lijst.appendChild(maakRij(d)))
+    data.forEach(d => lijst.appendChild(maakDeelnemerRij(d)))
   }
 
-  function maakRij(deelnemer) {
+  function maakDeelnemerRij(deelnemer) {
     const link = `${BASE_URL}?token=${deelnemer.token}`
     const row = document.createElement('div')
     row.className = 'deelnemer-row'
@@ -236,9 +328,9 @@
     row.innerHTML = `
       <div class="deelnemer-top">
         <span class="deelnemer-naam">${deelnemer.name}</span>
-        <button class="btn danger" data-id="${deelnemer.id}" style="padding:0.3rem 0.7rem;font-size:0.8rem">Verwijder</button>
+        <button class="btn danger" style="padding:0.3rem 0.7rem;font-size:0.8rem">Verwijder</button>
       </div>
-      <div class="link-box" data-link="${link}">
+      <div class="link-box">
         <span>${link}</span>
         <span class="copy-hint">Kopieer</span>
       </div>
@@ -255,7 +347,6 @@
     setTimeout(() => hint.textContent = 'Kopieer', 1500)
   }
 
-  // Toevoegen
   document.getElementById('toevoegen-btn').addEventListener('click', voegToe)
   document.getElementById('naam-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') voegToe()
@@ -264,28 +355,123 @@
   async function voegToe() {
     const naam = document.getElementById('naam-input').value.trim()
     if (!naam) return
-
     const token = naam.toLowerCase().replace(/\s+/g, '-') + '-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36)
-
-    const { data, error } = await supabase
-      .from('participants')
-      .insert({ name: naam, token })
-      .select()
-      .single()
-
-    if (error) {
-      alert('Fout: ' + error.message)
-      return
-    }
+    const { data, error } = await supabase.from('participants').insert({ name: naam, token }).select().single()
+    if (error) { alert('Fout: ' + error.message); return }
     document.getElementById('naam-input').value = ''
-    document.getElementById('deelnemers-lijst').prepend(maakRij(data))
+    document.getElementById('deelnemers-lijst').prepend(maakDeelnemerRij(data))
   }
 
-  // Verwijderen
   async function verwijder(id) {
     if (!confirm('Deelnemer verwijderen?')) return
     await supabase.from('participants').delete().eq('id', id)
     document.getElementById(`rij-${id}`)?.remove()
+  }
+
+  // ── Uitslagen ────────────────────────────────────────────
+  async function laadUitslagen() {
+    const { data: matches } = await supabase.from('matches').select('*').order('date')
+    const container = document.getElementById('uitslagen-lijst')
+    container.innerHTML = ''
+
+    const groepen = [...new Set(matches.map(m => m.poule).filter(Boolean))].sort()
+
+    groepen.forEach(poule => {
+      const header = document.createElement('div')
+      header.className = 'section-title'
+      header.textContent = `Groep ${poule}`
+      container.appendChild(header)
+
+      matches.filter(m => m.poule === poule).forEach(match => {
+        container.appendChild(maakUitslagKaart(match))
+      })
+    })
+
+    // Wedstrijden zonder poule onderaan
+    const zonderPoule = matches.filter(m => !m.poule)
+    if (zonderPoule.length > 0) {
+      const header = document.createElement('div')
+      header.className = 'section-title'
+      header.textContent = 'Overig'
+      container.appendChild(header)
+      zonderPoule.forEach(match => container.appendChild(maakUitslagKaart(match)))
+    }
+  }
+
+  function maakUitslagKaart(match) {
+    const card = document.createElement('div')
+    card.className = 'match-card'
+    const heeftUitslag = match.score_home !== null && match.score_away !== null
+    card.innerHTML = `
+      <div class="match-teams">${match.home} - ${match.away}</div>
+      ${match.date ? `<div class="match-date">${formatDate(match.date)}</div>` : ''}
+      <div class="score-form">
+        <input type="number" min="0" max="20" class="score-input" id="home-${match.id}" value="${match.score_home ?? ''}">
+        <span>-</span>
+        <input type="number" min="0" max="20" class="score-input" id="away-${match.id}" value="${match.score_away ?? ''}">
+        <button class="btn opslaan-btn" style="margin-left:auto">Opslaan</button>
+        ${heeftUitslag ? `<button class="btn danger verwijder-btn">Wis</button>` : ''}
+      </div>
+    `
+    card.querySelector('.opslaan-btn').addEventListener('click', () => slaUitslagOp(match.id, card))
+    card.querySelector('.verwijder-btn')?.addEventListener('click', () => wisUitslag(match.id, card))
+    return card
+  }
+
+  async function wisUitslag(matchId, card) {
+    if (!confirm('Uitslag verwijderen?')) return
+    const { error } = await supabase.from('matches').update({ score_home: null, score_away: null }).eq('id', matchId)
+    if (error) { alert('Fout: ' + error.message); return }
+    document.getElementById(`home-${matchId}`).value = ''
+    document.getElementById(`away-${matchId}`).value = ''
+    card.querySelector('.verwijder-btn')?.remove()
+  }
+
+  async function slaUitslagOp(matchId, card) {
+    const homeVal = document.getElementById(`home-${matchId}`).value
+    const awayVal = document.getElementById(`away-${matchId}`).value
+    const btn = card.querySelector('.opslaan-btn')
+
+    if (homeVal === '' || awayVal === '') {
+      alert('Vul beide scores in.')
+      return
+    }
+
+    btn.textContent = 'Opslaan...'
+    btn.disabled = true
+
+    const { error } = await supabase.from('matches').update({
+      score_home: parseInt(homeVal),
+      score_away: parseInt(awayVal)
+    }).eq('id', matchId)
+
+    if (error) {
+      alert('Fout: ' + error.message)
+      btn.textContent = 'Opslaan'
+      btn.disabled = false
+    } else {
+      btn.textContent = 'Opgeslagen!'
+      btn.classList.add('saved')
+      if (!card.querySelector('.verwijder-btn')) {
+        const wisBtn = document.createElement('button')
+        wisBtn.className = 'btn danger verwijder-btn'
+        wisBtn.textContent = 'Wis'
+        wisBtn.addEventListener('click', () => wisUitslag(matchId, card))
+        card.querySelector('.score-form').appendChild(wisBtn)
+      }
+      setTimeout(() => {
+        btn.textContent = 'Opslaan'
+        btn.classList.remove('saved')
+        btn.disabled = false
+      }, 2000)
+    }
+  }
+
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('nl-NL', {
+      weekday: 'short', day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit'
+    })
   }
 </script>
 </body>

@@ -82,6 +82,9 @@ async function loadPredictions() {
   predictions?.forEach(p => { predMap[p.match_id] = p })
 
   const now = new Date()
+  const volgende = matches.find(m => m.date && new Date(m.date) > now)
+  renderCountdown(volgende)
+
   const groepen = [...new Set(matches.map(m => m.poule).filter(Boolean))].sort()
 
   let actieveFilter = null
@@ -253,6 +256,54 @@ async function loadScoreboard() {
     `
     container.appendChild(row)
   })
+}
+
+let countdownInterval = null
+
+function renderCountdown(match) {
+  if (countdownInterval) clearInterval(countdownInterval)
+
+  const container = document.getElementById('countdown-container')
+  container.innerHTML = ''
+  if (!match) return
+
+  const card = document.createElement('div')
+  card.className = 'countdown-card'
+  card.innerHTML = `
+    <div class="countdown-match">Volgende wedstrijd: ${match.home} - ${match.away}</div>
+    <div class="countdown-timer">
+      <div class="countdown-unit"><span class="countdown-value" id="cd-days">0</span><span class="countdown-label">dagen</span></div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit"><span class="countdown-value" id="cd-hours">00</span><span class="countdown-label">uur</span></div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit"><span class="countdown-value" id="cd-mins">00</span><span class="countdown-label">min</span></div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit"><span class="countdown-value" id="cd-secs">00</span><span class="countdown-label">sec</span></div>
+    </div>
+  `
+  container.appendChild(card)
+
+  const kickoff = new Date(match.date)
+
+  function tick() {
+    const diff = kickoff - new Date()
+    if (diff <= 0) {
+      clearInterval(countdownInterval)
+      card.innerHTML = `<div class="countdown-match">⚽ ${match.home} - ${match.away} is begonnen!</div>`
+      return
+    }
+    const days = Math.floor(diff / 86400000)
+    const hours = Math.floor((diff % 86400000) / 3600000)
+    const mins = Math.floor((diff % 3600000) / 60000)
+    const secs = Math.floor((diff % 60000) / 1000)
+    document.getElementById('cd-days').textContent = days
+    document.getElementById('cd-hours').textContent = String(hours).padStart(2, '0')
+    document.getElementById('cd-mins').textContent = String(mins).padStart(2, '0')
+    document.getElementById('cd-secs').textContent = String(secs).padStart(2, '0')
+  }
+
+  tick()
+  countdownInterval = setInterval(tick, 1000)
 }
 
 function formatDate(dateStr) {
