@@ -128,6 +128,8 @@
 
     .save-btn:hover { background: #155d2e; }
     .save-btn.saved { background: #4caf50; }
+    .save-btn.aanpassen { background: #e53935; }
+    .save-btn.aanpassen:hover { background: #b71c1c; }
 
     .locked-label {
       margin-left: auto;
@@ -191,6 +193,31 @@
 
     .sb-name { flex: 1; font-weight: 500; }
     .sb-points { font-weight: 700; color: #1a7a3a; }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-btn {
+      padding: 0.3rem 0.65rem;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: #555;
+      transition: all 0.15s;
+    }
+
+    .filter-btn.active {
+      background: #1a7a3a;
+      border-color: #1a7a3a;
+      color: white;
+      font-weight: 600;
+    }
 
     .empty-state {
       text-align: center;

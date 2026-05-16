@@ -82,14 +82,45 @@ async function loadPredictions() {
   predictions?.forEach(p => { predMap[p.match_id] = p })
 
   const now = new Date()
-  container.innerHTML = ''
+  const groepen = [...new Set(matches.map(m => m.poule).filter(Boolean))].sort()
 
-  matches.forEach(match => {
-    const pred = predMap[match.id] || {}
-    const isPlayed = match.score_home !== null && match.score_away !== null
-    const isLocked = match.date ? now >= new Date(match.date) : false
-    container.appendChild(buildMatchCard(match, pred, isPlayed, isLocked))
-  })
+  let actieveFilter = null
+
+  function renderMatches() {
+    container.innerHTML = ''
+
+    const filterBar = document.createElement('div')
+    filterBar.className = 'filter-bar'
+
+    const alleBtn = document.createElement('button')
+    alleBtn.className = `filter-btn${actieveFilter === null ? ' active' : ''}`
+    alleBtn.textContent = 'Alle'
+    alleBtn.addEventListener('click', () => { actieveFilter = null; renderMatches() })
+    filterBar.appendChild(alleBtn)
+
+    groepen.forEach(poule => {
+      const btn = document.createElement('button')
+      btn.className = `filter-btn${actieveFilter === poule ? ' active' : ''}`
+      btn.textContent = poule
+      btn.addEventListener('click', () => { actieveFilter = poule; renderMatches() })
+      filterBar.appendChild(btn)
+    })
+
+    container.appendChild(filterBar)
+
+    const zichtbaar = actieveFilter
+      ? matches.filter(m => m.poule === actieveFilter)
+      : matches
+
+    zichtbaar.forEach(match => {
+      const pred = predMap[match.id] || {}
+      const isPlayed = match.score_home !== null && match.score_away !== null
+      const isLocked = match.date ? now >= new Date(match.date) : false
+      container.appendChild(buildMatchCard(match, pred, isPlayed, isLocked))
+    })
+  }
+
+  renderMatches()
 }
 
 function buildMatchCard(match, pred, isPlayed, isLocked) {
@@ -121,7 +152,10 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
           ${isLocked ? 'disabled' : ''}>
         ${isLocked
           ? '<span class="locked-label">Gesloten</span>'
-          : `<button class="save-btn" data-match="${match.id}">Opslaan</button>`
+          : (() => {
+              const heeftVoorspelling = pred.pred_home !== undefined && pred.pred_home !== null
+              return `<button class="save-btn${heeftVoorspelling ? ' aanpassen' : ''}" data-match="${match.id}">${heeftVoorspelling ? 'Pas aan' : 'Opslaan'}</button>`
+            })()
         }
       </div>
     `}
@@ -177,8 +211,9 @@ async function savePrediction(matchId) {
     btn.textContent = 'Opgeslagen!'
     btn.classList.add('saved')
     setTimeout(() => {
-      btn.textContent = 'Opslaan'
+      btn.textContent = 'Pas aan'
       btn.classList.remove('saved')
+      btn.classList.add('aanpassen')
       btn.disabled = false
     }, 2000)
   }
