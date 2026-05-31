@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eagle Pick '26 — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Stardos+Stencil:wght@400;700&family=Crimson+Pro:ital,wght@0,400;1,400&family=Special+Elite&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --parchment:   #f4e9cf;
+      --parchment-2: #ecdfb8;
+      --cream:       #fbf3df;
+      --ink:         #1a1a14;
+      --ink-soft:    #3a3530;
+      --red:         #b2222a;
+      --crimson:     #8b1a1f;
+      --navy:        #122047;
+      --gold:        #c8a04a;
+      --gold-bright: #e7c069;
+      --green:       #2a7a3b;
+      --display: "Big Shoulders Display", Impact, sans-serif;
+      --stencil: "Stardos Stencil", monospace;
+      --serif:   "Crimson Pro", "Times New Roman", serif;
+      --tickets: "Special Elite", "Courier New", monospace;
+      --mono:    "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      background: var(--parchment);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background-image:
+        radial-gradient(rgba(26,26,20,0.06) 1px, transparent 1.2px),
+        radial-gradient(rgba(26,26,20,0.03) 1px, transparent 1.4px);
+      background-size: 3px 3px, 7px 7px;
+      pointer-events: none;
+      z-index: 1000;
+      mix-blend-mode: multiply;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ---- LOGIN ---- */
+    #login-section {
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 30%, #fff7e0 0%, var(--parchment) 50%, #d9c896 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 1.5rem 80px;
+      text-align: center;
+    }
+
+    .cover-stripes {
+      position: absolute;
+      left: -10%; right: -10%; top: 0;
+      height: 48px;
+      background: repeating-linear-gradient(90deg, var(--red) 0 60px, var(--cream) 60px 120px);
+      transform: rotate(-2deg) translateY(-16px);
+      border-top: 5px solid var(--navy);
+      border-bottom: 5px solid var(--navy);
+    }
+    .cover-stripes.bottom { top: auto; bottom: 0; transform: rotate(1.5deg) translateY(16px); }
+
+    .login-kicker {
+      font-family: var(--tickets);
+      font-size: 12px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--crimson);
+      margin-bottom: 6px;
+    }
+    .login-kicker::before, .login-kicker::after { content: " — "; color: var(--ink-soft); }
+
+    .login-wordmark {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: clamp(56px, 14vw, 120px);
+      line-height: 0.85;
+      text-transform: uppercase;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+      text-shadow: 3px 3px 0 var(--cream), 6px 6px 0 var(--red), 9px 9px 0 var(--navy);
+      margin: 6px 0 4px;
+    }
+    .login-wordmark em { color: var(--red); font-style: italic; }
+
+    .login-sub {
+      font-family: var(--stencil);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--navy);
+      margin-bottom: 2rem;
+    }
+
+    .login-box {
+      background: var(--cream);
+      border: 3px solid var(--navy);
+      box-shadow: 6px 6px 0 var(--navy);
+      padding: 24px 28px;
+      max-width: 380px;
+      width: 100%;
+    }
+
+    .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+
+    .ep-input {
+      flex: 1;
+      padding: 0.6rem 0.9rem;
+      background: var(--parchment);
+      border: 2px solid var(--navy);
+      font-family: var(--tickets);
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .ep-input:focus { border-color: var(--red); background: var(--cream); }
+    .ep-input::placeholder { color: var(--ink-soft); opacity: 0.5; }
+
+    .btn-primary {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--cream);
+      background: var(--red);
+      border: 3px solid var(--navy);
+      padding: 10px 16px;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--navy);
+      white-space: nowrap;
+      transition: 100ms;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-primary::before { content: "★"; }
+    .btn-primary::after  { content: "★"; }
+    .btn-primary:hover   { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--navy); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 4px 4px 0 var(--navy); }
+    .btn-primary.saved   { background: var(--green); }
+
+    .error-msg {
+      font-family: var(--stencil);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: var(--red);
+    }
+
+    /* ---- NAVBAR ---- */
+    .app-nav {
+      background: var(--navy);
+      border-bottom: 4px solid var(--ink);
+      padding: 0.6rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-wordmark {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--cream);
+      margin-right: 0.25rem;
+    }
+    .nav-wordmark em { color: var(--gold-bright); font-style: italic; }
+
+    .admin-stamp {
+      font-family: var(--stencil);
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--red);
+      border: 2px solid var(--red);
+      padding: 3px 8px;
+      transform: rotate(-1.5deg);
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    .nav-tabs { display: flex; gap: 2px; }
+
+    .nav-tab {
+      padding: 0.35rem 0.9rem;
+      border: none;
+      background: none;
+      font-family: var(--stencil);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: rgba(251,243,223,0.4);
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-tab.active { color: var(--gold-bright); border-color: var(--gold-bright); }
+    .nav-tab:hover:not(.active) { color: var(--cream); }
+
+    /* ---- MAIN ---- */
+    main { max-width: 720px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+    .section-eyebrow {
+      font-family: var(--stencil);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--red);
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 0.5rem;
+    }
+    .section-eyebrow::before, .section-eyebrow::after { content: "★"; }
+
+    .card {
+      background: var(--cream);
+      border: 3px solid var(--navy);
+      box-shadow: 5px 5px 0 var(--navy);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1.4px);
+      background-size: 4px 4px;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+
+    .section-label {
+      font-family: var(--stencil);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin: 1.5rem 0 0.6rem;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .section-label::before, .section-label::after { content: "★"; }
+
+    /* ---- PARTICIPANT ROWS ---- */
+    .deelnemer-row {
+      background: var(--cream);
+      border: 3px solid var(--navy);
+      box-shadow: 4px 4px 0 var(--navy);
+      padding: 0.9rem 1.1rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+
+    .deelnemer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+    }
+
+    .deelnemer-info { display: flex; align-items: center; gap: 10px; }
+
+    .deelnemer-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 2px solid var(--cream);
+      outline: 2px solid var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 13px;
+      color: var(--gold-bright);
+      flex-shrink: 0;
+    }
+
+    .deelnemer-naam {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--navy);
+    }
+
+    .btn-danger {
+      font-family: var(--stencil);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--red);
+      background: none;
+      border: 2px solid var(--red);
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: 100ms;
+    }
+    .btn-danger:hover { background: var(--red); color: var(--cream); }
+
+    .link-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      background: var(--parchment);
+      border: 2px solid rgba(18,32,71,0.2);
+      padding: 0.45rem 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .link-box:hover { border-color: var(--navy); }
+
+    .link-url {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-hint {
+      font-family: var(--stencil);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--navy);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ---- MATCH CARDS ---- */
+    .match-card {
+      background: var(--cream);
+      border: 3px solid var(--navy);
+      box-shadow: 4px 4px 0 var(--navy);
+      padding: 1rem 1.1rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+    }
+    .match-card.has-score { border-color: var(--green); box-shadow: 4px 4px 0 var(--green); }
+
+    .match-teams {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.01em;
+      color: var(--navy);
+      margin-bottom: 0.2rem;
+    }
+
+    .match-date {
+      font-family: var(--tickets);
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-bottom: 0.75rem;
+    }
+
+    .score-form { display: flex; align-items: center; gap: 0.5rem; }
+
+    .score-input {
+      width: 52px; height: 42px;
+      text-align: center;
+      font-family: var(--mono);
+      font-weight: 800;
+      font-size: 20px;
+      background: var(--parchment);
+      border: 2px solid var(--navy);
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+    .score-input::-webkit-inner-spin-button,
+    .score-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .score-input:focus { border-color: var(--red); background: var(--cream); }
+
+    .score-sep { font-family: var(--display); font-weight: 900; font-size: 20px; color: var(--navy); }
+
+    .btn-ghost {
+      font-family: var(--stencil);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--red);
+      background: none;
+      border: 2px solid var(--red);
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: 100ms;
+    }
+    .btn-ghost:hover { background: var(--red); color: var(--cream); }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      font-family: var(--tickets);
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-section">
+  <div class="cover-stripes"></div>
+  <div class="cover-stripes bottom"></div>
+  <div class="login-kicker">Restricted access · Department of Picks</div>
+  <h1 class="login-wordmark">EAGLE<br>ADMIN <em>'26</em></h1>
+  <div class="login-sub">★ Authorized Personnel Only ★</div>
+  <div class="login-box">
+    <div class="input-row">
+      <input type="password" class="ep-input" id="wachtwoord-input" placeholder="Password..." />
+      <button class="btn-primary" id="login-btn">Enter</button>
+    </div>
+    <p class="error-msg hidden" id="login-error">★ Incorrect password ★</p>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-section" class="hidden">
+  <nav class="app-nav">
+    <div class="nav-wordmark">EAGLE PICK <em>'26</em></div>
+    <div class="admin-stamp">Admin</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="deelnemers">★ Pickers ★</button>
+      <button class="nav-tab" data-tab="uitslagen">★ Scores ★</button>
+    </div>
+  </nav>
+
+  <main>
+    <div id="tab-deelnemers" class="tab-content">
+      <div class="card" style="margin-top:0.5rem">
+        <div class="section-eyebrow" style="margin-bottom:0.75rem">Nieuwe deelnemer</div>
+        <div class="input-row" style="margin-bottom:0">
+          <input type="text" class="ep-input" id="naam-input" placeholder="Full name..." />
+          <button class="btn-primary" id="toevoegen-btn">Add</button>
+        </div>
+      </div>
+      <div class="section-label">Registered Pickers</div>
+      <div id="deelnemers-lijst"></div>
+    </div>
+
+    <div id="tab-uitslagen" class="tab-content hidden">
+      <div id="uitslagen-lijst"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const WACHTWOORD = 'afblijven'
+
+  document.getElementById('login-btn').addEventListener('click', checkWachtwoord)
+  document.getElementById('wachtwoord-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkWachtwoord()
+  })
+
+  function checkWachtwoord() {
+    const input = document.getElementById('wachtwoord-input')
+    if (input.value === WACHTWOORD) {
+      sessionStorage.setItem('admin_auth', '1')
+      document.dispatchEvent(new CustomEvent('admin-login'))
+    } else {
+      document.getElementById('login-error').classList.remove('hidden')
+      input.style.borderColor = '#b2222a'
+      setTimeout(() => { input.style.borderColor = '' }, 1500)
+    }
+  }
+</script>
+
+<script type="module">
+  import { supabase } from './supabase.js'
+
+  const BASE_URL = window.location.origin + window.location.pathname.replace('admin.html', '')
+
+  function toonAdmin() {
+    document.getElementById('login-section').classList.add('hidden')
+    document.getElementById('admin-section').classList.remove('hidden')
+    toonTab('deelnemers')
+  }
+
+  document.addEventListener('admin-login', toonAdmin)
+  if (sessionStorage.getItem('admin_auth') === '1') toonAdmin()
+
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.addEventListener('click', () => toonTab(btn.dataset.tab))
+  })
+
+  function toonTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'))
+    document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'))
+    document.getElementById(`tab-${tab}`).classList.remove('hidden')
+    document.querySelector(`.nav-tab[data-tab="${tab}"]`).classList.add('active')
+    if (tab === 'deelnemers') laadDeelnemers()
+    if (tab === 'uitslagen') laadUitslagen()
+  }
+
+  function initialen(naam) {
+    const parts = (naam || '??').trim().split(' ')
+    return parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : (naam || '??').slice(0, 2).toUpperCase()
+  }
+
+  async function laadDeelnemers() {
+    const { data } = await supabase.from('participants').select('*').order('name')
+    const lijst = document.getElementById('deelnemers-lijst')
+    lijst.innerHTML = ''
+    if (!data || data.length === 0) {
+      lijst.innerHTML = '<p class="empty-state">No pickers registered yet, folks.</p>'
+      return
+    }
+    data.forEach(d => lijst.appendChild(maakDeelnemerRij(d)))
+  }
+
+  function maakDeelnemerRij(deelnemer) {
+    const link = `${BASE_URL}?token=${deelnemer.token}`
+    const row  = document.createElement('div')
+    row.className = 'deelnemer-row'
+    row.id = `rij-${deelnemer.id}`
+    row.innerHTML = `
+      <div class="deelnemer-top">
+        <div class="deelnemer-info">
+          <div class="deelnemer-avatar">${initialen(deelnemer.name)}</div>
+          <span class="deelnemer-naam">${deelnemer.name}</span>
+        </div>
+        <button class="btn-danger verwijder-btn">Remove</button>
+      </div>
+      <div class="link-box">
+        <span class="link-url">${link}</span>
+        <span class="copy-hint">★ Copy Link ★</span>
+      </div>
+    `
+    row.querySelector('.link-box').addEventListener('click', () => kopieerLink(link, row))
+    row.querySelector('.verwijder-btn').addEventListener('click', () => verwijder(deelnemer.id))
+    return row
+  }
+
+  async function kopieerLink(link, row) {
+    await navigator.clipboard.writeText(link)
+    const hint = row.querySelector('.copy-hint')
+    hint.textContent = '★ Copied! ★'
+    hint.style.color = '#2a7a3b'
+    setTimeout(() => { hint.textContent = '★ Copy Link ★'; hint.style.color = '' }, 1500)
+  }
+
+  document.getElementById('toevoegen-btn').addEventListener('click', voegToe)
+  document.getElementById('naam-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') voegToe()
+  })
+
+  async function voegToe() {
+    const naam = document.getElementById('naam-input').value.trim()
+    if (!naam) return
+    const token = naam.toLowerCase().replace(/\s+/g, '-') + '-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36)
+    const { data, error } = await supabase.from('participants').insert({ name: naam, token }).select().single()
+    if (error) { alert('Error: ' + error.message); return }
+    document.getElementById('naam-input').value = ''
+    document.getElementById('deelnemers-lijst').prepend(maakDeelnemerRij(data))
+  }
+
+  async function verwijder(id) {
+    if (!confirm('Remove this picker?')) return
+    await supabase.from('participants').delete().eq('id', id)
+    document.getElementById(`rij-${id}`)?.remove()
+  }
+
+  async function laadUitslagen() {
+    const { data: matches } = await supabase.from('matches').select('*').order('date')
+    const container = document.getElementById('uitslagen-lijst')
+    container.innerHTML = ''
+    if (!matches || matches.length === 0) {
+      container.innerHTML = '<p class="empty-state">No matches yet, folks.</p>'
+      return
+    }
+    const groepen = [...new Set(matches.map(m => m.poule).filter(Boolean))].sort()
+    groepen.forEach(poule => {
+      const header = document.createElement('div')
+      header.className = 'section-label'
+      header.textContent = poule
+      container.appendChild(header)
+      matches.filter(m => m.poule === poule).forEach(m => container.appendChild(maakUitslagKaart(m)))
+    })
+    const rest = matches.filter(m => !m.poule)
+    if (rest.length > 0) {
+      const header = document.createElement('div')
+      header.className = 'section-label'
+      header.textContent = 'Other'
+      container.appendChild(header)
+      rest.forEach(m => container.appendChild(maakUitslagKaart(m)))
+    }
+  }
+
+  function maakUitslagKaart(match) {
+    const card = document.createElement('div')
+    const heeftUitslag = match.score_home !== null && match.score_away !== null
+    card.className = `match-card${heeftUitslag ? ' has-score' : ''}`
+    card.innerHTML = `
+      <div class="match-teams">${match.home} × ${match.away}</div>
+      ${match.date ? `<div class="match-date">${new Date(match.date).toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</div>` : ''}
+      <div class="score-form">
+        <input type="number" min="0" max="20" class="score-input" id="home-${match.id}" value="${match.score_home ?? ''}">
+        <span class="score-sep">—</span>
+        <input type="number" min="0" max="20" class="score-input" id="away-${match.id}" value="${match.score_away ?? ''}">
+        <button class="btn-primary opslaan-btn" style="margin-left:auto;box-shadow:3px 3px 0 var(--navy);font-size:13px;padding:7px 14px;">Save</button>
+        ${heeftUitslag ? `<button class="btn-ghost wis-btn">Clear</button>` : ''}
+      </div>
+    `
+    card.querySelector('.opslaan-btn').addEventListener('click', () => slaUitslagOp(match.id, card))
+    card.querySelector('.wis-btn')?.addEventListener('click', () => wisUitslag(match.id, card))
+    return card
+  }
+
+  async function wisUitslag(matchId, card) {
+    if (!confirm('Clear this result?')) return
+    const { error } = await supabase.from('matches').update({ score_home: null, score_away: null }).eq('id', matchId)
+    if (error) { alert('Error: ' + error.message); return }
+    document.getElementById(`home-${matchId}`).value = ''
+    document.getElementById(`away-${matchId}`).value = ''
+    card.classList.remove('has-score')
+    card.querySelector('.wis-btn')?.remove()
+  }
+
+  async function slaUitslagOp(matchId, card) {
+    const homeVal = document.getElementById(`home-${matchId}`).value
+    const awayVal = document.getElementById(`away-${matchId}`).value
+    const btn     = card.querySelector('.opslaan-btn')
+    if (homeVal === '' || awayVal === '') {
+      document.getElementById(`home-${matchId}`).style.borderColor = '#b2222a'
+      document.getElementById(`away-${matchId}`).style.borderColor = '#b2222a'
+      setTimeout(() => {
+        document.getElementById(`home-${matchId}`).style.borderColor = ''
+        document.getElementById(`away-${matchId}`).style.borderColor = ''
+      }, 1500)
+      return
+    }
+    btn.textContent = '...'; btn.disabled = true
+    const { error } = await supabase.from('matches').update({
+      score_home: parseInt(homeVal), score_away: parseInt(awayVal)
+    }).eq('id', matchId)
+    if (error) {
+      alert('Error: ' + error.message); btn.textContent = 'Save'; btn.disabled = false
+    } else {
+      btn.textContent = '★ Locked ★'; btn.classList.add('saved')
+      card.classList.add('has-score')
+      if (!card.querySelector('.wis-btn')) {
+        const wisBtn = document.createElement('button')
+        wisBtn.className = 'btn-ghost wis-btn'; wisBtn.textContent = 'Clear'
+        wisBtn.addEventListener('click', () => wisUitslag(matchId, card))
+        card.querySelector('.score-form').appendChild(wisBtn)
+      }
+      setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); btn.disabled = false }, 2000)
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WK Pool 2026 · Oranje Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange:     #FF6600;
+      --orange-dim: #D45500;
+      --dark:       #1A1108;
+      --dark-card:  #201A08;
+      --navy:       #0B2185;
+      --off-white:  #EBEBEB;
+      --white:      #FFFFFF;
+      --red:        #FF3B30;
+      --green:      #34C759;
+      --dh: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+      --db: "Barlow", Arial, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      background: var(--dark);
+      color: var(--white);
+      font-family: var(--db);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ---- FLAG STRIPE ---- */
+    .flag-stripe { display: flex; height: 4px; }
+    .flag-stripe div { flex: 1; }
+
+    /* ---- LOGIN ---- */
+    #login-section {
+      min-height: 100vh;
+      background: var(--orange);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .login-hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+
+    .login-title {
+      font-family: var(--dh);
+      font-weight: 900;
+      font-size: clamp(60px, 18vw, 100px);
+      line-height: 0.88;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.35rem;
+    }
+
+    .login-sub {
+      font-family: var(--dh);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 1.75rem;
+    }
+
+    .login-card {
+      background: var(--dark);
+      border-radius: 10px;
+      padding: 1.5rem;
+      max-width: 360px;
+      width: 100%;
+    }
+
+    .input-row { display: flex; gap: 0.5rem; }
+
+    .lg-input {
+      flex: 1;
+      padding: 0.6rem 0.9rem;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,102,0,0.35);
+      border-radius: 8px;
+      font-family: var(--db);
+      font-size: 15px;
+      color: var(--white);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .lg-input:focus { border-color: var(--orange); background: rgba(255,102,0,0.1); }
+    .lg-input::placeholder { color: rgba(255,255,255,0.3); }
+
+    .btn-orange {
+      padding: 0.6rem 1.1rem;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--dh);
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .btn-orange:hover    { opacity: 0.85; }
+    .btn-orange:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-orange.saved    { background: var(--green); }
+
+    .error-msg {
+      font-family: var(--dh);
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      color: #FF6B6B;
+      margin-top: 0.6rem;
+    }
+
+    /* ---- NAV ---- */
+    .app-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--dark);
+      border-bottom: 3px solid var(--orange);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1.25rem;
+      height: 52px;
+    }
+
+    .nav-brand {
+      font-family: var(--dh);
+      font-weight: 900;
+      font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      margin-right: 0.5rem;
+    }
+
+    .admin-badge {
+      font-family: var(--dh);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      background: rgba(255,102,0,0.12);
+      border: 1px solid rgba(255,102,0,0.35);
+      border-radius: 99px;
+      padding: 2px 10px;
+      margin-right: 0.75rem;
+    }
+
+    .nav-tabs { display: flex; gap: 2px; }
+
+    .nav-tab {
+      padding: 0.35rem 0.9rem;
+      border: none;
+      background: none;
+      font-family: var(--dh);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: rgba(255,255,255,0.4);
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .nav-tab.active { color: var(--orange); background: rgba(255,102,0,0.1); }
+    .nav-tab:hover:not(.active) { color: white; }
+
+    /* ---- MAIN ---- */
+    main { max-width: 720px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+    /* ---- CARD ---- */
+    .card {
+      background: var(--dark-card);
+      border: 1px solid rgba(255,102,0,0.2);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-family: var(--dh);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.85rem;
+    }
+
+    .section-label {
+      font-family: var(--dh);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin: 1.5rem 0 0.6rem;
+    }
+
+    /* ---- PARTICIPANT ROWS ---- */
+    .deelnemer-row {
+      background: var(--dark-card);
+      border: 1px solid rgba(255,102,0,0.15);
+      border-radius: 10px;
+      padding: 0.9rem 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .deelnemer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+    }
+
+    .deelnemer-info { display: flex; align-items: center; gap: 10px; }
+
+    .deelnemer-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: white;
+      font-family: var(--dh);
+      font-weight: 900;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .deelnemer-naam { font-family: var(--dh); font-weight: 700; font-size: 17px; }
+
+    .btn-danger {
+      padding: 0.3rem 0.75rem;
+      background: none;
+      color: var(--red);
+      border: 1px solid rgba(255,59,48,0.3);
+      border-radius: 6px;
+      font-family: var(--db);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-danger:hover { background: rgba(255,59,48,0.1); }
+
+    .link-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,102,0,0.2);
+      border-radius: 7px;
+      padding: 0.45rem 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .link-box:hover { border-color: var(--orange); }
+
+    .link-url {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-hint { font-family: var(--dh); font-weight: 700; font-size: 13px; color: var(--orange); white-space: nowrap; flex-shrink: 0; }
+
+    /* ---- MATCH CARDS ---- */
+    .match-card {
+      background: var(--dark-card);
+      border: 1px solid rgba(255,102,0,0.15);
+      border-top: 3px solid var(--orange);
+      border-radius: 6px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .match-card.has-score { border-top-color: var(--green); }
+
+    .match-teams { font-family: var(--dh); font-weight: 800; font-size: 17px; text-transform: uppercase; margin-bottom: 0.2rem; }
+    .match-date  { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 0.75rem; }
+
+    .score-form { display: flex; align-items: center; gap: 0.5rem; }
+
+    .score-input {
+      width: 50px; height: 38px;
+      text-align: center;
+      font-family: var(--dh);
+      font-weight: 800;
+      font-size: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,102,0,0.3);
+      border-radius: 6px;
+      color: var(--white);
+      outline: none;
+      transition: all 0.15s;
+      -moz-appearance: textfield;
+    }
+    .score-input::-webkit-inner-spin-button,
+    .score-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .score-input:focus { border-color: var(--orange); background: rgba(255,102,0,0.1); }
+
+    .score-sep { font-size: 15px; color: rgba(255,255,255,0.3); }
+
+    .btn-wis {
+      padding: 0.35rem 0.8rem;
+      background: none;
+      color: var(--red);
+      border: 1px solid rgba(255,59,48,0.3);
+      border-radius: 6px;
+      font-family: var(--db);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-wis:hover { background: rgba(255,59,48,0.1); }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: rgba(255,255,255,0.25);
+      font-family: var(--dh);
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-section">
+  <div class="flag-stripe">
+    <div style="background:#AE1C28"></div>
+    <div style="background:#FFFFFF"></div>
+    <div style="background:#21468B"></div>
+  </div>
+  <nav class="app-nav" style="background:var(--dark);border-bottom-color:var(--orange)">
+    <div class="nav-brand">WK Pool</div>
+    <span class="admin-badge">Admin</span>
+  </nav>
+  <div class="login-hero">
+    <div class="login-title">BEHEER<br>DER</div>
+    <div class="login-sub">Oranje Edition 2026</div>
+    <div class="login-card">
+      <div class="input-row">
+        <input type="password" class="lg-input" id="wachtwoord-input" placeholder="Wachtwoord" />
+        <button class="btn-orange" id="login-btn">In</button>
+      </div>
+      <p class="error-msg hidden" id="login-error">Onjuist wachtwoord</p>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-section" class="hidden">
+  <div class="flag-stripe">
+    <div style="background:#AE1C28"></div>
+    <div style="background:#FFFFFF"></div>
+    <div style="background:#21468B"></div>
+  </div>
+  <nav class="app-nav">
+    <div class="nav-brand">WK Pool</div>
+    <span class="admin-badge">Admin</span>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="deelnemers">Deelnemers</button>
+      <button class="nav-tab" data-tab="uitslagen">Uitslagen</button>
+    </div>
+  </nav>
+
+  <main>
+    <div id="tab-deelnemers" class="tab-content">
+      <div class="card" style="margin-top:0.5rem">
+        <div class="card-title">Nieuwe deelnemer</div>
+        <div class="input-row" style="margin-bottom:0">
+          <input type="text" class="lg-input" id="naam-input" placeholder="Naam" />
+          <button class="btn-orange" id="toevoegen-btn">Voeg toe</button>
+        </div>
+      </div>
+      <div class="section-label">Deelnemers</div>
+      <div id="deelnemers-lijst"></div>
+    </div>
+
+    <div id="tab-uitslagen" class="tab-content hidden">
+      <div id="uitslagen-lijst"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const WACHTWOORD = 'afblijven'
+
+  document.getElementById('login-btn').addEventListener('click', checkWachtwoord)
+  document.getElementById('wachtwoord-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkWachtwoord()
+  })
+
+  function checkWachtwoord() {
+    const input = document.getElementById('wachtwoord-input')
+    if (input.value === WACHTWOORD) {
+      sessionStorage.setItem('admin_auth', '1')
+      document.dispatchEvent(new CustomEvent('admin-login'))
+    } else {
+      document.getElementById('login-error').classList.remove('hidden')
+      input.style.borderColor = '#FF6B6B'
+      setTimeout(() => { input.style.borderColor = '' }, 1500)
+    }
+  }
+</script>
+
+<script type="module">
+  import { supabase } from './supabase.js'
+
+  const BASE_URL = window.location.origin + window.location.pathname.replace('admin.html', '')
+
+  function toonAdmin() {
+    document.getElementById('login-section').classList.add('hidden')
+    document.getElementById('admin-section').classList.remove('hidden')
+    toonTab('deelnemers')
+  }
+
+  document.addEventListener('admin-login', toonAdmin)
+  if (sessionStorage.getItem('admin_auth') === '1') toonAdmin()
+
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.addEventListener('click', () => toonTab(btn.dataset.tab))
+  })
+
+  function toonTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'))
+    document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'))
+    document.getElementById(`tab-${tab}`).classList.remove('hidden')
+    document.querySelector(`.nav-tab[data-tab="${tab}"]`).classList.add('active')
+    if (tab === 'deelnemers') laadDeelnemers()
+    if (tab === 'uitslagen') laadUitslagen()
+  }
+
+  function initialen(naam) {
+    const parts = (naam || '??').trim().split(' ')
+    return parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : (naam || '??').slice(0, 2).toUpperCase()
+  }
+
+  async function laadDeelnemers() {
+    const { data } = await supabase.from('participants').select('*').order('name')
+    const lijst = document.getElementById('deelnemers-lijst')
+    lijst.innerHTML = ''
+    if (!data || data.length === 0) {
+      lijst.innerHTML = '<p class="empty-state">Nog geen deelnemers</p>'
+      return
+    }
+    data.forEach(d => lijst.appendChild(maakDeelnemerRij(d)))
+  }
+
+  function maakDeelnemerRij(deelnemer) {
+    const link = `${BASE_URL}?token=${deelnemer.token}`
+    const row  = document.createElement('div')
+    row.className = 'deelnemer-row'
+    row.id = `rij-${deelnemer.id}`
+    row.innerHTML = `
+      <div class="deelnemer-top">
+        <div class="deelnemer-info">
+          <div class="deelnemer-avatar">${initialen(deelnemer.name)[0]}</div>
+          <span class="deelnemer-naam">${deelnemer.name}</span>
+        </div>
+        <button class="btn-danger verwijder-btn">Verwijder</button>
+      </div>
+      <div class="link-box">
+        <span class="link-url">${link}</span>
+        <span class="copy-hint">Kopieer</span>
+      </div>
+    `
+    row.querySelector('.link-box').addEventListener('click', () => kopieerLink(link, row))
+    row.querySelector('.verwijder-btn').addEventListener('click', () => verwijder(deelnemer.id))
+    return row
+  }
+
+  async function kopieerLink(link, row) {
+    await navigator.clipboard.writeText(link)
+    const hint = row.querySelector('.copy-hint')
+    hint.textContent = '✓ Gekopieerd'
+    hint.style.color = '#34C759'
+    setTimeout(() => { hint.textContent = 'Kopieer'; hint.style.color = '' }, 1500)
+  }
+
+  document.getElementById('toevoegen-btn').addEventListener('click', voegToe)
+  document.getElementById('naam-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') voegToe()
+  })
+
+  async function voegToe() {
+    const naam = document.getElementById('naam-input').value.trim()
+    if (!naam) return
+    const token = naam.toLowerCase().replace(/\s+/g, '-') + '-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36)
+    const { data, error } = await supabase.from('participants').insert({ name: naam, token }).select().single()
+    if (error) { alert('Fout: ' + error.message); return }
+    document.getElementById('naam-input').value = ''
+    document.getElementById('deelnemers-lijst').prepend(maakDeelnemerRij(data))
+  }
+
+  async function verwijder(id) {
+    if (!confirm('Deelnemer verwijderen?')) return
+    await supabase.from('participants').delete().eq('id', id)
+    document.getElementById(`rij-${id}`)?.remove()
+  }
+
+  async function laadUitslagen() {
+    const { data: matches } = await supabase.from('matches').select('*').order('date')
+    const container = document.getElementById('uitslagen-lijst')
+    container.innerHTML = ''
+    if (!matches || matches.length === 0) {
+      container.innerHTML = '<p class="empty-state">Nog geen wedstrijden</p>'
+      return
+    }
+    const groepen = [...new Set(matches.map(m => m.poule).filter(Boolean))].sort()
+    groepen.forEach(poule => {
+      const header = document.createElement('div')
+      header.className = 'section-label'
+      header.textContent = `Groep ${poule}`
+      container.appendChild(header)
+      matches.filter(m => m.poule === poule).forEach(m => container.appendChild(maakUitslagKaart(m)))
+    })
+    const rest = matches.filter(m => !m.poule)
+    if (rest.length > 0) {
+      const header = document.createElement('div')
+      header.className = 'section-label'
+      header.textContent = 'Overig'
+      container.appendChild(header)
+      rest.forEach(m => container.appendChild(maakUitslagKaart(m)))
+    }
+  }
+
+  function maakUitslagKaart(match) {
+    const card = document.createElement('div')
+    const heeftUitslag = match.score_home !== null && match.score_away !== null
+    card.className = `match-card${heeftUitslag ? ' has-score' : ''}`
+    card.innerHTML = `
+      <div class="match-teams">${match.home} × ${match.away}</div>
+      ${match.date ? `<div class="match-date">${new Date(match.date).toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</div>` : ''}
+      <div class="score-form">
+        <input type="number" min="0" max="20" class="score-input" id="home-${match.id}" value="${match.score_home ?? ''}">
+        <span class="score-sep">–</span>
+        <input type="number" min="0" max="20" class="score-input" id="away-${match.id}" value="${match.score_away ?? ''}">
+        <button class="btn-orange opslaan-btn" style="margin-left:auto;padding:0.35rem 0.9rem;font-size:14px;">Opslaan</button>
+        ${heeftUitslag ? `<button class="btn-wis wis-btn">Wis</button>` : ''}
+      </div>
+    `
+    card.querySelector('.opslaan-btn').addEventListener('click', () => slaUitslagOp(match.id, card))
+    card.querySelector('.wis-btn')?.addEventListener('click', () => wisUitslag(match.id, card))
+    return card
+  }
+
+  async function wisUitslag(matchId, card) {
+    if (!confirm('Uitslag verwijderen?')) return
+    const { error } = await supabase.from('matches').update({ score_home: null, score_away: null }).eq('id', matchId)
+    if (error) { alert('Fout: ' + error.message); return }
+    document.getElementById(`home-${matchId}`).value = ''
+    document.getElementById(`away-${matchId}`).value = ''
+    card.classList.remove('has-score')
+    card.querySelector('.wis-btn')?.remove()
+  }
+
+  async function slaUitslagOp(matchId, card) {
+    const homeVal = document.getElementById(`home-${matchId}`).value
+    const awayVal = document.getElementById(`away-${matchId}`).value
+    const btn     = card.querySelector('.opslaan-btn')
+    if (homeVal === '' || awayVal === '') {
+      document.getElementById(`home-${matchId}`).style.borderColor = '#FF6B6B'
+      document.getElementById(`away-${matchId}`).style.borderColor = '#FF6B6B'
+      setTimeout(() => {
+        document.getElementById(`home-${matchId}`).style.borderColor = ''
+        document.getElementById(`away-${matchId}`).style.borderColor = ''
+      }, 1500)
+      return
+    }
+    btn.textContent = '...'; btn.disabled = true
+    const { error } = await supabase.from('matches').update({
+      score_home: parseInt(homeVal), score_away: parseInt(awayVal)
+    }).eq('id', matchId)
+    if (error) {
+      alert('Fout: ' + error.message); btn.textContent = 'Opslaan'; btn.disabled = false
+    } else {
+      btn.textContent = '✓'; btn.classList.add('saved')
+      card.classList.add('has-score')
+      if (!card.querySelector('.wis-btn')) {
+        const wisBtn = document.createElement('button')
+        wisBtn.className = 'btn-wis wis-btn'; wisBtn.textContent = 'Wis'
+        wisBtn.addEventListener('click', () => wisUitslag(matchId, card))
+        card.querySelector('.score-form').appendChild(wisBtn)
+      }
+      setTimeout(() => { btn.textContent = 'Opslaan'; btn.classList.remove('saved'); btn.disabled = false }, 2000)
+    }
+  }
+</script>
+</body>
+</html>
