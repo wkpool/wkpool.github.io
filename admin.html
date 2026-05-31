@@ -3,341 +3,230 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LASERGOAL '26 — Admin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800;12..96,900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <title>WK Pool 2026 — Admin</title>
   <style>
     :root {
-      --void:        #07010f;
-      --night:       #0d0420;
-      --plasma:      #160833;
-      --plasma-2:    #1f0a47;
-      --bone:        #f6f1ff;
-      --bone-dim:    #b8a8d6;
-      --bone-mute:   #6f5f95;
-      --magenta:     #ff2e93;
-      --cyan:        #00f0ff;
-      --lime:        #c8ff00;
-      --orange:      #ff7a00;
-      --violet:      #b53dff;
-      --display: "Bricolage Grotesque", system-ui, sans-serif;
-      --ui:      "Space Grotesk", system-ui, sans-serif;
-      --mono:    "JetBrains Mono", ui-monospace, monospace;
-      --r-card: 16px;
-      --r-pill: 999px;
-      --grid-soft: rgba(0,240,255,0.12);
-      --grid-hot:  rgba(255,46,147,0.35);
+      --bg: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --separator: rgba(60, 60, 67, 0.12);
+      --text-primary: #000000;
+      --text-secondary: rgba(60, 60, 67, 0.6);
+      --text-tertiary: rgba(60, 60, 67, 0.3);
+      --blue: #007AFF;
+      --green: #34C759;
+      --orange: #FF9500;
+      --red: #FF3B30;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --r: 12px;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
 
     body {
-      background: var(--void);
-      color: var(--bone);
-      font-family: var(--ui);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-family: var(--font);
       font-size: 16px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
-      overflow-x: hidden;
     }
 
     .hidden { display: none !important; }
 
-    /* ===================== LOGIN ===================== */
+    /* ---- LOGIN ---- */
     #login-section {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-      overflow: hidden;
-      background: radial-gradient(ellipse at 50% 80%, #2a0a6a 0%, #0a0220 55%, #07010f 100%);
-    }
-
-    .login-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--grid-hot) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-hot) 1px, transparent 1px);
-      background-size: 60px 60px;
-      transform: perspective(700px) rotateX(55deg);
-      transform-origin: 50% 100%;
-      mask-image: linear-gradient(0deg, #000 0%, transparent 60%);
-    }
-
-    .login-scanlines {
-      position: absolute; inset: 0;
-      background-image: repeating-linear-gradient(180deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px);
-      pointer-events: none;
-    }
-
-    .login-cat {
-      position: absolute;
-      bottom: 0; right: 5%;
-      width: 160px;
-      opacity: 0.75;
-      filter: drop-shadow(0 0 16px rgba(255,46,147,0.4));
-    }
-
-    .login-box {
-      position: relative;
-      z-index: 2;
-      width: 100%;
-      max-width: 400px;
       padding: 2rem;
-      text-align: center;
     }
+
+    .login-card {
+      background: white;
+      border-radius: 18px;
+      padding: 2.5rem;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+    }
+
+    .login-logo { font-size: 40px; margin-bottom: 0.75rem; line-height: 1; }
 
     .login-eyebrow {
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.25em;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: var(--magenta);
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .login-eyebrow::before, .login-eyebrow::after {
-      content: "";
-      width: 20px; height: 1px;
-      background: var(--magenta);
-      box-shadow: 0 0 8px var(--magenta);
+      color: var(--blue);
+      margin-bottom: 0.4rem;
     }
 
     .login-title {
-      font-family: var(--display);
-      font-weight: 900;
-      font-size: clamp(56px, 16vw, 90px);
-      line-height: 0.88;
-      letter-spacing: -0.04em;
-      background: linear-gradient(180deg, #fff 0%, #fff 38%, var(--magenta) 38%, var(--magenta) 70%, var(--orange) 70%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      margin-bottom: 0.5rem;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 1.5rem;
     }
 
-    .login-sub {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      color: var(--bone-mute);
-      text-transform: uppercase;
-      margin-bottom: 2rem;
-    }
-
-    .login-form-card {
-      background: rgba(22,8,51,0.85);
-      border: 1px solid rgba(255,46,147,0.25);
-      border-radius: var(--r-card);
-      padding: 1.75rem;
-      backdrop-filter: blur(16px);
-    }
-
-    .input-row {
+    .input-group {
       display: flex;
       gap: 0.5rem;
+      margin-bottom: 0.75rem;
     }
 
-    .lg-input {
+    .flat-input {
       flex: 1;
-      padding: 0.65rem 0.9rem;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
+      padding: 0.6rem 0.9rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--separator);
       border-radius: 10px;
-      font-family: var(--mono);
-      font-size: 14px;
-      color: var(--bone);
+      font-family: var(--font);
+      font-size: 15px;
+      color: var(--text-primary);
       outline: none;
-      transition: all 0.2s;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .lg-input:focus {
-      border-color: rgba(255,46,147,0.6);
-      background: rgba(255,46,147,0.06);
-      box-shadow: 0 0 0 3px rgba(255,46,147,0.1);
-    }
-    .lg-input::placeholder { color: var(--bone-mute); }
 
-    .error-msg {
-      color: var(--magenta);
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      margin-top: 0.75rem;
+    .flat-input:focus {
+      border-color: var(--blue);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
     }
-    .error-msg::before { content: "// "; }
 
-    /* ===================== BUTTONS ===================== */
-    .btn {
+    .flat-input::placeholder { color: var(--text-tertiary); }
+
+    .btn-primary {
       padding: 0.6rem 1.1rem;
-      background: linear-gradient(135deg, var(--magenta), var(--violet));
+      background: var(--blue);
       color: white;
       border: none;
-      border-radius: var(--r-pill);
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      border-radius: 10px;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
-      transition: all 0.2s;
-      box-shadow: 0 4px 14px rgba(255,46,147,0.25);
-    }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,46,147,0.35); }
-    .btn:active { transform: translateY(0); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    .btn.danger {
-      background: transparent;
-      border: 1px solid rgba(255,46,147,0.4);
-      color: var(--magenta);
-      box-shadow: none;
-    }
-    .btn.danger:hover { background: rgba(255,46,147,0.1); box-shadow: none; }
-
-    .btn.saved {
-      background: linear-gradient(135deg, var(--lime), #8bc700);
-      color: var(--void);
-      box-shadow: 0 4px 14px rgba(200,255,0,0.25);
+      transition: opacity 0.15s;
     }
 
-    /* ===================== APP HEADER ===================== */
-    .app-header {
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(180deg, #160833 0%, #0d0420 100%);
-      border-bottom: 1px solid rgba(255,46,147,0.2);
-      padding: 1rem 1.25rem 0;
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:active { opacity: 0.7; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary.saved { background: var(--green); }
+
+    .error-msg {
+      font-size: 13px;
+      color: var(--red);
+      margin-top: 0.5rem;
     }
-    .app-header-bg {
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(var(--grid-soft) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-soft) 1px, transparent 1px);
-      background-size: 40px 40px;
-      opacity: 0.5;
+
+    /* ---- NAV ---- */
+    .app-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--separator);
     }
-    .app-header-inner { position: relative; z-index: 1; }
-    .app-topbar {
+
+    .nav-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+      height: 52px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.75rem;
-    }
-    .app-wordmark {
-      font-family: var(--display);
-      font-weight: 900;
-      font-size: 20px;
-      letter-spacing: -0.03em;
-      background: linear-gradient(90deg, #fff, var(--magenta));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-    .admin-badge {
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--magenta);
-      background: rgba(255,46,147,0.1);
-      border: 1px solid rgba(255,46,147,0.3);
-      border-radius: var(--r-pill);
-      padding: 3px 10px;
+      gap: 0.25rem;
     }
 
-    nav { display: flex; }
-    .tab-btn {
-      flex: 1;
-      padding: 0.7rem 1rem;
+    .nav-brand {
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.3px;
+      margin-right: 0.75rem;
+    }
+
+    .admin-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--orange);
+      background: rgba(255,149,0,0.1);
+      border: 1px solid rgba(255,149,0,0.25);
+      border-radius: 99px;
+      padding: 2px 10px;
+      margin-right: 1rem;
+    }
+
+    .nav-tabs { display: flex; gap: 2px; }
+
+    .nav-tab {
+      padding: 0.35rem 0.9rem;
       border: none;
       background: none;
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 400;
       cursor: pointer;
-      color: var(--bone-mute);
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      color: var(--magenta);
-      border-bottom-color: var(--magenta);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      transition: all 0.15s;
     }
 
-    /* ===================== MAIN ===================== */
+    .nav-tab.active {
+      color: var(--text-primary);
+      font-weight: 600;
+      background: var(--bg-secondary);
+    }
+
+    .nav-tab:hover:not(.active) { color: var(--text-primary); }
+
+    /* ---- MAIN ---- */
     main {
-      max-width: 640px;
+      max-width: 720px;
       margin: 0 auto;
-      padding: 1.25rem;
-      padding-bottom: 120px; /* space for corner cat */
+      padding: 1.5rem 1.25rem 3rem;
     }
 
-    /* ===================== CARDS ===================== */
+    /* ---- CARDS ---- */
     .card {
-      background: linear-gradient(135deg, #160833 0%, #0d0420 100%);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: var(--r-card);
+      background: white;
+      border: 1px solid var(--separator);
+      border-radius: var(--r);
       padding: 1.25rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
     }
 
     .card-title {
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
-      color: var(--cyan);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 1rem;
-    }
-    .card-title::before {
-      content: "";
-      width: 16px; height: 1px;
-      background: var(--cyan);
-      box-shadow: 0 0 6px var(--cyan);
+      color: var(--text-tertiary);
+      margin-bottom: 0.85rem;
     }
 
     .section-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      letter-spacing: 0.03em;
       text-transform: uppercase;
-      color: var(--bone-mute);
       margin: 1.5rem 0 0.6rem;
     }
-    .section-label:first-child { margin-top: 0; }
 
-    .add-form { display: flex; gap: 0.5rem; }
-
-    /* ===================== DEELNEMERS ===================== */
+    /* ---- PARTICIPANT ROWS ---- */
     .deelnemer-row {
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(135deg, #160833 0%, #0d0420 100%);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: var(--r-card);
-      padding: 1rem 1.25rem;
+      background: white;
+      border: 1px solid var(--separator);
+      border-radius: var(--r);
+      padding: 0.9rem 1.1rem;
       margin-bottom: 0.5rem;
-      transition: border-color 0.2s;
     }
-    .deelnemer-row:hover { border-color: rgba(255,46,147,0.25); }
 
     .deelnemer-top {
       display: flex;
@@ -345,294 +234,221 @@
       justify-content: space-between;
       margin-bottom: 0.6rem;
     }
-    .deelnemer-info { display: flex; align-items: center; gap: 10px; }
+
+    .deelnemer-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
     .deelnemer-avatar {
       width: 32px; height: 32px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #1f0a47, #160833);
-      border: 1px solid rgba(255,46,147,0.35);
+      background: var(--blue);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--magenta);
       flex-shrink: 0;
     }
 
-    .deelnemer-naam { font-weight: 600; font-size: 15px; }
+    .deelnemer-naam {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .btn-destructive {
+      padding: 0.3rem 0.75rem;
+      background: none;
+      color: var(--red);
+      border: 1px solid rgba(255,59,48,0.25);
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-destructive:hover { background: rgba(255,59,48,0.06); }
 
     .link-box {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
-      background: rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.06);
+      background: var(--bg-secondary);
+      border: 1px solid var(--separator);
       border-radius: 8px;
       padding: 0.45rem 0.75rem;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: border-color 0.15s;
     }
-    .link-box:hover { border-color: rgba(0,240,255,0.3); background: rgba(0,240,255,0.04); }
+
+    .link-box:hover { border-color: rgba(0,122,255,0.4); }
 
     .link-url {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--bone-mute);
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
     .copy-hint {
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--blue);
       white-space: nowrap;
       flex-shrink: 0;
-      transition: color 0.2s;
     }
 
-    /* Peek cat inside deelnemer row */
-    .cat-peek {
-      position: absolute;
-      bottom: -2px; right: 10px;
-      width: 46px;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.3s, transform 0.3s;
-      pointer-events: none;
-    }
-    .deelnemer-row:hover .cat-peek {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* ===================== MATCH CARDS ===================== */
+    /* ---- MATCH CARDS ---- */
     .match-card {
-      position: relative;
-      background: linear-gradient(135deg, #160833 0%, #0d0420 100%);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: var(--r-card);
-      padding: 1rem 1.25rem;
+      background: white;
+      border: 1px solid var(--separator);
+      border-radius: var(--r);
+      padding: 1rem 1.1rem;
       margin-bottom: 0.5rem;
     }
 
-    .match-card-accent {
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: linear-gradient(180deg, var(--violet), var(--magenta));
-      border-radius: 3px 0 0 3px;
-      transition: background 0.3s;
-    }
-    .match-card-accent.has-score {
-      background: linear-gradient(180deg, var(--lime), var(--cyan));
+    .match-card.has-score {
+      border-color: rgba(52,199,89,0.35);
     }
 
     .match-teams {
-      font-family: var(--display);
-      font-weight: 800;
       font-size: 16px;
-      letter-spacing: -0.01em;
-      margin-bottom: 0.25rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
     }
 
     .match-date {
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--bone-mute);
+      font-size: 12px;
+      color: var(--text-tertiary);
       margin-bottom: 0.75rem;
     }
 
-    .score-form { display: flex; align-items: center; gap: 0.5rem; }
+    .score-form {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
     .score-input {
-      width: 52px; height: 44px;
+      width: 52px; height: 40px;
       text-align: center;
-      font-family: var(--mono);
-      font-size: 1.2rem;
-      font-weight: 800;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      color: var(--bone);
+      font-family: var(--font);
+      font-size: 17px;
+      font-weight: 600;
+      background: var(--bg-secondary);
+      border: 1px solid var(--separator);
+      border-radius: 8px;
+      color: var(--text-primary);
       outline: none;
-      transition: all 0.2s;
+      transition: border-color 0.15s, box-shadow 0.15s;
       -moz-appearance: textfield;
     }
+
     .score-input::-webkit-inner-spin-button,
     .score-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
     .score-input:focus {
-      border-color: rgba(0,240,255,0.5);
-      background: rgba(0,240,255,0.06);
-      box-shadow: 0 0 0 3px rgba(0,240,255,0.1);
+      border-color: var(--blue);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
     }
 
-    .score-sep { font-family: var(--mono); font-size: 1rem; color: var(--bone-mute); }
+    .score-sep {
+      font-size: 15px;
+      color: var(--text-tertiary);
+    }
 
-    /* ===================== EMPTY STATE ===================== */
+    .btn-secondary {
+      padding: 0.4rem 0.85rem;
+      background: none;
+      color: var(--red);
+      border: 1px solid rgba(255,59,48,0.25);
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-secondary:hover { background: rgba(255,59,48,0.06); }
+
+    /* ---- EMPTY STATE ---- */
     .empty-state {
       text-align: center;
-      color: var(--bone-mute);
-      padding: 1rem;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-    .empty-state::before { content: "// "; color: var(--cyan); }
-
-    /* ===================== CATS ===================== */
-    .cat-corner {
-      position: fixed;
-      bottom: 0; right: 16px;
-      width: 88px;
-      z-index: 100;
-      pointer-events: none;
-      filter: drop-shadow(0 0 14px rgba(255,46,147,0.45));
-      animation: cat-bob 3.5s ease-in-out infinite;
-    }
-    @keyframes cat-bob {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-
-    .empty-cat {
-      display: block;
-      margin: 1.5rem auto 0.5rem;
-      width: 72px;
-      opacity: 0.55;
-      filter: drop-shadow(0 0 10px rgba(0,240,255,0.3));
+      color: var(--text-tertiary);
+      padding: 2rem 1rem;
+      font-size: 15px;
     }
 
     @media (max-width: 480px) {
-      main { padding: 1rem; padding-bottom: 100px; }
-      .cat-corner { width: 64px; right: 8px; }
+      .nav-brand { font-size: 15px; }
+      main { padding: 1rem 1rem 3rem; }
     }
   </style>
 </head>
 <body>
 
-<!-- ===================== LOGIN ===================== -->
+<!-- LOGIN -->
 <div id="login-section">
-  <div class="login-grid"></div>
-  <div class="login-scanlines"></div>
-
-  <!-- Cat watching the login -->
-  <svg class="login-cat" viewBox="0 0 160 210" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="80" cy="150" rx="54" ry="52" fill="#160833" stroke="#ff2e93" stroke-width="2"/>
-    <ellipse cx="80" cy="90" rx="44" ry="40" fill="#160833" stroke="#ff2e93" stroke-width="2"/>
-    <polygon points="44,62 32,26 64,54" fill="#160833" stroke="#ff2e93" stroke-width="2"/>
-    <polygon points="116,62 128,26 96,54" fill="#160833" stroke="#ff2e93" stroke-width="2"/>
-    <polygon points="48,59 38,32 62,52" fill="#2a0a47"/>
-    <polygon points="112,59 122,32 98,52" fill="#2a0a47"/>
-    <ellipse cx="62" cy="88" rx="10" ry="11" fill="#00f0ff" opacity="0.9"/>
-    <ellipse cx="98" cy="88" rx="10" ry="11" fill="#00f0ff" opacity="0.9"/>
-    <ellipse cx="62" cy="89" rx="5" ry="7" fill="#07010f"/>
-    <ellipse cx="98" cy="89" rx="5" ry="7" fill="#07010f"/>
-    <ellipse cx="62" cy="88" rx="10" ry="11" fill="none" stroke="#00f0ff" stroke-width="1.5" opacity="0.4"/>
-    <ellipse cx="98" cy="88" rx="10" ry="11" fill="none" stroke="#00f0ff" stroke-width="1.5" opacity="0.4"/>
-    <polygon points="80,100 74,107 86,107" fill="#ff2e93"/>
-    <path d="M74,107 Q80,113 86,107" fill="none" stroke="#ff2e93" stroke-width="1.5"/>
-    <line x1="35" y1="99" x2="68" y2="103" stroke="#b53dff" stroke-width="1.2" opacity="0.7"/>
-    <line x1="35" y1="106" x2="68" y2="106" stroke="#b53dff" stroke-width="1.2" opacity="0.7"/>
-    <line x1="125" y1="99" x2="92" y2="103" stroke="#b53dff" stroke-width="1.2" opacity="0.7"/>
-    <line x1="125" y1="106" x2="92" y2="106" stroke="#b53dff" stroke-width="1.2" opacity="0.7"/>
-    <path d="M136,178 Q162,148 154,114 Q148,90 134,96" fill="none" stroke="#ff2e93" stroke-width="3" stroke-linecap="round"/>
-    <path d="M42,122 Q80,136 118,122" fill="none" stroke="#c8ff00" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="80" cy="130" r="5" fill="#c8ff00"/>
-  </svg>
-
-  <div class="login-box">
-    <div class="login-eyebrow">beheerder · toegang</div>
-    <div class="login-title">ADMIN</div>
-    <div class="login-sub">LASERGOAL '26</div>
-    <div class="login-form-card">
-      <div class="input-row">
-        <input type="password" class="lg-input" id="wachtwoord-input" placeholder="wachtwoord..." />
-        <button class="btn" id="login-btn">In</button>
-      </div>
-      <p class="error-msg hidden" id="login-error">onjuist wachtwoord</p>
+  <div class="login-card">
+    <div class="login-logo">⚽</div>
+    <div class="login-eyebrow">WK Pool 2026</div>
+    <div class="login-title">Beheerder</div>
+    <div class="input-group">
+      <input type="password" class="flat-input" id="wachtwoord-input" placeholder="Wachtwoord" />
+      <button class="btn-primary" id="login-btn">Inloggen</button>
     </div>
+    <p class="error-msg hidden" id="login-error">Onjuist wachtwoord</p>
   </div>
 </div>
 
-<!-- ===================== ADMIN APP ===================== -->
+<!-- ADMIN APP -->
 <div id="admin-section" class="hidden">
-  <header class="app-header">
-    <div class="app-header-bg"></div>
-    <div class="app-header-inner">
-      <div class="app-topbar">
-        <div class="app-wordmark">LASERGOAL '26</div>
-        <span class="admin-badge">// admin</span>
+  <nav class="app-nav">
+    <div class="nav-inner">
+      <div class="nav-brand">WK Pool 2026</div>
+      <span class="admin-badge">Admin</span>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="deelnemers">Deelnemers</button>
+        <button class="nav-tab" data-tab="uitslagen">Uitslagen</button>
       </div>
-      <nav>
-        <button class="tab-btn active" data-tab="deelnemers">// Deelnemers</button>
-        <button class="tab-btn" data-tab="uitslagen">// Uitslagen</button>
-      </nav>
     </div>
-  </header>
+  </nav>
 
   <main>
-    <!-- Tab: Deelnemers -->
+    <!-- Deelnemers tab -->
     <div id="tab-deelnemers" class="tab-content">
-      <div class="card" style="margin-top:1rem;">
-        <div class="card-title">nieuwe deelnemer</div>
-        <div class="add-form">
-          <input type="text" class="lg-input" id="naam-input" placeholder="naam..." />
-          <button class="btn" id="toevoegen-btn">Voeg toe</button>
+      <div class="card" style="margin-top:0.5rem">
+        <div class="card-title">Nieuwe deelnemer</div>
+        <div class="input-group" style="margin-bottom:0">
+          <input type="text" class="flat-input" id="naam-input" placeholder="Naam" />
+          <button class="btn-primary" id="toevoegen-btn">Voeg toe</button>
         </div>
       </div>
-      <div class="section-label">// deelnemers</div>
+      <div class="section-label">Deelnemers</div>
       <div id="deelnemers-lijst"></div>
     </div>
 
-    <!-- Tab: Uitslagen -->
+    <!-- Uitslagen tab -->
     <div id="tab-uitslagen" class="tab-content hidden">
       <div id="uitslagen-lijst"></div>
     </div>
   </main>
 </div>
 
-<!-- Always-watching corner cat -->
-<svg class="cat-corner" viewBox="0 0 100 135" xmlns="http://www.w3.org/2000/svg">
-  <ellipse cx="50" cy="98" rx="38" ry="34" fill="#160833" stroke="#ff2e93" stroke-width="1.5"/>
-  <ellipse cx="50" cy="60" rx="32" ry="29" fill="#160833" stroke="#ff2e93" stroke-width="1.5"/>
-  <polygon points="24,42 14,14 38,36" fill="#160833" stroke="#ff2e93" stroke-width="1.5"/>
-  <polygon points="76,42 86,14 62,36" fill="#160833" stroke="#ff2e93" stroke-width="1.5"/>
-  <polygon points="27,40 20,18 36,34" fill="#2a0a47"/>
-  <polygon points="73,40 80,18 64,34" fill="#2a0a47"/>
-  <ellipse cx="36" cy="59" rx="8" ry="9" fill="#00f0ff" opacity="0.9"/>
-  <ellipse cx="64" cy="59" rx="8" ry="9" fill="#00f0ff" opacity="0.9"/>
-  <ellipse cx="36" cy="60" rx="4" ry="6" fill="#07010f"/>
-  <ellipse cx="64" cy="60" rx="4" ry="6" fill="#07010f"/>
-  <polygon points="50,69 46,74 54,74" fill="#ff2e93"/>
-  <path d="M46,74 Q50,78 54,74" fill="none" stroke="#ff2e93" stroke-width="1.2"/>
-  <line x1="14" y1="66" x2="40" y2="68" stroke="#b53dff" stroke-width="1" opacity="0.7"/>
-  <line x1="14" y1="72" x2="40" y2="71" stroke="#b53dff" stroke-width="1" opacity="0.7"/>
-  <line x1="86" y1="66" x2="60" y2="68" stroke="#b53dff" stroke-width="1" opacity="0.7"/>
-  <line x1="86" y1="72" x2="60" y2="71" stroke="#b53dff" stroke-width="1" opacity="0.7"/>
-  <path d="M26,78 Q50,90 74,78" fill="none" stroke="#c8ff00" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="50" cy="84" r="3.5" fill="#c8ff00"/>
-  <path d="M84,115 Q102,98 98,78" fill="none" stroke="#ff2e93" stroke-width="2.5" stroke-linecap="round"/>
-</svg>
-
-<script type="module">
-  import { supabase } from './supabase.js'
-
+<!-- Login runs as a plain script — no module dependency, always works -->
+<script>
   const WACHTWOORD = 'afblijven'
-  const BASE_URL = window.location.origin + window.location.pathname.replace('admin.html', '')
 
-  // ── Login ─────────────────────────────────────────────
   document.getElementById('login-btn').addEventListener('click', checkWachtwoord)
   document.getElementById('wachtwoord-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') checkWachtwoord()
@@ -642,13 +458,19 @@
     const input = document.getElementById('wachtwoord-input')
     if (input.value === WACHTWOORD) {
       sessionStorage.setItem('admin_auth', '1')
-      toonAdmin()
+      document.dispatchEvent(new CustomEvent('admin-login'))
     } else {
       document.getElementById('login-error').classList.remove('hidden')
-      input.style.borderColor = 'var(--magenta)'
+      input.style.borderColor = '#FF3B30'
       setTimeout(() => { input.style.borderColor = '' }, 1500)
     }
   }
+</script>
+
+<script type="module">
+  import { supabase } from './supabase.js'
+
+  const BASE_URL = window.location.origin + window.location.pathname.replace('admin.html', '')
 
   function toonAdmin() {
     document.getElementById('login-section').classList.add('hidden')
@@ -656,23 +478,24 @@
     toonTab('deelnemers')
   }
 
+  document.addEventListener('admin-login', toonAdmin)
   if (sessionStorage.getItem('admin_auth') === '1') toonAdmin()
 
-  // ── Tabs ──────────────────────────────────────────────
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  // ── Tabs ─────────────────────────────────────────────────
+  document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.addEventListener('click', () => toonTab(btn.dataset.tab))
   })
 
   function toonTab(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'))
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'))
+    document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'))
     document.getElementById(`tab-${tab}`).classList.remove('hidden')
-    document.querySelector(`[data-tab="${tab}"]`).classList.add('active')
+    document.querySelector(`.nav-tab[data-tab="${tab}"]`).classList.add('active')
     if (tab === 'deelnemers') laadDeelnemers()
     if (tab === 'uitslagen') laadUitslagen()
   }
 
-  // ── Helpers ───────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────
   function initialen(naam) {
     const parts = (naam || '??').trim().split(' ')
     return parts.length >= 2
@@ -680,44 +503,13 @@
       : (naam || '??').slice(0, 2).toUpperCase()
   }
 
-  function katPeekSvg() {
-    return `<svg class="cat-peek" viewBox="0 0 60 52" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="30" cy="34" rx="22" ry="16" fill="#160833" stroke="#ff2e93" stroke-width="1.5"/>
-      <ellipse cx="30" cy="20" rx="18" ry="16" fill="#160833" stroke="#ff2e93" stroke-width="1.5"/>
-      <polygon points="14,12 8,0 22,10" fill="#160833" stroke="#ff2e93" stroke-width="1.5"/>
-      <polygon points="46,12 52,0 38,10" fill="#160833" stroke="#ff2e93" stroke-width="1.5"/>
-      <ellipse cx="22" cy="19" rx="5" ry="6" fill="#00f0ff" opacity="0.9"/>
-      <ellipse cx="38" cy="19" rx="5" ry="6" fill="#00f0ff" opacity="0.9"/>
-      <ellipse cx="22" cy="20" rx="2.5" ry="4" fill="#07010f"/>
-      <ellipse cx="38" cy="20" rx="2.5" ry="4" fill="#07010f"/>
-      <polygon points="30,26 27,30 33,30" fill="#ff2e93"/>
-      <line x1="6" y1="22" x2="22" y2="22" stroke="#b53dff" stroke-width="1" opacity="0.6"/>
-      <line x1="54" y1="22" x2="38" y2="22" stroke="#b53dff" stroke-width="1" opacity="0.6"/>
-    </svg>`
-  }
-
-  function katLeegSvg() {
-    return `<svg class="empty-cat" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="68" rx="34" ry="28" fill="#160833" stroke="#00f0ff" stroke-width="1.5"/>
-      <ellipse cx="50" cy="40" rx="26" ry="24" fill="#160833" stroke="#00f0ff" stroke-width="1.5"/>
-      <polygon points="28,26 18,4 38,22" fill="#160833" stroke="#00f0ff" stroke-width="1.5"/>
-      <polygon points="72,26 82,4 62,22" fill="#160833" stroke="#00f0ff" stroke-width="1.5"/>
-      <line x1="34" y1="40" x2="46" y2="40" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="54" y1="40" x2="66" y2="40" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
-      <polygon points="50,50 46,55 54,55" fill="#ff2e93"/>
-      <path d="M46,55 Q50,59 54,55" fill="none" stroke="#ff2e93" stroke-width="1.2"/>
-      <path d="M22,62 Q50,78 78,62" fill="none" stroke="#c8ff00" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="50" cy="68" r="3" fill="#c8ff00"/>
-    </svg>`
-  }
-
-  // ── Deelnemers ────────────────────────────────────────
+  // ── Deelnemers ───────────────────────────────────────────
   async function laadDeelnemers() {
     const { data } = await supabase.from('participants').select('*').order('name')
     const lijst = document.getElementById('deelnemers-lijst')
     lijst.innerHTML = ''
     if (!data || data.length === 0) {
-      lijst.innerHTML = `${katLeegSvg()}<p class="empty-state">Nog geen deelnemers</p>`
+      lijst.innerHTML = '<p class="empty-state">Nog geen deelnemers toegevoegd</p>'
       return
     }
     data.forEach(d => lijst.appendChild(maakDeelnemerRij(d)))
@@ -734,13 +526,12 @@
           <div class="deelnemer-avatar">${initialen(deelnemer.name)}</div>
           <span class="deelnemer-naam">${deelnemer.name}</span>
         </div>
-        <button class="btn danger verwijder-btn" style="padding:0.35rem 0.75rem;font-size:10px;">Verwijder</button>
+        <button class="btn-destructive verwijder-btn">Verwijder</button>
       </div>
       <div class="link-box">
         <span class="link-url">${link}</span>
         <span class="copy-hint">Kopieer</span>
       </div>
-      ${katPeekSvg()}
     `
     row.querySelector('.link-box').addEventListener('click', () => kopieerLink(link, row))
     row.querySelector('.verwijder-btn').addEventListener('click', () => verwijder(deelnemer.id))
@@ -751,7 +542,7 @@
     await navigator.clipboard.writeText(link)
     const hint = row.querySelector('.copy-hint')
     hint.textContent = '✓ Gekopieerd'
-    hint.style.color = 'var(--lime)'
+    hint.style.color = 'var(--green)'
     setTimeout(() => { hint.textContent = 'Kopieer'; hint.style.color = '' }, 1500)
   }
 
@@ -776,14 +567,14 @@
     document.getElementById(`rij-${id}`)?.remove()
   }
 
-  // ── Uitslagen ─────────────────────────────────────────
+  // ── Uitslagen ────────────────────────────────────────────
   async function laadUitslagen() {
     const { data: matches } = await supabase.from('matches').select('*').order('date')
     const container = document.getElementById('uitslagen-lijst')
     container.innerHTML = ''
 
     if (!matches || matches.length === 0) {
-      container.innerHTML = `${katLeegSvg()}<p class="empty-state">Nog geen wedstrijden</p>`
+      container.innerHTML = '<p class="empty-state">Nog geen wedstrijden</p>'
       return
     }
 
@@ -792,7 +583,7 @@
     groepen.forEach(poule => {
       const header = document.createElement('div')
       header.className = 'section-label'
-      header.textContent = `// Groep ${poule}`
+      header.textContent = `Groep ${poule}`
       container.appendChild(header)
       matches.filter(m => m.poule === poule).forEach(match => {
         container.appendChild(maakUitslagKaart(match))
@@ -803,7 +594,7 @@
     if (zonderPoule.length > 0) {
       const header = document.createElement('div')
       header.className = 'section-label'
-      header.textContent = '// Overig'
+      header.textContent = 'Overig'
       container.appendChild(header)
       zonderPoule.forEach(match => container.appendChild(maakUitslagKaart(match)))
     }
@@ -811,43 +602,37 @@
 
   function maakUitslagKaart(match) {
     const card = document.createElement('div')
-    card.className = 'match-card'
     const heeftUitslag = match.score_home !== null && match.score_away !== null
+    card.className = `match-card${heeftUitslag ? ' has-score' : ''}`
 
-    const accent = document.createElement('div')
-    accent.className = `match-card-accent${heeftUitslag ? ' has-score' : ''}`
-    card.appendChild(accent)
-
-    const inner = document.createElement('div')
-    inner.innerHTML = `
+    card.innerHTML = `
       <div class="match-teams">${match.home} × ${match.away}</div>
       ${match.date ? `<div class="match-date">${formatDate(match.date)}</div>` : ''}
       <div class="score-form">
         <input type="number" min="0" max="20" class="score-input" id="home-${match.id}" value="${match.score_home ?? ''}">
-        <span class="score-sep">—</span>
+        <span class="score-sep">–</span>
         <input type="number" min="0" max="20" class="score-input" id="away-${match.id}" value="${match.score_away ?? ''}">
-        <button class="btn opslaan-btn" style="margin-left:auto;">Opslaan</button>
-        ${heeftUitslag ? `<button class="btn danger verwijder-btn">Wis</button>` : ''}
+        <button class="btn-primary opslaan-btn" style="margin-left:auto;padding:0.4rem 0.9rem;font-size:14px;">Opslaan</button>
+        ${heeftUitslag ? `<button class="btn-secondary wis-btn">Wis</button>` : ''}
       </div>
     `
-    card.appendChild(inner)
 
-    card.querySelector('.opslaan-btn').addEventListener('click', () => slaUitslagOp(match.id, card, accent))
-    card.querySelector('.verwijder-btn')?.addEventListener('click', () => wisUitslag(match.id, card, accent))
+    card.querySelector('.opslaan-btn').addEventListener('click', () => slaUitslagOp(match.id, card))
+    card.querySelector('.wis-btn')?.addEventListener('click', () => wisUitslag(match.id, card))
     return card
   }
 
-  async function wisUitslag(matchId, card, accent) {
+  async function wisUitslag(matchId, card) {
     if (!confirm('Uitslag verwijderen?')) return
     const { error } = await supabase.from('matches').update({ score_home: null, score_away: null }).eq('id', matchId)
     if (error) { alert('Fout: ' + error.message); return }
     document.getElementById(`home-${matchId}`).value = ''
     document.getElementById(`away-${matchId}`).value = ''
-    accent.classList.remove('has-score')
-    card.querySelector('.verwijder-btn')?.remove()
+    card.classList.remove('has-score')
+    card.querySelector('.wis-btn')?.remove()
   }
 
-  async function slaUitslagOp(matchId, card, accent) {
+  async function slaUitslagOp(matchId, card) {
     const homeVal = document.getElementById(`home-${matchId}`).value
     const awayVal = document.getElementById(`away-${matchId}`).value
     const btn = card.querySelector('.opslaan-btn')
@@ -855,8 +640,8 @@
     if (homeVal === '' || awayVal === '') {
       const h = document.getElementById(`home-${matchId}`)
       const a = document.getElementById(`away-${matchId}`)
-      h.style.borderColor = 'var(--magenta)'
-      a.style.borderColor = 'var(--magenta)'
+      h.style.borderColor = 'var(--red)'
+      a.style.borderColor = 'var(--red)'
       setTimeout(() => { h.style.borderColor = ''; a.style.borderColor = '' }, 1500)
       return
     }
@@ -876,12 +661,12 @@
     } else {
       btn.textContent = '✓ Opgeslagen'
       btn.classList.add('saved')
-      accent.classList.add('has-score')
-      if (!card.querySelector('.verwijder-btn')) {
+      card.classList.add('has-score')
+      if (!card.querySelector('.wis-btn')) {
         const wisBtn = document.createElement('button')
-        wisBtn.className = 'btn danger verwijder-btn'
+        wisBtn.className = 'btn-secondary wis-btn'
         wisBtn.textContent = 'Wis'
-        wisBtn.addEventListener('click', () => wisUitslag(matchId, card, accent))
+        wisBtn.addEventListener('click', () => wisUitslag(matchId, card))
         card.querySelector('.score-form').appendChild(wisBtn)
       }
       setTimeout(() => {
