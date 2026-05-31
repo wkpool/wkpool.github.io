@@ -28,10 +28,11 @@ async function loginWithToken(token) {
 
   if (error || !data) {
     document.getElementById('login-section').innerHTML = `
-      <main>
-        <h2>Ongeldige link</h2>
-        <p>Neem contact op met de beheerder.</p>
-      </main>
+      <div class="login-content" style="position:relative;z-index:2;">
+        <div class="login-eyebrow">fout</div>
+        <div class="login-title" style="font-size:60px;">ONGEL<br>DIGE<br>LINK</div>
+        <div class="login-text">Neem contact op met de beheerder voor een geldige uitnodigingslink.</div>
+      </div>
     `
     return
   }
@@ -50,7 +51,19 @@ function showLogin() {
 function showApp() {
   document.getElementById('login-section').classList.add('hidden')
   document.getElementById('app-section').classList.remove('hidden')
-  document.getElementById('user-name').textContent = currentParticipant.name
+
+  const nameEl = document.getElementById('user-name')
+  nameEl.textContent = currentParticipant.name
+
+  // Set avatar initials
+  const avatarEl = document.getElementById('user-avatar-initials')
+  if (avatarEl) {
+    const parts = currentParticipant.name.trim().split(' ')
+    avatarEl.textContent = parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : currentParticipant.name.slice(0, 2).toUpperCase()
+  }
+
   showTab('predictions')
 }
 
@@ -74,7 +87,7 @@ async function loadPredictions() {
   ])
 
   if (!matches || matches.length === 0) {
-    container.innerHTML = '<p class="empty-state">Nog geen wedstrijden toegevoegd.</p>'
+    container.innerHTML = '<p class="empty-state">Nog geen wedstrijden toegevoegd</p>'
     return
   }
 
@@ -92,6 +105,7 @@ async function loadPredictions() {
   function renderMatches() {
     container.innerHTML = ''
 
+    // Filter bar
     const filterBar = document.createElement('div')
     filterBar.className = 'filter-bar'
 
@@ -129,40 +143,77 @@ async function loadPredictions() {
 function buildMatchCard(match, pred, isPlayed, isLocked) {
   const card = document.createElement('div')
   card.className = 'match-card'
+
   const pts = isPlayed ? calcPoints(match, pred) : null
 
-  card.innerHTML = `
-    <div class="match-teams">
-      <span class="team home">${match.home || '?'}</span>
-      <span class="vs">-</span>
-      <span class="team away">${match.away || '?'}</span>
-    </div>
-    ${match.date ? `<div class="match-date">${formatDate(match.date)}</div>` : ''}
-    ${isPlayed ? `
-      <div class="match-result">${match.score_home} - ${match.score_away}</div>
-      <div class="pred-summary">
-        <span>Jouw voorspelling: ${pred.pred_home ?? '—'} - ${pred.pred_away ?? '—'}</span>
-        <span class="points-badge points-${pts}">${pts} pt</span>
-      </div>
-    ` : `
-      <div class="prediction-form">
-        <input type="number" min="0" max="20" value="${pred.pred_home ?? ''}"
-          class="score-input" data-match="${match.id}" data-field="pred_home"
-          ${isLocked ? 'disabled' : ''}>
-        <span>-</span>
-        <input type="number" min="0" max="20" value="${pred.pred_away ?? ''}"
-          class="score-input" data-match="${match.id}" data-field="pred_away"
-          ${isLocked ? 'disabled' : ''}>
-        ${isLocked
-          ? '<span class="locked-label">Gesloten</span>'
-          : (() => {
-              const heeftVoorspelling = pred.pred_home !== undefined && pred.pred_home !== null
-              return `<button class="save-btn${heeftVoorspelling ? ' aanpassen' : ''}" data-match="${match.id}">${heeftVoorspelling ? 'Pas aan' : 'Opslaan'}</button>`
-            })()
-        }
-      </div>
-    `}
+  // Accent bar
+  const accent = document.createElement('div')
+  accent.className = `match-card-accent${isLocked && !isPlayed ? ' locked-accent' : isPlayed ? ' played-accent' : ''}`
+  card.appendChild(accent)
+
+  // Teams
+  const teams = document.createElement('div')
+  teams.className = 'match-teams'
+  teams.innerHTML = `
+    <span class="team-name">${match.home || '?'}</span>
+    <span class="vs-sep">×</span>
+    <span class="team-name">${match.away || '?'}</span>
   `
+  card.appendChild(teams)
+
+  // Date / meta
+  if (match.date) {
+    const meta = document.createElement('div')
+    meta.className = 'match-meta'
+    const pouleStr = match.poule ? `${match.poule} · ` : ''
+    meta.textContent = pouleStr + formatDate(match.date)
+    card.appendChild(meta)
+  }
+
+  if (isPlayed) {
+    // Result
+    const resultDiv = document.createElement('div')
+    resultDiv.className = 'match-result'
+    resultDiv.innerHTML = `
+      <span class="result-score">${match.score_home} — ${match.score_away}</span>
+      <span class="result-label">eindstand</span>
+    `
+    card.appendChild(resultDiv)
+
+    // Prediction summary
+    const summary = document.createElement('div')
+    summary.className = 'pred-summary'
+    const ptClass = `points-${pts}`
+    const ptLabel = pts === 2 ? '✓ exact' : pts === 1 ? '~ winnaar' : '✗ mis'
+    summary.innerHTML = `
+      <span>Jouw tip: ${pred.pred_home ?? '—'} — ${pred.pred_away ?? '—'}</span>
+      <span class="points-badge ${ptClass}">${pts} pt · ${ptLabel}</span>
+    `
+    card.appendChild(summary)
+
+  } else {
+    // Prediction form
+    const form = document.createElement('div')
+    form.className = 'prediction-form'
+
+    const hasPred = pred.pred_home !== undefined && pred.pred_home !== null
+
+    form.innerHTML = `
+      <input type="number" min="0" max="20" value="${pred.pred_home ?? ''}"
+        class="score-input" data-match="${match.id}" data-field="pred_home"
+        ${isLocked ? 'disabled' : ''}>
+      <span class="score-dash">—</span>
+      <input type="number" min="0" max="20" value="${pred.pred_away ?? ''}"
+        class="score-input" data-match="${match.id}" data-field="pred_away"
+        ${isLocked ? 'disabled' : ''}>
+      ${isLocked
+        ? '<span class="locked-label">// gesloten</span>'
+        : `<button class="save-btn${hasPred ? ' aanpassen' : ''}" data-match="${match.id}">${hasPred ? 'Pas aan' : 'Opslaan'}</button>`
+      }
+    `
+    card.appendChild(form)
+  }
+
   return card
 }
 
@@ -181,14 +232,20 @@ async function savePrediction(matchId) {
   const btn = document.querySelector(`.save-btn[data-match="${matchId}"]`)
 
   if (homeInput.value === '' || awayInput.value === '') {
-    alert('Vul beide scores in.')
+    // Flash input borders instead of alert
+    homeInput.style.borderColor = 'var(--magenta)'
+    awayInput.style.borderColor = 'var(--magenta)'
+    setTimeout(() => {
+      homeInput.style.borderColor = ''
+      awayInput.style.borderColor = ''
+    }, 1500)
     return
   }
 
   const pred_home = parseInt(homeInput.value)
   const pred_away = parseInt(awayInput.value)
 
-  btn.textContent = 'Opslaan...'
+  btn.textContent = '...'
   btn.disabled = true
 
   const { data: existing } = await supabase
@@ -204,14 +261,14 @@ async function savePrediction(matchId) {
 
   if (error) {
     btn.textContent = 'Fout!'
-    btn.style.background = '#e53935'
+    btn.style.background = 'var(--magenta)'
     setTimeout(() => {
       btn.textContent = 'Opslaan'
       btn.style.background = ''
       btn.disabled = false
     }, 2000)
   } else {
-    btn.textContent = 'Opgeslagen!'
+    btn.textContent = '✓ Opgeslagen'
     btn.classList.add('saved')
     setTimeout(() => {
       btn.textContent = 'Pas aan'
@@ -247,12 +304,24 @@ async function loadScoreboard() {
   container.innerHTML = ''
   scores.forEach((p, i) => {
     const row = document.createElement('div')
-    row.className = `scoreboard-row${p.id === currentParticipant.id ? ' current-user' : ''}`
-    const rankClass = i < 3 ? ` rank-${i + 1}` : ''
+    const rankClass = i === 0 ? 'rank-first' : ''
+    const isMe = p.id === currentParticipant.id
+    row.className = `scoreboard-row ${rankClass}${isMe ? ' current-user' : ''}`
+
+    const sbRankClass = i < 3 ? ` rank-${i + 1}` : ''
+    const rankLabel = String(i + 1).padStart(2, '0')
+
+    // Avatar initials
+    const nameParts = (p.name || '??').trim().split(' ')
+    const initials = nameParts.length >= 2
+      ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
+      : (p.name || '??').slice(0, 2).toUpperCase()
+
     row.innerHTML = `
-      <span class="rank${rankClass}">${i + 1}</span>
-      <span class="sb-name">${p.name}</span>
-      <span class="sb-points">${p.points} pt</span>
+      <span class="sb-rank${sbRankClass}">${rankLabel}</span>
+      <div class="sb-avatar">${initials}</div>
+      <span class="sb-name">${p.name}${isMe ? ' <span style="color:var(--magenta);font-size:11px;font-family:var(--mono);">// jij</span>' : ''}</span>
+      <span class="sb-points">${p.points}<small>pts</small></span>
     `
     container.appendChild(row)
   })
@@ -270,15 +339,31 @@ function renderCountdown(match) {
   const card = document.createElement('div')
   card.className = 'countdown-card'
   card.innerHTML = `
-    <div class="countdown-match">Volgende wedstrijd: ${match.home} - ${match.away}</div>
-    <div class="countdown-timer">
-      <div class="countdown-unit"><span class="countdown-value" id="cd-days">0</span><span class="countdown-label">dagen</span></div>
-      <div class="countdown-sep">:</div>
-      <div class="countdown-unit"><span class="countdown-value" id="cd-hours">00</span><span class="countdown-label">uur</span></div>
-      <div class="countdown-sep">:</div>
-      <div class="countdown-unit"><span class="countdown-value" id="cd-mins">00</span><span class="countdown-label">min</span></div>
-      <div class="countdown-sep">:</div>
-      <div class="countdown-unit"><span class="countdown-value" id="cd-secs">00</span><span class="countdown-label">sec</span></div>
+    <div class="grid-bg"></div>
+    <div class="countdown-inner">
+      <div class="countdown-label-top">volgende wedstrijd</div>
+      <div class="countdown-match-name">${match.home} × ${match.away}</div>
+      <div class="countdown-timer">
+        <div class="countdown-unit">
+          <span class="countdown-value" id="cd-days">0</span>
+          <span class="countdown-unit-label">dagen</span>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <span class="countdown-value" id="cd-hours">00</span>
+          <span class="countdown-unit-label">uur</span>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <span class="countdown-value" id="cd-mins">00</span>
+          <span class="countdown-unit-label">min</span>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <span class="countdown-value" id="cd-secs">00</span>
+          <span class="countdown-unit-label">sec</span>
+        </div>
+      </div>
     </div>
   `
   container.appendChild(card)
@@ -289,7 +374,12 @@ function renderCountdown(match) {
     const diff = kickoff - new Date()
     if (diff <= 0) {
       clearInterval(countdownInterval)
-      card.innerHTML = `<div class="countdown-match">⚽ ${match.home} - ${match.away} is begonnen!</div>`
+      card.innerHTML = `
+        <div class="countdown-inner">
+          <div class="countdown-label-top">bezig!</div>
+          <div class="countdown-match-name">${match.home} × ${match.away} — afgetrapt!</div>
+        </div>
+      `
       return
     }
     const days = Math.floor(diff / 86400000)
