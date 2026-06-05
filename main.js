@@ -2,6 +2,183 @@ import { supabase } from './supabase.js'
 
 let currentParticipant = null
 
+// Flag emoji lookup — covers all WC 2026 participants + common variants (Dutch & English)
+const FLAGS = {
+  // Dutch names
+  'nederland':        '🇳🇱',
+  'duitsland':        '🇩🇪',
+  'frankrijk':        '🇫🇷',
+  'engeland':         '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  'spanje':           '🇪🇸',
+  'portugal':         '🇵🇹',
+  'belgie':           '🇧🇪',
+  'belgië':           '🇧🇪',
+  'argentinie':       '🇦🇷',
+  'argentinië':       '🇦🇷',
+  'brazilie':         '🇧🇷',
+  'brazilië':         '🇧🇷',
+  'verenigde staten': '🇺🇸',
+  'denemarken':       '🇩🇰',
+  'zwitserland':      '🇨🇭',
+  'polen':            '🇵🇱',
+  'turkije':          '🇹🇷',
+  'kroatie':          '🇭🇷',
+  'kroatië':          '🇭🇷',
+  'servie':           '🇷🇸',
+  'servië':           '🇷🇸',
+  'oekraine':         '🇺🇦',
+  'oekraïne':         '🇺🇦',
+  'schotland':        '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'albanie':          '🇦🇱',
+  'albanië':          '🇦🇱',
+  'slovenie':         '🇸🇮',
+  'slovenië':         '🇸🇮',
+  'roemenie':         '🇷🇴',
+  'roemenië':         '🇷🇴',
+  'georgie':          '🇬🇪',
+  'georgië':          '🇬🇪',
+  'oostenrijk':       '🇦🇹',
+  'hongarije':        '🇭🇺',
+  'slowakije':        '🇸🇰',
+  'tsjechie':         '🇨🇿',
+  'tsjechië':         '🇨🇿',
+  'saoedi-arabie':    '🇸🇦',
+  'saoedi-arabië':    '🇸🇦',
+  'saoediarabie':     '🇸🇦',
+  'iran':             '🇮🇷',
+  'irak':             '🇮🇶',
+  'jordanie':         '🇯🇴',
+  'jordanië':         '🇯🇴',
+  'oezbekistan':      '🇺🇿',
+  'australie':        '🇳🇿',
+  'australië':        '🇳🇿',
+  'nieuw-zeeland':    '🇳🇿',
+  'marokko':          '🇲🇦',
+  'egypte':           '🇪🇬',
+  'kameroen':         '🇨🇲',
+  'ivoorkust':        '🇨🇮',
+  'algerije':         '🇩🇿',
+  'tunesie':          '🇹🇳',
+  'tunesië':          '🇹🇳',
+  'mali':             '🇲🇱',
+  'zuid-afrika':      '🇿🇦',
+  'zuidafrika':       '🇿🇦',
+  'ghana':            '🇬🇭',
+  'costa rica':       '🇨🇷',
+  // English / universal names
+  'netherlands':      '🇳🇱',
+  'germany':          '🇩🇪',
+  'france':           '🇫🇷',
+  'england':          '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  'spain':            '🇪🇸',
+  'belgium':          '🇧🇪',
+  'argentina':        '🇦🇷',
+  'brazil':           '🇧🇷',
+  'usa':              '🇺🇸',
+  'united states':    '🇺🇸',
+  'mexico':           '🇲🇽',
+  'canada':           '🇨🇦',
+  'japan':            '🇯🇵',
+  'south korea':      '🇰🇷',
+  'korea':            '🇰🇷',
+  'zuid-korea':       '🇰🇷',
+  'zuid-kore':        '🇰🇷',
+  'zuidkorea':        '🇰🇷',
+  'bosnie':           '🇧🇦',
+  'bosnië':           '🇧🇦',
+  'bosnie-herzegovina': '🇧🇦',
+  'bosnië-herzegovina': '🇧🇦',
+  'bosnia':           '🇧🇦',
+  'bosnia and herzegovina': '🇧🇦',
+  'bosnia & herzegovina': '🇧🇦',
+  'qatar':            '<span style="display:inline-block;transform:scaleX(-1)">🇶🇦</span>',
+  'haiti':            '🇭🇹',
+  'haïti':            '🇭🇹',
+  'curacao':          '🇨🇼',
+  'curaçao':          '🇨🇼',
+  'kaapverdie':       '🇨🇻',
+  'kaapverdië':       '🇨🇻',
+  'cape verde':       '🇨🇻',
+  'congo':            '🇨🇩',
+  'dr congo':         '🇨🇩',
+  'congo-kinshasa':   '🇨🇩',
+  'democratische republiek congo': '🇨🇩',
+  'australia':        '🇳🇿',
+  'new zealand':      '🇳🇿',
+  'denmark':          '🇩🇰',
+  'switzerland':      '🇨🇭',
+  'poland':           '🇵🇱',
+  'turkey':           '🇹🇷',
+  'croatia':          '🇭🇷',
+  'serbia':           '🇷🇸',
+  'ukraine':          '🇺🇦',
+  'scotland':         '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'albania':          '🇦🇱',
+  'slovenia':         '🇸🇮',
+  'romania':          '🇷🇴',
+  'georgia':          '🇬🇪',
+  'austria':          '🇦🇹',
+  'hungary':          '🇭🇺',
+  'slovakia':         '🇸🇰',
+  'czech republic':   '🇨🇿',
+  'czechia':          '🇨🇿',
+  'saudi arabia':     '🇸🇦',
+  'iraq':             '🇮🇶',
+  'jordan':           '🇯🇴',
+  'uzbekistan':       '🇺🇿',
+  'morocco':          '🇲🇦',
+  'egypt':            '🇪🇬',
+  'nigeria':          '🇳🇬',
+  'cameroon':         '🇨🇲',
+  'senegal':          '🇸🇳',
+  'ivory coast':      '🇨🇮',
+  "cote d'ivoire":    '🇨🇮',
+  'algeria':          '🇩🇿',
+  'tunisia':          '🇹🇳',
+  'south africa':     '🇿🇦',
+  'uruguay':          '🇺🇾',
+  'colombia':         '🇨🇴',
+  'ecuador':          '🇪🇨',
+  'venezuela':        '🇻🇪',
+  'paraguay':         '🇵🇾',
+  'bolivia':          '🇧🇴',
+  'peru':             '🇵🇪',
+  'chile':            '🇨🇱',
+  'panama':           '<span style="display:inline-block;transform:rotate(180deg)">🇵🇦</span>',
+  'honduras':         '🇭🇳',
+  'wales':            '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  'wales (cymru)':    '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  'north ireland':    '🇬🇧',
+  'northern ireland': '🇬🇧',
+  'ireland':          '🇮🇪',
+  'ierland':          '🇮🇪',
+  'finland':          '🇫🇮',
+  'finland':          '🇫🇮',
+  'noorwegen':        '🇳🇴',
+  'norway':           '🇳🇴',
+  'sweden':           '🇸🇪',
+  'zweden':           '🇸🇪',
+  'iceland':          '🇮🇸',
+  'ijsland':          '🇮🇸',
+  'greece':           '🇬🇷',
+  'griekenland':      '🇬🇷',
+  'israel':           '🇮🇱',
+  'israël':           '🇮🇱',
+  'russia':           '🇷🇺',
+  'rusland':          '🇷🇺',
+  'japan':            '🇯🇵',
+  'china':            '🇨🇳',
+  'china pr':         '🇨🇳',
+  'india':            '🇮🇳',
+}
+
+function flag(name, stored) {
+  if (stored) return stored
+  if (!name) return '🏳'
+  const key = name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+  return FLAGS[key] || FLAGS[name.toLowerCase().trim()] || '🏳'
+}
+
 const AVATAR_COLORS = [
   'linear-gradient(135deg,#7c5cbf,#5a3fa0)',
   'linear-gradient(135deg,#ff4d6d,#e84393)',
@@ -109,6 +286,10 @@ function showApp() {
 // ── Tabs ──────────────────────────────────────────────────
 
 function switchTab(tab) {
+  if (tab !== 'matches') {
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null }
+    activeGroupFilter = null
+  }
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'))
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'))
   document.getElementById(`tab-${tab}`).classList.remove('hidden')
@@ -243,6 +424,25 @@ async function loadScoreboard() {
 
 // ── Matches ───────────────────────────────────────────────
 
+let countdownInterval = null
+let activeGroupFilter = null
+let groupColorMap = {}
+
+const GROUP_COLORS = [
+  { bg: 'rgba(155,109,232,0.15)', border: 'rgba(155,109,232,0.4)', text: '#b48af5' }, // purple
+  { bg: 'rgba(255,77,109,0.15)',  border: 'rgba(255,77,109,0.4)',  text: '#ff6b8a' }, // pink
+  { bg: 'rgba(0,212,170,0.15)',   border: 'rgba(0,212,170,0.4)',   text: '#00d4aa' }, // teal
+  { bg: 'rgba(255,184,0,0.15)',   border: 'rgba(255,184,0,0.4)',   text: '#ffb800' }, // amber
+  { bg: 'rgba(14,165,233,0.15)',  border: 'rgba(14,165,233,0.4)',  text: '#38bdf8' }, // blue
+  { bg: 'rgba(249,115,22,0.15)',  border: 'rgba(249,115,22,0.4)',  text: '#fb923c' }, // orange
+  { bg: 'rgba(29,182,138,0.15)',  border: 'rgba(29,182,138,0.4)',  text: '#34d399' }, // green
+  { bg: 'rgba(236,72,153,0.15)',  border: 'rgba(236,72,153,0.4)',  text: '#f472b6' }, // rose
+  { bg: 'rgba(124,92,191,0.15)',  border: 'rgba(124,92,191,0.4)',  text: '#a78bfa' }, // violet
+  { bg: 'rgba(239,68,68,0.15)',   border: 'rgba(239,68,68,0.4)',   text: '#f87171' }, // red
+  { bg: 'rgba(16,185,129,0.15)',  border: 'rgba(16,185,129,0.4)',  text: '#6ee7b7' }, // emerald
+  { bg: 'rgba(99,102,241,0.15)',  border: 'rgba(99,102,241,0.4)',  text: '#818cf8' }, // indigo
+]
+
 async function loadMatches() {
   const container = document.getElementById('all-matches-list')
   container.innerHTML = '<p class="empty-state">Laden…</p>'
@@ -257,17 +457,114 @@ async function loadMatches() {
     return
   }
 
+  const datedMatches = matches.filter(m => m.date)
+  const firstMatchDate = datedMatches.length > 0
+    ? new Date(Math.min(...datedMatches.map(m => new Date(m.date))))
+    : null
+
+  const now = new Date()
+  const globalLocked = firstMatchDate ? now >= firstMatchDate : false
+
+  startCountdown(firstMatchDate, globalLocked)
+
   const predMap = {}
   predictions?.forEach(p => { predMap[p.match_id] = p })
 
-  const now = new Date()
+  const groups = [...new Set(matches.map(m => m.poule).filter(Boolean))].sort()
+  groupColorMap = {}
+  groups.forEach((g, i) => { groupColorMap[g] = GROUP_COLORS[i % GROUP_COLORS.length] })
+  buildGroupFilters(groups)
+
   container.innerHTML = ''
   matches.forEach(match => {
     const pred     = predMap[match.id] || {}
     const isPlayed = match.score_home !== null && match.score_away !== null
-    const isLocked = !isPlayed && match.date && now >= new Date(match.date)
-    container.appendChild(buildMatchCard(match, pred, isPlayed, isLocked))
+    const isLocked = !isPlayed && globalLocked
+    const card = buildMatchCard(match, pred, isPlayed, isLocked)
+    card.dataset.group = match.poule || ''
+    if (activeGroupFilter && match.poule !== activeGroupFilter) card.classList.add('hidden')
+    container.appendChild(card)
   })
+}
+
+function buildGroupFilters(groups) {
+  const el = document.getElementById('group-filters')
+  if (!el) return
+  el.innerHTML = ''
+
+
+  const allBtn = document.createElement('button')
+  allBtn.className = `gf-btn${activeGroupFilter === null ? ' active' : ''}`
+  allBtn.textContent = 'Alle'
+  allBtn.addEventListener('click', () => setGroupFilter(null, groupColorMap))
+  el.appendChild(allBtn)
+
+  groups.forEach(group => {
+    const c = groupColorMap[group]
+    const btn = document.createElement('button')
+    btn.className = `gf-btn${activeGroupFilter === group ? ' active' : ''}`
+    btn.textContent = `Groep ${group}`
+    btn.dataset.group = group
+    if (activeGroupFilter === group) {
+      btn.style.cssText = `background:${c.bg};border-color:${c.border};color:${c.text}`
+    }
+    btn.addEventListener('click', () => setGroupFilter(group, groupColorMap))
+    el.appendChild(btn)
+  })
+}
+
+function setGroupFilter(group, groupColorMap) {
+  activeGroupFilter = group
+  document.querySelectorAll('#all-matches-list .match-card').forEach(card => {
+    const show = group === null || card.dataset.group === group
+    card.classList.toggle('hidden', !show)
+  })
+  document.querySelectorAll('.gf-btn').forEach(btn => {
+    const isActive = (btn.dataset.group ?? null) === group ||
+                     (btn.textContent === 'Alle' && group === null)
+    btn.classList.toggle('active', isActive)
+    if (btn.dataset.group && groupColorMap) {
+      const c = groupColorMap[btn.dataset.group]
+      btn.style.cssText = isActive ? `background:${c.bg};border-color:${c.border};color:${c.text}` : ''
+    } else if (!btn.dataset.group) {
+      btn.style.cssText = ''
+    }
+  })
+}
+
+function startCountdown(firstMatchDate, globalLocked) {
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null }
+
+  const el = document.getElementById('matches-countdown')
+  if (!el) return
+
+  if (!firstMatchDate) { el.innerHTML = ''; return }
+
+  if (globalLocked) {
+    el.innerHTML = '<span class="countdown-locked">⛔ Voorspellingen zijn gesloten</span>'
+    return
+  }
+
+  function tick() {
+    const diff = firstMatchDate - new Date()
+    if (diff <= 0) {
+      clearInterval(countdownInterval)
+      countdownInterval = null
+      el.innerHTML = '<span class="countdown-locked">⛔ Voorspellingen zijn gesloten</span>'
+      loadMatches()
+      return
+    }
+    const d = Math.floor(diff / 86400000)
+    const h = Math.floor((diff % 86400000) / 3600000)
+    const m = Math.floor((diff % 3600000)  / 60000)
+    const s = Math.floor((diff % 60000)    / 1000)
+    const pad = n => String(n).padStart(2, '0')
+    const timeStr = d > 0 ? `${d}d ${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(h)}:${pad(m)}:${pad(s)}`
+    el.innerHTML = `⏱ Sluit over <span class="countdown-time">${timeStr}</span>`
+  }
+
+  tick()
+  countdownInterval = setInterval(tick, 1000)
 }
 
 // ── Builders ──────────────────────────────────────────────
@@ -299,9 +596,9 @@ function buildMatchTile(match, pred, isLocked, isPlayed) {
   tile.innerHTML = `
     ${badgeHtml}
     <div class="tile-teams">
-      <div class="tile-flag">${match.home_flag || '🏳'}</div>
+      <div class="tile-flag">${flag(match.home, match.home_flag)}</div>
       <div class="tile-vs">-</div>
-      <div class="tile-flag">${match.away_flag || '🏳'}</div>
+      <div class="tile-flag">${flag(match.away, match.away_flag)}</div>
     </div>
     <div class="tile-scores">
       <div>
@@ -322,7 +619,7 @@ function buildUpcomingItem(match, hasPred) {
   const item = document.createElement('div')
   item.className = 'upcoming-item'
   item.innerHTML = `
-    <div class="upcoming-icon" style="background:${tileColor(match.id)}">${match.home_flag || '⚽'}</div>
+    <div class="upcoming-icon" style="background:${tileColor(match.id)}">${flag(match.home, match.home_flag)}</div>
     <div class="upcoming-info">
       <div class="upcoming-name">${match.home || '?'} vs ${match.away || '?'}</div>
       <div class="upcoming-sub">${match.date ? formatDate(match.date) : ''} · ${match.poule || 'Groepsfase'}</div>
@@ -364,12 +661,12 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
   else if (isLocked) { statusText = 'Gesloten'; statusClass = 's-closed' }
   else               { statusText = 'Open';     statusClass = 's-open'   }
 
-  const homeFlag = match.home_flag ? `<div class="match-flag">${match.home_flag}</div>` : ''
-  const awayFlag = match.away_flag ? `<div class="match-flag">${match.away_flag}</div>` : ''
+  const homeFlag = `<div class="match-flag">${flag(match.home, match.home_flag)}</div>`
+  const awayFlag = `<div class="match-flag">${flag(match.away, match.away_flag)}</div>`
 
   card.innerHTML = `
     <div class="match-card-top">
-      <span class="match-group">${match.poule || ''}</span>
+      <span class="match-group" ${match.poule && groupColorMap[match.poule] ? `style="background:${groupColorMap[match.poule].bg};border-color:${groupColorMap[match.poule].border};color:${groupColorMap[match.poule].text}"` : ''}>${match.poule ? `Groep ${match.poule}` : ''}</span>
       <span class="match-status ${statusClass}">${statusText}</span>
     </div>
     <div class="match-teams-row">
@@ -378,7 +675,6 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
         <div class="match-team-name">${match.home || '?'}</div>
       </div>
       <div class="match-vs">
-        <div class="match-vs-label">VS</div>
         <div class="match-vs-time">${match.date ? formatDate(match.date) : ''}</div>
       </div>
       <div class="match-team">

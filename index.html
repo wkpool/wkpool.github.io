@@ -369,6 +369,51 @@
     .matches-page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
     .matches-page-sub   { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
 
+    .group-filters {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding: 4px 16px 12px;
+    }
+    .group-filters:empty { display: none; }
+
+    .gf-btn {
+      padding: 5px 12px;
+      border-radius: 99px; border: 1px solid var(--border);
+      background: var(--card);
+      font-family: var(--font); font-size: 11px; font-weight: 600;
+      color: var(--text-mid); cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .gf-btn:hover { border-color: rgba(180,138,245,0.3); color: var(--text); }
+
+    .gf-btn.active {
+      background: rgba(180,138,245,0.15);
+      border-color: rgba(180,138,245,0.4);
+      color: var(--purple-l);
+    }
+
+    .matches-countdown {
+      margin-top: 10px;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 7px 14px;
+      color: var(--text-mid);
+    }
+
+    .matches-countdown:empty { display: none; }
+
+    .countdown-time {
+      font-size: 16px; font-weight: 800;
+      color: var(--text); letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .countdown-locked {
+      color: var(--pink); font-weight: 700;
+    }
+
     #all-matches-list { padding: 0 16px 8px; }
 
     .match-card {
@@ -383,9 +428,13 @@
     }
 
     .match-group {
-      font-size: 10px; font-weight: 600;
-      letter-spacing: .08em; text-transform: uppercase;
-      color: var(--text-dim);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--purple-l);
+      background: rgba(180,138,245,0.12);
+      border: 1px solid rgba(180,138,245,0.2);
+      border-radius: 99px;
+      padding: 2px 10px;
     }
 
     .match-status { font-size: 12px; font-weight: 600; }
@@ -403,8 +452,8 @@
     .match-flag { font-size: 28px; line-height: 1; }
     .match-team-name { font-size: 13px; font-weight: 600; }
     .match-vs { text-align: center; }
-    .match-vs-label { font-size: 11px; color: var(--text-dim); font-weight: 600; }
-    .match-vs-time  { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+    .match-vs-label { font-size: 13px; color: var(--text); font-weight: 700; }
+    .match-vs-time  { font-size: 12px; color: var(--text-mid); margin-top: 4px; font-weight: 500; }
 
     .match-bottom {
       display: flex; align-items: center; justify-content: space-between;
@@ -561,8 +610,10 @@
       <div id="tab-matches" class="tab-content hidden">
         <div class="matches-page-header">
           <div class="matches-page-title">Voorspellingen</div>
-          <div class="matches-page-sub">Vul je scores in vóór de wedstrijd begint</div>
+          <div class="matches-page-sub">Vul je scores in vóór de eerste wedstrijd begint</div>
+          <div id="matches-countdown" class="matches-countdown"></div>
         </div>
+        <div id="group-filters" class="group-filters"></div>
         <div id="all-matches-list"></div>
       </div>
 
