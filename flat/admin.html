@@ -4,234 +4,351 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WK Pool 2026 — Admin</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:       #111118;
-      --bg2:      #1a1a24;
-      --bg3:      #22222e;
-      --card:     #1e1e2a;
-      --pink:     #ff4d6d;
-      --teal:     #00d4aa;
-      --red:      #ff4d6d;
-      --purple-l: #b48af5;
-      --text:     rgba(255,255,255,0.92);
-      --text-mid: rgba(255,255,255,0.55);
-      --text-dim: rgba(255,255,255,0.28);
-      --border:   rgba(255,255,255,0.07);
-      --font:     'Poppins', -apple-system, sans-serif;
+      --bg: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --separator: rgba(60, 60, 67, 0.12);
+      --text-primary: #000000;
+      --text-secondary: rgba(60, 60, 67, 0.6);
+      --text-tertiary: rgba(60, 60, 67, 0.3);
+      --blue: #007AFF;
+      --green: #34C759;
+      --orange: #FF9500;
+      --red: #FF3B30;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --r: 12px;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
 
     body {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
       font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      font-size: 16px;
+      line-height: 1.5;
       -webkit-font-smoothing: antialiased;
-    }
-
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background:
-        radial-gradient(ellipse 60% 50% at 80% 10%, rgba(124,92,191,0.1) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,77,109,0.06) 0%, transparent 55%);
+      min-height: 100vh;
     }
 
     .hidden { display: none !important; }
 
-    /* ── LOGIN ── */
+    /* ---- LOGIN ---- */
     #login-section {
-      position: relative; z-index: 5;
       min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 2rem;
     }
 
     .login-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 24px;
+      background: white;
+      border-radius: 18px;
       padding: 2.5rem;
-      max-width: 380px; width: 100%;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
     }
 
-    .login-logo  { font-size: 40px; margin-bottom: 0.75rem; line-height: 1; }
+    .login-logo { font-size: 40px; margin-bottom: 0.75rem; line-height: 1; }
+
     .login-eyebrow {
-      font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-      color: var(--pink); margin-bottom: 0.4rem;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 0.4rem;
     }
-    .login-title { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1.5rem; }
 
-    .input-group { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .login-title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 1.5rem;
+    }
 
-    .dark-input {
-      flex: 1; padding: 0.6rem 0.9rem;
-      background: var(--bg3);
-      border: 1px solid rgba(255,255,255,0.12);
+    .input-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .flat-input {
+      flex: 1;
+      padding: 0.6rem 0.9rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--separator);
       border-radius: 10px;
-      font-family: var(--font); font-size: 15px;
-      color: var(--text); outline: none;
-      transition: border-color .15s, box-shadow .15s;
+      font-family: var(--font);
+      font-size: 15px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .dark-input:focus {
-      border-color: var(--pink);
-      box-shadow: 0 0 0 3px rgba(255,77,109,0.18);
+    .flat-input:focus {
+      border-color: var(--blue);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
     }
 
-    .dark-input::placeholder { color: var(--text-dim); }
+    .flat-input::placeholder { color: var(--text-tertiary); }
 
     .btn-primary {
       padding: 0.6rem 1.1rem;
-      background: linear-gradient(135deg, #ff6b8a, #ff4d6d);
-      color: white; border: none; border-radius: 10px;
-      font-family: var(--font); font-size: 15px; font-weight: 600;
-      cursor: pointer; white-space: nowrap;
-      transition: opacity .15s;
-      box-shadow: 0 8px 20px rgba(255,77,109,0.3);
+      background: var(--blue);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
     }
 
-    .btn-primary:hover    { opacity: 0.85; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:active { opacity: 0.7; }
     .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary.saved    { background: var(--teal); box-shadow: 0 8px 20px rgba(0,212,170,0.25); }
+    .btn-primary.saved { background: var(--green); }
 
-    .error-msg { font-size: 13px; color: var(--red); margin-top: 0.5rem; }
+    .error-msg {
+      font-size: 13px;
+      color: var(--red);
+      margin-top: 0.5rem;
+    }
 
-    /* ── NAV ── */
+    /* ---- NAV ---- */
     .app-nav {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(26,26,36,0.96);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--separator);
     }
 
     .nav-inner {
-      max-width: 720px; margin: 0 auto;
-      padding: 0 1.25rem; height: 52px;
-      display: flex; align-items: center; gap: 0.25rem;
-      position: relative; z-index: 5;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
     }
 
-    .nav-brand { font-weight: 800; font-size: 17px; letter-spacing: -0.03em; margin-right: 0.75rem; }
+    .nav-brand {
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.3px;
+      margin-right: 0.75rem;
+    }
 
     .admin-badge {
-      font-size: 11px; font-weight: 700;
-      color: #ffb800;
-      background: rgba(255,184,0,0.12);
-      border: 1px solid rgba(255,184,0,0.25);
-      border-radius: 99px; padding: 2px 10px; margin-right: 1rem;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--orange);
+      background: rgba(255,149,0,0.1);
+      border: 1px solid rgba(255,149,0,0.25);
+      border-radius: 99px;
+      padding: 2px 10px;
+      margin-right: 1rem;
     }
 
     .nav-tabs { display: flex; gap: 2px; }
 
     .nav-tab {
-      padding: 0.35rem 0.9rem; border: none; background: none;
-      font-family: var(--font); font-size: 14px; font-weight: 400;
-      cursor: pointer; color: var(--text-mid);
-      border-radius: 8px; transition: all .15s;
+      padding: 0.35rem 0.9rem;
+      border: none;
+      background: none;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 400;
+      cursor: pointer;
+      color: var(--text-secondary);
+      border-radius: 8px;
+      transition: all 0.15s;
     }
 
-    .nav-tab.active { color: var(--text); font-weight: 600; background: rgba(255,255,255,0.06); }
-    .nav-tab:hover:not(.active) { color: var(--text); }
+    .nav-tab.active {
+      color: var(--text-primary);
+      font-weight: 600;
+      background: var(--bg-secondary);
+    }
 
-    /* ── MAIN ── */
+    .nav-tab:hover:not(.active) { color: var(--text-primary); }
+
+    /* ---- MAIN ---- */
     main {
-      max-width: 720px; margin: 0 auto;
+      max-width: 720px;
+      margin: 0 auto;
       padding: 1.5rem 1.25rem 3rem;
-      position: relative; z-index: 5;
     }
 
-    /* ── CARDS ── */
+    /* ---- CARDS ---- */
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 18px; padding: 1.25rem; margin-bottom: 1rem;
+      background: white;
+      border: 1px solid var(--separator);
+      border-radius: var(--r);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
     }
 
     .card-title {
-      font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-      color: var(--text-dim); margin-bottom: 0.85rem;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 0.85rem;
     }
 
     .section-label {
-      font-size: 11px; font-weight: 700; color: var(--text-dim);
-      letter-spacing: .08em; text-transform: uppercase;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
       margin: 1.5rem 0 0.6rem;
     }
 
-    /* ── PARTICIPANT ROWS ── */
+    /* ---- PARTICIPANT ROWS ---- */
     .deelnemer-row {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px; padding: 0.9rem 1.1rem; margin-bottom: 0.5rem;
+      background: white;
+      border: 1px solid var(--separator);
+      border-radius: var(--r);
+      padding: 0.9rem 1.1rem;
+      margin-bottom: 0.5rem;
     }
 
     .deelnemer-top {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
     }
 
-    .deelnemer-info { display: flex; align-items: center; gap: 10px; }
+    .deelnemer-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
     .deelnemer-avatar {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: linear-gradient(135deg, #9b6de8, #ff4d6d);
-      color: white; font-size: 12px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
-    .deelnemer-naam { font-size: 15px; font-weight: 600; }
+    .deelnemer-naam {
+      font-size: 15px;
+      font-weight: 600;
+    }
 
     .btn-destructive {
       padding: 0.3rem 0.75rem;
-      background: none; color: var(--red);
-      border: 1px solid rgba(255,77,109,0.25);
-      border-radius: 8px; font-family: var(--font); font-size: 13px; font-weight: 500;
-      cursor: pointer; transition: background .15s;
+      background: none;
+      color: var(--red);
+      border: 1px solid rgba(255,59,48,0.25);
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
     }
 
-    .btn-destructive:hover { background: rgba(255,77,109,0.08); }
+    .btn-destructive:hover { background: rgba(255,59,48,0.06); }
 
     .link-box {
-      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-      background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 8px; padding: 0.45rem 0.75rem;
-      cursor: pointer; transition: border-color .15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--separator);
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
     }
 
-    .link-box:hover { border-color: rgba(180,138,245,0.4); }
+    .link-box:hover { border-color: rgba(0,122,255,0.4); }
 
     .link-url {
-      font-family: ui-monospace, monospace; font-size: 12px;
-      color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .copy-hint { font-size: 13px; font-weight: 600; color: var(--purple-l); white-space: nowrap; flex-shrink: 0; }
+    .copy-hint {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--blue);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
 
-    /* ── MATCH CARDS (admin) ── */
+    /* ---- MATCH CARDS ---- */
     .match-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 16px; padding: 1rem 1.1rem; margin-bottom: 0.5rem;
+      background: white;
+      border: 1px solid var(--separator);
+      border-radius: var(--r);
+      padding: 1rem 1.1rem;
+      margin-bottom: 0.5rem;
     }
 
-    .match-card.has-score { border-color: rgba(0,212,170,0.3); }
+    .match-card.has-score {
+      border-color: rgba(52,199,89,0.35);
+    }
 
-    .match-teams { font-size: 16px; font-weight: 600; margin-bottom: 0.2rem; }
-    .match-date  { font-size: 12px; color: var(--text-dim); margin-bottom: 0.75rem; }
+    .match-teams {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
 
-    .score-form { display: flex; align-items: center; gap: 0.5rem; }
+    .match-date {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 0.75rem;
+    }
+
+    .score-form {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
     .score-input {
-      width: 52px; height: 40px; text-align: center;
-      font-family: var(--font); font-size: 17px; font-weight: 700;
-      background: var(--bg3); border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 8px; color: var(--text); outline: none;
-      transition: border-color .15s, box-shadow .15s;
+      width: 52px; height: 40px;
+      text-align: center;
+      font-family: var(--font);
+      font-size: 17px;
+      font-weight: 600;
+      background: var(--bg-secondary);
+      border: 1px solid var(--separator);
+      border-radius: 8px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
       -moz-appearance: textfield;
     }
 
@@ -239,24 +356,37 @@
     .score-input::-webkit-outer-spin-button { -webkit-appearance: none; }
 
     .score-input:focus {
-      border-color: var(--pink);
-      box-shadow: 0 0 0 3px rgba(255,77,109,0.18);
+      border-color: var(--blue);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
     }
 
-    .score-sep { font-size: 15px; color: var(--text-dim); }
+    .score-sep {
+      font-size: 15px;
+      color: var(--text-tertiary);
+    }
 
     .btn-secondary {
-      padding: 0.4rem 0.85rem; background: none; color: var(--red);
-      border: 1px solid rgba(255,77,109,0.25); border-radius: 8px;
-      font-family: var(--font); font-size: 13px; font-weight: 500;
-      cursor: pointer; transition: background .15s;
+      padding: 0.4rem 0.85rem;
+      background: none;
+      color: var(--red);
+      border: 1px solid rgba(255,59,48,0.25);
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
     }
 
-    .btn-secondary:hover { background: rgba(255,77,109,0.08); }
+    .btn-secondary:hover { background: rgba(255,59,48,0.06); }
 
+    /* ---- EMPTY STATE ---- */
     .empty-state {
-      text-align: center; color: var(--text-dim);
-      padding: 2rem 1rem; font-size: 14px;
+      text-align: center;
+      color: var(--text-tertiary);
+      padding: 2rem 1rem;
+      font-size: 15px;
     }
 
     @media (max-width: 480px) {
@@ -274,7 +404,7 @@
     <div class="login-eyebrow">WK Pool 2026</div>
     <div class="login-title">Beheerder</div>
     <div class="input-group">
-      <input type="password" class="dark-input" id="wachtwoord-input" placeholder="Wachtwoord" />
+      <input type="password" class="flat-input" id="wachtwoord-input" placeholder="Wachtwoord" />
       <button class="btn-primary" id="login-btn">Inloggen</button>
     </div>
     <p class="error-msg hidden" id="login-error">Onjuist wachtwoord</p>
@@ -295,12 +425,12 @@
   </nav>
 
   <main>
-    <!-- Deelnemers -->
+    <!-- Deelnemers tab -->
     <div id="tab-deelnemers" class="tab-content">
       <div class="card" style="margin-top:0.5rem">
         <div class="card-title">Nieuwe deelnemer</div>
         <div class="input-group" style="margin-bottom:0">
-          <input type="text" class="dark-input" id="naam-input" placeholder="Naam" />
+          <input type="text" class="flat-input" id="naam-input" placeholder="Naam" />
           <button class="btn-primary" id="toevoegen-btn">Voeg toe</button>
         </div>
       </div>
@@ -308,13 +438,14 @@
       <div id="deelnemers-lijst"></div>
     </div>
 
-    <!-- Uitslagen -->
+    <!-- Uitslagen tab -->
     <div id="tab-uitslagen" class="tab-content hidden">
       <div id="uitslagen-lijst"></div>
     </div>
   </main>
 </div>
 
+<!-- Login runs as a plain script — no module dependency, always works -->
 <script>
   const WACHTWOORD = 'afblijven'
 
@@ -330,7 +461,7 @@
       document.dispatchEvent(new CustomEvent('admin-login'))
     } else {
       document.getElementById('login-error').classList.remove('hidden')
-      input.style.borderColor = 'var(--red)'
+      input.style.borderColor = '#FF3B30'
       setTimeout(() => { input.style.borderColor = '' }, 1500)
     }
   }
@@ -350,6 +481,7 @@
   document.addEventListener('admin-login', toonAdmin)
   if (sessionStorage.getItem('admin_auth') === '1') toonAdmin()
 
+  // ── Tabs ─────────────────────────────────────────────────
   document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.addEventListener('click', () => toonTab(btn.dataset.tab))
   })
@@ -360,9 +492,10 @@
     document.getElementById(`tab-${tab}`).classList.remove('hidden')
     document.querySelector(`.nav-tab[data-tab="${tab}"]`).classList.add('active')
     if (tab === 'deelnemers') laadDeelnemers()
-    if (tab === 'uitslagen')  laadUitslagen()
+    if (tab === 'uitslagen') laadUitslagen()
   }
 
+  // ── Helpers ──────────────────────────────────────────────
   function initialen(naam) {
     const parts = (naam || '??').trim().split(' ')
     return parts.length >= 2
@@ -370,8 +503,7 @@
       : (naam || '??').slice(0, 2).toUpperCase()
   }
 
-  // ── Deelnemers ──────────────────────────────────────────
-
+  // ── Deelnemers ───────────────────────────────────────────
   async function laadDeelnemers() {
     const { data } = await supabase.from('participants').select('*').order('name')
     const lijst = document.getElementById('deelnemers-lijst')
@@ -410,7 +542,7 @@
     await navigator.clipboard.writeText(link)
     const hint = row.querySelector('.copy-hint')
     hint.textContent = '✓ Gekopieerd'
-    hint.style.color = 'var(--teal)'
+    hint.style.color = 'var(--green)'
     setTimeout(() => { hint.textContent = 'Kopieer'; hint.style.color = '' }, 1500)
   }
 
@@ -436,7 +568,6 @@
   }
 
   // ── Uitslagen ────────────────────────────────────────────
-
   async function laadUitslagen() {
     const { data: matches } = await supabase.from('matches').select('*').order('date')
     const container = document.getElementById('uitslagen-lijst')
@@ -481,7 +612,7 @@
         <input type="number" min="0" max="20" class="score-input" id="home-${match.id}" value="${match.score_home ?? ''}">
         <span class="score-sep">–</span>
         <input type="number" min="0" max="20" class="score-input" id="away-${match.id}" value="${match.score_away ?? ''}">
-        <button class="btn-primary opslaan-btn" style="margin-left:auto;padding:0.4rem 0.9rem;font-size:14px">Opslaan</button>
+        <button class="btn-primary opslaan-btn" style="margin-left:auto;padding:0.4rem 0.9rem;font-size:14px;">Opslaan</button>
         ${heeftUitslag ? `<button class="btn-secondary wis-btn">Wis</button>` : ''}
       </div>
     `
@@ -509,12 +640,13 @@
     if (homeVal === '' || awayVal === '') {
       const h = document.getElementById(`home-${matchId}`)
       const a = document.getElementById(`away-${matchId}`)
-      h.style.borderColor = 'var(--red)'; a.style.borderColor = 'var(--red)'
+      h.style.borderColor = 'var(--red)'
+      a.style.borderColor = 'var(--red)'
       setTimeout(() => { h.style.borderColor = ''; a.style.borderColor = '' }, 1500)
       return
     }
 
-    btn.textContent = '…'
+    btn.textContent = '...'
     btn.disabled = true
 
     const { error } = await supabase.from('matches').update({

@@ -2,10 +2,60 @@ import { supabase } from './supabase.js'
 
 let currentParticipant = null
 
+const AVATAR_COLORS = [
+  'linear-gradient(135deg,#7c5cbf,#5a3fa0)',
+  'linear-gradient(135deg,#ff4d6d,#e84393)',
+  'linear-gradient(135deg,#1db68a,#0d8a65)',
+  'linear-gradient(135deg,#9b6de8,#7c5cbf)',
+  'linear-gradient(135deg,#22c55e,#16a34a)',
+  'linear-gradient(135deg,#f97316,#ea580c)',
+  'linear-gradient(135deg,#0ea5e9,#0284c7)',
+  'linear-gradient(135deg,#ec4899,#be185d)',
+]
+
+const TILE_COLORS = [
+  'linear-gradient(135deg,#7c5cbf,#5a3fa0)',
+  'linear-gradient(135deg,#1db68a,#0d8a65)',
+  'linear-gradient(135deg,#e84393,#c2185b)',
+  'linear-gradient(135deg,#ff4d6d,#c0392b)',
+  'linear-gradient(135deg,#0ea5e9,#0284c7)',
+]
+
+function strHash(s) {
+  let h = 0
+  for (const c of String(s || '')) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff
+  return Math.abs(h)
+}
+
+function avatarColor(name) { return AVATAR_COLORS[strHash(name) % AVATAR_COLORS.length] }
+function tileColor(id)     { return TILE_COLORS[strHash(id) % TILE_COLORS.length] }
+
+function initials(name) {
+  const parts = (name || '??').trim().split(' ')
+  return parts.length >= 2
+    ? (parts[0][0] + parts[1][0]).toUpperCase()
+    : (name || '??').slice(0, 2).toUpperCase()
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('nl-NL', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+  })
+}
+
+function calcPoints(match, pred) {
+  if (pred.pred_home == null || pred.pred_away == null) return 0
+  if (match.score_home === pred.pred_home && match.score_away === pred.pred_away) return 2
+  const mw = Math.sign(match.score_home - match.score_away)
+  const pw = Math.sign(pred.pred_home  - pred.pred_away)
+  return mw === pw ? 1 : 0
+}
+
+// ── Auth ──────────────────────────────────────────────────
+
 async function init() {
   const params = new URLSearchParams(window.location.search)
   const token = params.get('token')
-
   if (token) {
     await loginWithToken(token)
   } else {
@@ -21,10 +71,7 @@ async function init() {
 
 async function loginWithToken(token) {
   const { data, error } = await supabase
-    .from('participants')
-    .select('*')
-    .eq('token', token)
-    .single()
+    .from('participants').select('*').eq('token', token).single()
 
   if (error || !data) {
     document.getElementById('login-section').innerHTML = `
@@ -52,146 +99,157 @@ function showApp() {
   document.getElementById('login-section').classList.add('hidden')
   document.getElementById('app-section').classList.remove('hidden')
 
-  const nameEl = document.getElementById('nav-user-name')
-  nameEl.textContent = currentParticipant.name
+  const name = currentParticipant.name
+  document.getElementById('greeting-name').textContent = `Hoi ${name.split(' ')[0]} 👋`
+  document.getElementById('nav-avatar').textContent = initials(name)
 
-  const avatarEl = document.getElementById('nav-avatar')
-  const parts = currentParticipant.name.trim().split(' ')
-  avatarEl.textContent = parts.length >= 2
-    ? (parts[0][0] + parts[1][0]).toUpperCase()
-    : currentParticipant.name.slice(0, 2).toUpperCase()
-
-  switchTab('scoreboard')
+  switchTab('home')
 }
+
+// ── Tabs ──────────────────────────────────────────────────
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'))
-  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'))
   document.getElementById(`tab-${tab}`).classList.remove('hidden')
-  document.querySelector(`.nav-tab[data-tab="${tab}"]`)?.classList.add('active')
+  document.querySelector(`.nav-item[data-tab="${tab}"]`)?.classList.add('active')
+  document.getElementById('app-content')?.scrollTo(0, 0)
 
-  if (tab === 'scoreboard') loadDashboard()
-  if (tab === 'matches') loadMatches()
+  if (tab === 'home')       loadHome()
+  if (tab === 'scoreboard') loadScoreboard()
+  if (tab === 'matches')    loadMatches()
 }
 
-async function loadDashboard() {
+// ── Home ──────────────────────────────────────────────────
+
+async function loadHome() {
   const [{ data: participants }, { data: matches }, { data: predictions }] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*').order('date'),
-    supabase.from('predictions').select('*')
+    supabase.from('predictions').select('*'),
   ])
 
   const now = new Date()
-  const playedMatches = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
+  const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
 
-  const scores = (participants || []).map(p => {
-    const preds = (predictions || []).filter(pr => pr.participant_id === p.id)
-    let points = 0, exact = 0, goed = 0
-    preds.forEach(pred => {
-      const match = playedMatches.find(m => m.id === pred.match_id)
-      if (match) {
-        const pts = calcPoints(match, pred)
-        points += pts
-        if (pts === 2) exact++
-        if (pts === 1) goed++
-      }
-    })
-    return { ...p, points, exact, goed }
-  }).sort((a, b) => b.points - a.points)
+  const scores = calcScores(participants, played, predictions)
+  const myScore = scores.find(p => p.id === currentParticipant.id) || { points: 0, exact: 0 }
+  const myRank  = scores.indexOf(myScore) + 1
 
-  const myScore = scores.find(p => p.id === currentParticipant.id) || { points: 0, exact: 0, goed: 0 }
-  const myRank = scores.indexOf(myScore) + 1
-  const openMatches = (matches || []).filter(m => {
-    const notPlayed = m.score_home === null || m.score_away === null
-    const notLocked = m.date ? now < new Date(m.date) : true
-    return notPlayed && notLocked
-  })
+  document.getElementById('hero-pts').textContent       = myScore.points
+  document.getElementById('hero-rank').textContent      = `${myRank}e`
+  document.getElementById('hero-rank-total').textContent = `${scores.length} deeln.`
 
-  // Stats
-  const statsGrid = document.getElementById('stats-grid')
-  statsGrid.innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Jouw positie</div>
-      <div class="stat-value">${myRank}e</div>
-      <div class="stat-sub">van ${scores.length} deelnemers</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Totaal punten</div>
-      <div class="stat-value">${myScore.points}</div>
-      <div class="stat-sub">gespeeld: ${playedMatches.length} wedstrijden</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Exact raak</div>
-      <div class="stat-value">${myScore.exact}</div>
-      <div class="stat-sub">voorspellingen</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Open</div>
-      <div class="stat-value">${openMatches.length}</div>
-      <div class="stat-sub">wedstrijden te voorspellen</div>
-      ${openMatches.length > 0 ? '<span class="stat-badge badge-green">Actief</span>' : ''}
-    </div>
-  `
-
-  // Scoreboard
-  const sbList = document.getElementById('scoreboard-list')
-  sbList.innerHTML = ''
-  const medals = ['🥇', '🥈', '🥉']
-
-  scores.forEach((p, i) => {
-    const isMe = p.id === currentParticipant.id
-    const row = document.createElement('div')
-    row.className = `sb-row${isMe ? ' me' : ''}`
-
-    const parts = (p.name || '??').trim().split(' ')
-    const initials = parts.length >= 2
-      ? (parts[0][0] + parts[1][0]).toUpperCase()
-      : (p.name || '??').slice(0, 2).toUpperCase()
-
-    const rankCell = i < 3
-      ? `<span style="font-size:18px;line-height:1">${medals[i]}</span>`
-      : `<span class="sb-rank-num">${i + 1}</span>`
-
-    row.innerHTML = `
-      <div class="sb-rank-cell">${rankCell}</div>
-      <div class="sb-avatar-sm">${initials}</div>
-      <div class="sb-name-col">
-        <span class="sb-name-text">${p.name}</span>
-        ${isMe ? '<span class="sb-me-tag">← Jij</span>' : ''}
-      </div>
-      <span class="sb-pts">${p.points}</span>
-      <span class="sb-exact">${p.exact}</span>
-    `
-    sbList.appendChild(row)
-  })
-
-  // Upcoming matches
   const myPredMap = {}
   ;(predictions || []).filter(p => p.participant_id === currentParticipant.id)
     .forEach(p => { myPredMap[p.match_id] = p })
 
+  // Match tiles: open + recently played
+  const tilesEl = document.getElementById('home-tiles')
+  tilesEl.innerHTML = ''
+
+  const openMatches = (matches || []).filter(m => m.score_home === null && m.score_away === null)
+  const recentPlayed = played.slice(-2)
+  const tileMatches = [...openMatches.slice(0, 5), ...recentPlayed]
+
+  if (tileMatches.length === 0) {
+    tilesEl.innerHTML = '<p style="color:var(--text-dim);font-size:13px;padding:4px 0">Geen wedstrijden</p>'
+  } else {
+    tileMatches.forEach(m => {
+      const isLocked = m.score_home === null && m.score_away === null && m.date && now >= new Date(m.date)
+      const isPlayed = m.score_home !== null && m.score_away !== null
+      tilesEl.appendChild(buildMatchTile(m, myPredMap[m.id] || {}, isLocked, isPlayed))
+    })
+  }
+
+  // Upcoming list: next 3 future matches not yet played
   const upcoming = (matches || [])
-    .filter(m => m.date && new Date(m.date) > now && (m.score_home === null || m.score_away === null))
+    .filter(m => m.date && new Date(m.date) > now && m.score_home === null && m.score_away === null)
     .slice(0, 3)
 
-  const upcomingList = document.getElementById('upcoming-list')
-  upcomingList.innerHTML = ''
+  const upcomingEl = document.getElementById('home-upcoming')
+  upcomingEl.innerHTML = ''
+
   if (upcoming.length === 0) {
-    upcomingList.innerHTML = '<p class="empty-state">Geen aankomende wedstrijden</p>'
+    upcomingEl.innerHTML = '<p class="empty-state">Geen aankomende wedstrijden</p>'
   } else {
-    upcoming.forEach(match => {
-      upcomingList.appendChild(buildMatchCard(match, myPredMap[match.id] || {}, false, false, true))
+    upcoming.forEach(m => {
+      const pred = myPredMap[m.id]
+      const hasPred = pred?.pred_home != null
+      upcomingEl.appendChild(buildUpcomingItem(m, hasPred))
     })
   }
 }
 
+// ── Scoreboard ────────────────────────────────────────────
+
+async function loadScoreboard() {
+  const [{ data: participants }, { data: matches }, { data: predictions }] = await Promise.all([
+    supabase.from('participants').select('*'),
+    supabase.from('matches').select('*'),
+    supabase.from('predictions').select('*'),
+  ])
+
+  const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
+  const scores = calcScores(participants, played, predictions)
+
+  document.getElementById('sb-sub').textContent = `WK Pool 2026 · ${scores.length} deelnemers`
+
+  // Podium: order [2nd, 1st, 3rd]
+  const podPositions = [
+    { player: scores[1], rank: 2, cls: 'pod-2nd' },
+    { player: scores[0], rank: 1, cls: 'pod-1st' },
+    { player: scores[2], rank: 3, cls: 'pod-3rd' },
+  ]
+
+  const podiumEl = document.getElementById('podium-row')
+  podiumEl.innerHTML = ''
+
+  podPositions.forEach(({ player, rank, cls }) => {
+    const pod = document.createElement('div')
+    pod.className = `pod ${cls}`
+
+    if (!player) {
+      pod.innerHTML = `
+        <div class="pod-avatar" style="background:var(--bg3);border:1px dashed var(--border)">—</div>
+        <div class="pod-name" style="color:var(--text-dim)">—</div>
+        <div class="pod-pts" style="color:var(--text-dim)">—</div>
+        <div class="pod-base"></div>
+      `
+    } else {
+      const isMe    = player.id === currentParticipant.id
+      const crown   = rank === 1 ? '<span class="pod-crown">👑</span>' : ''
+      const ptColor = rank === 1 ? 'var(--amber)' : rank === 2 ? 'var(--purple-l)' : 'var(--pink)'
+
+      pod.innerHTML = `
+        <div class="pod-avatar" style="background:${avatarColor(player.name)}">
+          ${crown}${initials(player.name)}
+        </div>
+        <div class="pod-name">${player.name.split(' ')[0]}${isMe ? ' (jij)' : ''}</div>
+        <div class="pod-pts" style="color:${ptColor}">${player.points}</div>
+        <div class="pod-base"></div>
+      `
+    }
+    podiumEl.appendChild(pod)
+  })
+
+  // Leaderboard list (4th+)
+  const lbEl = document.getElementById('lb-list')
+  lbEl.innerHTML = ''
+  scores.slice(3).forEach((p, i) => {
+    lbEl.appendChild(buildLbItem(p, i + 4))
+  })
+}
+
+// ── Matches ───────────────────────────────────────────────
+
 async function loadMatches() {
   const container = document.getElementById('all-matches-list')
-  container.innerHTML = '<p class="empty-state">Laden...</p>'
+  container.innerHTML = '<p class="empty-state">Laden…</p>'
 
   const [{ data: matches }, { data: predictions }] = await Promise.all([
     supabase.from('matches').select('*').order('date'),
-    supabase.from('predictions').select('*').eq('participant_id', currentParticipant.id)
+    supabase.from('predictions').select('*').eq('participant_id', currentParticipant.id),
   ])
 
   if (!matches || matches.length === 0) {
@@ -205,66 +263,144 @@ async function loadMatches() {
   const now = new Date()
   container.innerHTML = ''
   matches.forEach(match => {
-    const pred = predMap[match.id] || {}
+    const pred     = predMap[match.id] || {}
     const isPlayed = match.score_home !== null && match.score_away !== null
-    const isLocked = match.date ? now >= new Date(match.date) : false
-    container.appendChild(buildMatchCard(match, pred, isPlayed, isLocked, false))
+    const isLocked = !isPlayed && match.date && now >= new Date(match.date)
+    container.appendChild(buildMatchCard(match, pred, isPlayed, isLocked))
   })
 }
 
-function buildMatchCard(match, pred, isPlayed, isLocked, dashboardView) {
+// ── Builders ──────────────────────────────────────────────
+
+function buildMatchTile(match, pred, isLocked, isPlayed) {
+  const tile = document.createElement('div')
+  let statusCls, badgeHtml
+
+  if (isPlayed) {
+    statusCls = 't-played'
+    const pts = calcPoints(match, pred)
+    badgeHtml = `<div class="tile-badge">${pts === 2 ? '⚡ Exact' : pts === 1 ? '✓ Goed' : '✗ Mis'}</div>`
+  } else if (isLocked) {
+    statusCls = 't-locked'
+    badgeHtml = '<div class="tile-badge">⏸ Gesloten</div>'
+  } else {
+    statusCls = 't-open'
+    badgeHtml = '<div class="tile-badge"><span class="live-dot"></span> Open</div>'
+  }
+
+  tile.className = `match-tile ${statusCls}`
+
+  const hasPred = pred.pred_home != null
+
+  let homeScore = '?', awayScore = '?'
+  if (isPlayed) { homeScore = match.score_home; awayScore = match.score_away }
+  else if (hasPred) { homeScore = pred.pred_home; awayScore = pred.pred_away }
+
+  tile.innerHTML = `
+    ${badgeHtml}
+    <div class="tile-teams">
+      <div class="tile-flag">${match.home_flag || '🏳'}</div>
+      <div class="tile-vs">-</div>
+      <div class="tile-flag">${match.away_flag || '🏳'}</div>
+    </div>
+    <div class="tile-scores">
+      <div>
+        <div class="tile-score-num">${homeScore}</div>
+        <div class="tile-score-lbl">${(match.home || '').slice(0, 8)}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="tile-score-num">${awayScore}</div>
+        <div class="tile-score-lbl">${(match.away || '').slice(0, 8)}</div>
+      </div>
+    </div>
+  `
+  tile.addEventListener('click', () => switchTab('matches'))
+  return tile
+}
+
+function buildUpcomingItem(match, hasPred) {
+  const item = document.createElement('div')
+  item.className = 'upcoming-item'
+  item.innerHTML = `
+    <div class="upcoming-icon" style="background:${tileColor(match.id)}">${match.home_flag || '⚽'}</div>
+    <div class="upcoming-info">
+      <div class="upcoming-name">${match.home || '?'} vs ${match.away || '?'}</div>
+      <div class="upcoming-sub">${match.date ? formatDate(match.date) : ''} · ${match.poule || 'Groepsfase'}</div>
+    </div>
+    <div class="upcoming-right">
+      <span>${hasPred ? '✓' : 'Open'}</span>
+      <div class="upcoming-dot${hasPred ? ' done' : ''}"></div>
+    </div>
+  `
+  item.addEventListener('click', () => switchTab('matches'))
+  return item
+}
+
+function buildLbItem(p, rank) {
+  const isMe = p.id === currentParticipant.id
+  const item = document.createElement('div')
+  item.className = `lb-item${isMe ? ' me' : ''}`
+  item.innerHTML = `
+    <div class="lb-num${isMe ? ' is-me' : ''}">${rank}</div>
+    <div class="lb-av" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
+    <div class="lb-info">
+      <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}</div>
+      <div class="lb-detail">${p.exact} exact · ${p.goed} goed</div>
+    </div>
+    <div class="lb-right">
+      <div class="lb-pts-val${isMe ? ' is-me' : ''}">${p.points}</div>
+      <div class="lb-pts-lbl">punten</div>
+    </div>
+  `
+  return item
+}
+
+function buildMatchCard(match, pred, isPlayed, isLocked) {
   const card = document.createElement('div')
   card.className = 'match-card'
 
-  const pts = isPlayed ? calcPoints(match, pred) : null
-
-  // Header
-  const top = document.createElement('div')
-  top.className = 'match-card-top'
   let statusText, statusClass
   if (isPlayed)      { statusText = 'Gespeeld'; statusClass = 's-played' }
   else if (isLocked) { statusText = 'Gesloten'; statusClass = 's-closed' }
   else               { statusText = 'Open';     statusClass = 's-open'   }
-  top.innerHTML = `
-    <span class="match-group">${match.poule || ''}</span>
-    <span class="match-status ${statusClass}">${statusText}</span>
-  `
-  card.appendChild(top)
 
-  // Teams
-  const teamsRow = document.createElement('div')
-  teamsRow.className = 'match-teams-row'
   const homeFlag = match.home_flag ? `<div class="match-flag">${match.home_flag}</div>` : ''
   const awayFlag = match.away_flag ? `<div class="match-flag">${match.away_flag}</div>` : ''
-  teamsRow.innerHTML = `
-    <div class="match-team">
-      ${homeFlag}
-      <div class="match-team-name">${match.home || '?'}</div>
-    </div>
-    <div class="match-vs">
-      <div class="match-vs-label">VS</div>
-      <div class="match-vs-time">${match.date ? formatDate(match.date) : ''}</div>
-    </div>
-    <div class="match-team">
-      ${awayFlag}
-      <div class="match-team-name">${match.away || '?'}</div>
-    </div>
-  `
-  card.appendChild(teamsRow)
 
-  // Bottom row
-  const bottom = document.createElement('div')
-  bottom.className = 'match-bottom'
+  card.innerHTML = `
+    <div class="match-card-top">
+      <span class="match-group">${match.poule || ''}</span>
+      <span class="match-status ${statusClass}">${statusText}</span>
+    </div>
+    <div class="match-teams-row">
+      <div class="match-team">
+        ${homeFlag}
+        <div class="match-team-name">${match.home || '?'}</div>
+      </div>
+      <div class="match-vs">
+        <div class="match-vs-label">VS</div>
+        <div class="match-vs-time">${match.date ? formatDate(match.date) : ''}</div>
+      </div>
+      <div class="match-team">
+        ${awayFlag}
+        <div class="match-team-name">${match.away || '?'}</div>
+      </div>
+    </div>
+    <div class="match-bottom" id="mb-${match.id}"></div>
+  `
+
+  const bottom = card.querySelector(`#mb-${match.id}`)
 
   if (isPlayed) {
+    const pts = calcPoints(match, pred)
     const ptClass = `pts-${pts}`
-    const ptLabel = pts === 2 ? 'Exact' : pts === 1 ? 'Winnaar goed' : '0 punten'
+    const ptLabel = pts === 2 ? '⚡ Exact' : pts === 1 ? '✓ Winnaar goed' : '✗ 0 punten'
     bottom.innerHTML = `
-      <span class="played-meta">Uitslag: ${match.score_home} – ${match.score_away} · Jij: ${pred.pred_home ?? '—'} – ${pred.pred_away ?? '—'}</span>
+      <span class="played-meta">Uitslag: ${match.score_home}–${match.score_away} · Jij: ${pred.pred_home ?? '—'}–${pred.pred_away ?? '—'}</span>
       <span class="pts-tag ${ptClass}">${ptLabel}</span>
     `
-  } else if (dashboardView || isLocked) {
-    const hasPred = pred.pred_home !== undefined && pred.pred_home !== null
+  } else if (isLocked) {
+    const hasPred = pred.pred_home != null
     bottom.innerHTML = `
       <span class="pred-label">Jouw voorspelling</span>
       ${hasPred
@@ -273,7 +409,7 @@ function buildMatchCard(match, pred, isPlayed, isLocked, dashboardView) {
       }
     `
   } else {
-    const hasPred = pred.pred_home !== undefined && pred.pred_home !== null
+    const hasPred = pred.pred_home != null
     bottom.innerHTML = `
       <span class="pred-label">Jouw voorspelling</span>
       <div class="pred-form">
@@ -289,17 +425,26 @@ function buildMatchCard(match, pred, isPlayed, isLocked, dashboardView) {
     `
   }
 
-  card.appendChild(bottom)
   return card
 }
 
-function calcPoints(match, pred) {
-  if (pred.pred_home === null || pred.pred_home === undefined) return 0
-  if (pred.pred_away === null || pred.pred_away === undefined) return 0
-  if (match.score_home === pred.pred_home && match.score_away === pred.pred_away) return 2
-  const matchWinner = Math.sign(match.score_home - match.score_away)
-  const predWinner  = Math.sign(pred.pred_home  - pred.pred_away)
-  return matchWinner === predWinner ? 1 : 0
+// ── Helpers ───────────────────────────────────────────────
+
+function calcScores(participants, playedMatches, predictions) {
+  return (participants || []).map(p => {
+    const preds = (predictions || []).filter(pr => pr.participant_id === p.id)
+    let points = 0, exact = 0, goed = 0
+    preds.forEach(pred => {
+      const match = playedMatches.find(m => m.id === pred.match_id)
+      if (match) {
+        const pts = calcPoints(match, pred)
+        points += pts
+        if (pts === 2) exact++
+        if (pts === 1) goed++
+      }
+    })
+    return { ...p, points, exact, goed }
+  }).sort((a, b) => b.points - a.points)
 }
 
 async function savePrediction(matchId) {
@@ -308,8 +453,8 @@ async function savePrediction(matchId) {
   const btn       = document.querySelector(`.save-btn[data-match="${matchId}"]`)
 
   if (homeInput.value === '' || awayInput.value === '') {
-    homeInput.style.borderColor = 'var(--red)'
-    awayInput.style.borderColor = 'var(--red)'
+    homeInput.style.borderColor = '#ff4d6d'
+    awayInput.style.borderColor = '#ff4d6d'
     setTimeout(() => { homeInput.style.borderColor = ''; awayInput.style.borderColor = '' }, 1500)
     return
   }
@@ -317,12 +462,11 @@ async function savePrediction(matchId) {
   const pred_home = parseInt(homeInput.value)
   const pred_away = parseInt(awayInput.value)
 
-  btn.textContent = '...'
+  btn.textContent = '…'
   btn.disabled = true
 
   const { data: existing } = await supabase
-    .from('predictions')
-    .select('id')
+    .from('predictions').select('id')
     .eq('participant_id', currentParticipant.id)
     .eq('match_id', matchId)
     .maybeSingle()
@@ -335,37 +479,25 @@ async function savePrediction(matchId) {
     btn.textContent = 'Fout!'
     setTimeout(() => { btn.textContent = 'Opslaan'; btn.disabled = false }, 2000)
   } else {
-    btn.textContent = '✓ Opgeslagen'
+    btn.textContent = '✓'
     btn.classList.add('saved')
     setTimeout(() => {
       btn.textContent = 'Aanpassen'
       btn.classList.remove('saved')
       btn.classList.add('edit')
       btn.disabled = false
-    }, 2000)
+    }, 1500)
   }
 }
 
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('nl-NL', {
-    day: 'numeric', month: 'short',
-    hour: '2-digit', minute: '2-digit'
-  })
-}
+// ── Events ────────────────────────────────────────────────
 
 document.addEventListener('click', e => {
   const btn = e.target.closest('.save-btn')
   if (btn && !btn.disabled) { savePrediction(parseInt(btn.dataset.match)); return }
 
-  const tab = e.target.closest('.nav-tab')
-  if (tab) { switchTab(tab.dataset.tab); return }
-})
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('hero-predictions-btn')?.addEventListener('click', () => switchTab('matches'))
-  document.getElementById('hero-rules-btn')?.addEventListener('click', () => switchTab('rules'))
-  document.getElementById('to-matches-btn')?.addEventListener('click', () => switchTab('matches'))
-  document.getElementById('to-all-matches-btn')?.addEventListener('click', () => switchTab('matches'))
+  const navItem = e.target.closest('.nav-item[data-tab]')
+  if (navItem) { switchTab(navItem.dataset.tab); return }
 })
 
 init()
