@@ -222,10 +222,15 @@ function formatDate(dateStr) {
 
 function calcPoints(match, pred) {
   if (pred.pred_home == null || pred.pred_away == null) return 0
-  if (match.score_home === pred.pred_home && match.score_away === pred.pred_away) return 2
+  const ko = match.phase === 'knockout'
+  const base = ko ? 6 : 3
+  if (match.score_home === pred.pred_home && match.score_away === pred.pred_away) return base + (ko ? 4 : 2)
   const mw = Math.sign(match.score_home - match.score_away)
   const pw = Math.sign(pred.pred_home  - pred.pred_away)
-  return mw === pw ? 1 : 0
+  if (mw !== pw) return 0
+  const mDiff = match.score_home - match.score_away
+  const pDiff = pred.pred_home  - pred.pred_away
+  return base + (mDiff === pDiff ? (ko ? 2 : 1) : 0)
 }
 
 // ── Auth ──────────────────────────────────────────────────
