@@ -322,7 +322,7 @@ async function loadHome() {
   const myScore = scores.find(p => p.id === currentParticipant.id) || { points: 0, exact: 0 }
   const myRank  = scores.indexOf(myScore) + 1
 
-  document.getElementById('hero-pts').textContent       = myScore.points
+  document.getElementById('hero-ptn').textContent       = myScore.points
   document.getElementById('hero-rank').textContent      = `${myRank}e`
   document.getElementById('hero-rank-total').textContent = `${scores.length} deeln.`
 
@@ -581,7 +581,8 @@ function buildMatchTile(match, pred, isLocked, isPlayed) {
   if (isPlayed) {
     statusCls = 't-played'
     const pts = calcPoints(match, pred)
-    badgeHtml = `<div class="tile-badge">${pts === 2 ? '⚡ Exact' : pts === 1 ? '✓ Goed' : '✗ Mis'}</div>`
+    const maxExact = match.phase === 'knockout' ? 10 : 5
+    badgeHtml = `<div class="tile-badge">${pts === maxExact ? '⚡ Exact' : pts > 0 ? '✓ Goed' : '✗ Mis'}</div>`
   } else if (isLocked) {
     statusCls = 't-locked'
     badgeHtml = '<div class="tile-badge">⏸ Gesloten</div>'

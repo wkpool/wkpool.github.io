@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#181231"></stop>
+      <stop offset="0.45" stop-color="#1a1030"></stop>
+      <stop offset="0.78" stop-color="#2c1030"></stop>
+      <stop offset="1" stop-color="#3c1022"></stop>
+    </linearGradient>
+    <radialGradient id="glow" cx="512" cy="1000" r="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#961e46" stop-opacity="0.55"></stop>
+      <stop offset="1" stop-color="#961e46" stop-opacity="0"></stop>
+    </radialGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.09"></stop>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.015"></stop>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop>
+    </linearGradient>
+    <linearGradient id="pink" x1="0" y1="92" x2="0" y2="822" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff9e7d"></stop>
+      <stop offset="0.45" stop-color="#ff5f97"></stop>
+      <stop offset="1" stop-color="#d62a86"></stop>
+    </linearGradient>
+    <linearGradient id="purp" x1="0" y1="92" x2="0" y2="822" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c98cf5"></stop>
+      <stop offset="0.5" stop-color="#9a5fe6"></stop>
+      <stop offset="1" stop-color="#6a3bc4"></stop>
+    </linearGradient>
+    <radialGradient id="ball" cx="469.4" cy="451.6" r="163.8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"></stop>
+      <stop offset="0.7" stop-color="#f3f3f5"></stop>
+      <stop offset="1" stop-color="#c9c9d2"></stop>
+    </radialGradient>
+    <radialGradient id="rim" cx="524" cy="514" r="156" gradientUnits="userSpaceOnUse">
+      <stop offset="0.6" stop-color="#000000" stop-opacity="0"></stop>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.28"></stop>
+    </radialGradient>
+    <clipPath id="squircle">
+      <rect x="0" y="0" width="1024" height="1024" rx="232" ry="232"></rect>
+    </clipPath>
+    <clipPath id="ballClip">
+      <circle cx="524" cy="514" r="156"></circle>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#squircle)">
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"></rect>
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#glow)"></rect>
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#gloss)"></rect>
+
+    
+    <text x="352" y="482" text-anchor="middle" dominant-baseline="central" font-family="&#39;Arial Black&#39;, Arial, sans-serif" font-weight="900" font-size="760" fill="url(#pink)">2</text>
+    <text x="690" y="482" text-anchor="middle" dominant-baseline="central" font-family="&#39;Arial Black&#39;, Arial, sans-serif" font-weight="900" font-size="760" fill="url(#purp)">6</text>
+
+    
+    <circle cx="524" cy="514" r="156" fill="url(#ball)"></circle>
+    <g clip-path="url(#ballClip)">
+      <polygon points="524.00,451.60 583.35,494.72 560.68,564.48 487.32,564.48 464.65,494.72" fill="#1c1c22"></polygon>
+      <polygon points="577.04,370.48 540.39,420.92 481.09,401.66 481.09,339.30 540.39,320.04" fill="#1c1c22"></polygon>
+<polygon points="676.89,520.09 617.59,500.83 617.59,438.47 676.89,419.21 713.54,469.65" fill="#1c1c22"></polygon>
+<polygon points="565.45,661.29 565.45,598.93 624.75,579.67 661.40,630.11 624.75,680.55" fill="#1c1c22"></polygon>
+<polygon points="396.73,598.93 456.03,579.67 492.68,630.11 456.03,680.55 396.73,661.29" fill="#1c1c22"></polygon>
+<polygon points="403.89,419.21 440.54,469.65 403.89,520.09 344.59,500.83 344.59,438.47" fill="#1c1c22"></polygon>
+
+      <line x1="524.00" y1="451.60" x2="524.00" y2="370.48" stroke="#2a2a30" stroke-width="7.80" stroke-linecap="round"></line>
+<line x1="583.35" y1="494.72" x2="660.50" y2="469.65" stroke="#2a2a30" stroke-width="7.80" stroke-linecap="round"></line>
+<line x1="560.68" y1="564.48" x2="608.36" y2="630.11" stroke="#2a2a30" stroke-width="7.80" stroke-linecap="round"></line>
+<line x1="487.32" y1="564.48" x2="439.64" y2="630.11" stroke="#2a2a30" stroke-width="7.80" stroke-linecap="round"></line>
+<line x1="464.65" y1="494.72" x2="387.50" y2="469.65" stroke="#2a2a30" stroke-width="7.80" stroke-linecap="round"></line>
+
+    </g>
+    <circle cx="524" cy="514" r="156" fill="url(#rim)"></circle>
+    <circle cx="474.08" cy="454.72" r="34.32" fill="#ffffff" fill-opacity="0.45"></circle>
+
+    
+    <text x="512" y="858" text-anchor="middle" dominant-baseline="central" font-family="&#39;Arial Black&#39;, Arial, sans-serif" font-weight="800" font-size="128" letter-spacing="14" fill="#f6f2ff">WK POOL</text>
+  </g>
+
+  <rect x="3" y="3" width="1018" height="1018" rx="230" ry="230" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="4"></rect>
+</svg>
