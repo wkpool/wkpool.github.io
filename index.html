@@ -160,7 +160,7 @@
       text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px;
     }
 
-    .hero-pts {
+    .hero-ptn {
       font-size: 54px; font-weight: 800;
       color: white; letter-spacing: -0.03em; line-height: 1;
     }
@@ -305,7 +305,7 @@
     }
 
     .pod-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-    .pod-pts  { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+    .pod-ptn  { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
 
     .pod-base { margin-top: 10px; border-radius: 12px 12px 0 0; }
 
@@ -360,9 +360,9 @@
     .lb-detail { font-size: 11px; color: var(--text-mid); margin-top: 1px; }
 
     .lb-right  { text-align: right; flex-shrink: 0; }
-    .lb-pts-val { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
-    .lb-pts-val.is-me { color: var(--pink); }
-    .lb-pts-lbl { font-size: 10px; color: var(--text-dim); }
+    .lb-ptn-val { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+    .lb-ptn-val.is-me { color: var(--pink); }
+    .lb-ptn-lbl { font-size: 10px; color: var(--text-dim); }
 
     /* ── MATCHES PAGE ── */
     .matches-page-header { padding: 20px 22px 12px; }
@@ -506,10 +506,10 @@
 
     .played-meta { font-size: 12px; color: var(--text-mid); }
 
-    .pts-tag { font-size: 13px; font-weight: 700; }
-    .pts-2   { color: var(--teal); }
-    .pts-1   { color: var(--purple-l); }
-    .pts-0   { color: var(--text-dim); }
+    .ptn-tag { font-size: 13px; font-weight: 700; }
+    .ptn-2   { color: var(--teal); }
+    .ptn-1   { color: var(--purple-l); }
+    .ptn-0   { color: var(--text-dim); }
 
     .empty-state {
       text-align: center; color: var(--text-dim);
@@ -538,6 +538,68 @@
 
     .nav-item.active .nav-icon  { color: var(--pink); filter: drop-shadow(0 0 6px rgba(255,77,109,0.5)); }
     .nav-item.active .nav-label { color: var(--pink); }
+
+    /* ── RULES ── */
+    .rules-header { padding: 20px 22px 14px; }
+    .rules-title  { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .rules-sub    { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+
+    .rules-section { padding: 0 16px 4px; }
+
+    .rules-section-label {
+      font-size: 13px; font-weight: 700;
+      letter-spacing: -0.01em;
+      padding: 0 4px 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .rules-double-badge {
+      font-size: 11px; font-weight: 800;
+      background: rgba(255,107,138,0.15);
+      border: 1px solid rgba(255,107,138,0.3);
+      color: #ff6b8a;
+      border-radius: 99px; padding: 1px 8px;
+    }
+
+    .rules-card {
+      background: var(--card);
+      border: 1px solid var(--accent-border, var(--border));
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .rule-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px;
+      gap: 12px;
+    }
+
+    .rule-desc { flex: 1; min-width: 0; }
+
+    .rule-name {
+      font-size: 14px; font-weight: 600;
+    }
+
+    .rule-note {
+      font-size: 11px; color: var(--text-mid); margin-top: 2px;
+    }
+
+    .rule-ptn {
+      font-size: 22px; font-weight: 800;
+      color: var(--accent, var(--purple-l));
+      letter-spacing: -0.02em;
+      flex-shrink: 0; text-align: right;
+    }
+
+    .rule-ptn span { font-size: 12px; font-weight: 600; opacity: 0.7; }
+
+    .rule-ptn.rule-bonus { font-size: 18px; color: var(--accent, var(--purple-l)); }
+
+    .rule-divider {
+      height: 1px; background: var(--border);
+      margin: 0 18px;
+    }
 
     /* ── ANIMATIONS ── */
     @keyframes blink { 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
@@ -575,7 +637,7 @@
         <div class="hero-card" id="hero-card">
           <div class="hero-left">
             <div class="hero-label">Jouw punten</div>
-            <div class="hero-pts" id="hero-pts">—</div>
+            <div class="hero-ptn" id="hero-ptn">—</div>
           </div>
           <div class="hero-right">
             <div class="hero-rank-num" id="hero-rank">—</div>
@@ -606,6 +668,102 @@
         <div class="lb-list"    id="lb-list"></div>
       </div>
 
+      <!-- RULES TAB -->
+      <div id="tab-rules" class="tab-content hidden">
+        <div class="rules-header">
+          <div class="rules-title">Regels</div>
+          <div class="rules-sub">WK Pool 2026 · Puntensysteem</div>
+        </div>
+
+        <div class="rules-section">
+          <div class="rules-section-label" style="color:#b48af5">⚽ Groepsfase</div>
+          <div class="rules-card" style="--accent:#b48af5;--accent-bg:rgba(180,138,245,0.08);--accent-border:rgba(180,138,245,0.2)">
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">Toto goed</div>
+                <div class="rule-note">Winnaar of gelijkspel correct</div>
+              </div>
+              <div class="rule-ptn">3 <span>ptn</span></div>
+            </div>
+            <div class="rule-divider"></div>
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">Score exact goed</div>
+                <div class="rule-note">Alleen voor de exacte score</div>
+              </div>
+              <div class="rule-ptn rule-bonus">+2 <span>ptn</span></div>
+            </div>
+            <div class="rule-divider"></div>
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">Doelpuntenverschil goed</div>
+                <div class="rule-note">Score niet exact, verschil wel correct</div>
+              </div>
+              <div class="rule-ptn rule-bonus">+1 <span>pt</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rules-section">
+          <div class="rules-section-label" style="color:#ff6b8a">🏆 Knock-out fase <span class="rules-double-badge">2×</span></div>
+          <div class="rules-card" style="--accent:#ff6b8a;--accent-bg:rgba(255,107,138,0.08);--accent-border:rgba(255,107,138,0.2)">
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">Toto goed</div>
+                <div class="rule-note">Punten verdubbelen</div>
+              </div>
+              <div class="rule-ptn" style="color:#ff6b8a">6 <span>ptn</span></div>
+            </div>
+            <div class="rule-divider"></div>
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">Score exact goed</div>
+                <div class="rule-note">Alleen voor de exacte score</div>
+              </div>
+              <div class="rule-ptn rule-bonus" style="color:#ff6b8a">+4 <span>ptn</span></div>
+            </div>
+            <div class="rule-divider"></div>
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">Doelpuntenverschil goed</div>
+                <div class="rule-note">Score niet exact, verschil wel correct</div>
+              </div>
+              <div class="rule-ptn rule-bonus" style="color:#ff6b8a">+2 <span>ptn</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rules-section">
+          <div class="rules-section-label" style="color:#ffb800">⭐ Extraatjes</div>
+          <div class="rules-card" style="--accent:#ffb800;--accent-bg:rgba(255,184,0,0.08);--accent-border:rgba(255,184,0,0.2)">
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">Toernooi winnaar goed</div>
+                <div class="rule-note">Kampioen correct voorspeld</div>
+              </div>
+              <div class="rule-ptn" style="color:#ffb800">15 <span>ptn</span></div>
+            </div>
+            <div class="rule-divider"></div>
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">2e plaats goed</div>
+                <div class="rule-note">Runner-up correct voorspeld</div>
+              </div>
+              <div class="rule-ptn" style="color:#ffb800">8 <span>ptn</span></div>
+            </div>
+            <div class="rule-divider"></div>
+            <div class="rule-row">
+              <div class="rule-desc">
+                <div class="rule-name">Halve finalisten goed</div>
+                <div class="rule-note">Per correct voorspelde halvefinalist</div>
+              </div>
+              <div class="rule-ptn" style="color:#ffb800">5 <span>ptn</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- MATCHES TAB -->
       <div id="tab-matches" class="tab-content hidden">
         <div class="matches-page-header">
@@ -632,6 +790,10 @@
     <div class="nav-item" data-tab="matches">
       <div class="nav-icon">⚽</div>
       <div class="nav-label">Wedstrijden</div>
+    </div>
+    <div class="nav-item" data-tab="rules">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">Regels</div>
     </div>
   </nav>
 </div>

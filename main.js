@@ -740,7 +740,7 @@ function calcScores(participants, playedMatches, predictions) {
       }
     })
     return { ...p, points, exact, goed }
-  }).sort((a, b) => b.points - a.points)
+  }).sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'nl'))
 }
 
 async function savePrediction(matchId) {
