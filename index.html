@@ -604,6 +604,132 @@
 
     /* ── ANIMATIONS ── */
     @keyframes blink { 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
+
+    /* ── MATCH DETAIL OVERLAY ── */
+    #match-detail-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+
+    .md-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .md-sheet {
+      position: relative; z-index: 1;
+      background: #1a1a26;
+      border-radius: 24px 24px 0 0;
+      border-top: 1px solid rgba(255,255,255,0.09);
+      max-height: 88vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .md-handle {
+      width: 36px; height: 4px;
+      background: rgba(255,255,255,0.14);
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+
+    .md-body { padding: 10px 20px 48px; }
+
+    .md-close-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px; padding: 6px 0;
+    }
+
+    .md-eyebrow {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-dim);
+    }
+
+    .md-close-btn {
+      background: rgba(255,255,255,0.07); border: none; color: var(--text);
+      border-radius: 8px; padding: 5px 12px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: var(--font); transition: background .15s;
+    }
+
+    .md-close-btn:hover { background: rgba(255,255,255,0.12); }
+
+    .md-match-header {
+      display: flex; align-items: center; justify-content: center; gap: 20px;
+      padding: 14px 0 8px;
+    }
+
+    .md-team { text-align: center; }
+    .md-flag { font-size: 48px; line-height: 1; }
+    .md-team-name { font-size: 13px; font-weight: 600; margin-top: 6px; }
+    .md-vs-label { font-size: 13px; font-weight: 700; color: var(--text-dim); }
+
+    .md-score-result {
+      text-align: center; font-size: 38px; font-weight: 800;
+      letter-spacing: -0.03em; margin-bottom: 4px;
+    }
+
+    .md-meta {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+
+    .md-pill {
+      border-radius: 99px; padding: 3px 10px;
+      font-size: 11px; font-weight: 700;
+    }
+
+    .md-section {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 14px 16px; margin-bottom: 12px;
+    }
+
+    .md-section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
+    }
+
+    .md-pred-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .md-pred-row:last-child { border-bottom: none; }
+
+    .md-pred-name { font-size: 14px; font-weight: 500; }
+    .md-pred-name.is-me { color: var(--pink); font-weight: 700; }
+    .md-pred-score { font-size: 16px; font-weight: 700; }
+    .md-pred-pts { font-size: 11px; font-weight: 600; margin-top: 2px; text-align: right; }
+
+    .md-notes {
+      background: rgba(255,184,0,0.06);
+      border: 1px solid rgba(255,184,0,0.2);
+      border-radius: 16px; padding: 14px 16px; margin-bottom: 12px;
+    }
+
+    .md-notes-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: #ffb800; margin-bottom: 8px;
+    }
+
+    .md-notes-text { font-size: 14px; line-height: 1.6; color: var(--text-mid); }
+
+    .md-lock-msg {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px 16px; text-align: center; margin-bottom: 12px;
+    }
+
+    .detail-btn {
+      background: none; border: none; color: var(--purple-l);
+      font-family: var(--font); font-size: 12px; font-weight: 600;
+      cursor: pointer; padding: 0; opacity: 0.8;
+      transition: opacity .15s;
+    }
+
+    .detail-btn:hover { opacity: 1; }
   </style>
 </head>
 <body>
@@ -648,7 +774,7 @@
         </div>
 
         <div class="section-title">
-          <span>Wedstrijden</span>
+          <span>Eerstvolgende wedstrijden en jouw voorspellingen</span>
           <div class="section-dots"><span></span><span></span><span></span></div>
         </div>
         <div class="matches-scroll" id="home-tiles"></div>
@@ -800,5 +926,14 @@
 </div>
 
 <script type="module" src="main.js"></script>
+
+<!-- MATCH DETAIL OVERLAY -->
+<div id="match-detail-overlay" class="hidden">
+  <div class="md-backdrop" id="md-backdrop"></div>
+  <div class="md-sheet">
+    <div class="md-handle"></div>
+    <div class="md-body" id="match-detail-body"></div>
+  </div>
+</div>
 </body>
 </html>

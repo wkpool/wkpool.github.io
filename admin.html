@@ -512,10 +512,13 @@
         <button class="btn-primary opslaan-btn" style="margin-left:auto;padding:0.4rem 0.9rem;font-size:14px">Opslaan</button>
         ${heeftUitslag ? `<button class="btn-secondary wis-btn">Wis</button>` : ''}
       </div>
+      <textarea class="notes-input dark-input" id="notes-${match.id}" placeholder="Info / statistieken (optioneel)" style="margin-top:0.75rem;width:100%;min-height:64px;resize:vertical;font-size:13px">${match.notes ?? ''}</textarea>
+      <button class="btn-secondary notes-btn" style="margin-top:0.4rem;font-size:13px;color:var(--purple-l);border-color:rgba(180,138,245,0.3)">Info opslaan</button>
     `
 
     card.querySelector('.opslaan-btn').addEventListener('click', () => slaUitslagOp(match.id, card))
     card.querySelector('.wis-btn')?.addEventListener('click', () => wisUitslag(match.id, card))
+    card.querySelector('.notes-btn').addEventListener('click', () => slaNotesOp(match.id, card))
     return card
   }
 
@@ -571,6 +574,24 @@
         btn.disabled = false
       }, 2000)
     }
+  }
+
+  async function slaNotesOp(matchId, card) {
+    const notes = document.getElementById(`notes-${matchId}`).value.trim()
+    const btn = card.querySelector('.notes-btn')
+    btn.textContent = '…'
+    btn.disabled = true
+    const { error } = await supabase.from('matches').update({ notes: notes || null }).eq('id', matchId)
+    if (error) {
+      alert('Fout: ' + error.message)
+    } else {
+      btn.textContent = '✓ Opgeslagen'
+      btn.style.color = 'var(--teal)'
+      setTimeout(() => { btn.textContent = 'Info opslaan'; btn.style.color = ''; btn.disabled = false }, 2000)
+      return
+    }
+    btn.textContent = 'Info opslaan'
+    btn.disabled = false
   }
 
   // ── Voorspellingen ───────────────────────────────────────

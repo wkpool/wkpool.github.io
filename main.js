@@ -220,6 +220,121 @@ function formatDate(dateStr) {
   })
 }
 
+// ── Match Detail ──────────────────────────────────────────
+
+async function openMatchDetail(match) {
+  const overlay = document.getElementById('match-detail-overlay')
+  const body    = document.getElementById('match-detail-body')
+
+  overlay.classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+  body.innerHTML = `<p style="color:var(--text-dim);text-align:center;padding:4rem 0;font-size:14px">Laden…</p>`
+
+  const [{ data: participants }, { data: predictions }, { data: firstRows }] = await Promise.all([
+    supabase.from('participants').select('*').order('name'),
+    supabase.from('predictions').select('*').eq('match_id', match.id),
+    supabase.from('matches').select('date').not('date', 'is', null).order('date').limit(1),
+  ])
+
+  const now = new Date()
+  const firstMatchDate = firstRows?.[0]?.date ? new Date(firstRows[0].date) : null
+  const globalLocked   = firstMatchDate ? now >= firstMatchDate : false
+  const isPlayed       = match.score_home !== null && match.score_away !== null
+  const maxExact       = match.phase === 'knockout' ? 10 : 5
+
+  const myPred = (predictions || []).find(p => p.participant_id === currentParticipant.id)
+  const predMap = {}
+  ;(predictions || []).forEach(p => { predMap[p.participant_id] = p })
+
+  let html = `
+    <div class="md-close-row">
+      <div class="md-eyebrow">Wedstrijd</div>
+      <button class="md-close-btn" id="md-close-btn">✕ Sluit</button>
+    </div>
+
+    <div class="md-match-header">
+      <div class="md-team">
+        <div class="md-flag">${flag(match.home, match.home_flag)}</div>
+        <div class="md-team-name">${match.home || '?'}</div>
+      </div>
+      <div class="md-vs-label">vs</div>
+      <div class="md-team">
+        <div class="md-flag">${flag(match.away, match.away_flag)}</div>
+        <div class="md-team-name">${match.away || '?'}</div>
+      </div>
+    </div>
+
+    ${isPlayed ? `<div class="md-score-result">${match.score_home} – ${match.score_away}</div>` : ''}
+
+    <div class="md-meta">
+      ${match.poule ? `<span class="md-pill" style="background:rgba(180,138,245,0.15);color:#b48af5;border:1px solid rgba(180,138,245,0.3)">Groep ${match.poule}</span>` : ''}
+      ${match.phase === 'knockout' ? `<span class="md-pill" style="background:rgba(255,107,138,0.12);color:#ff6b8a;border:1px solid rgba(255,107,138,0.25)">Knock-out</span>` : ''}
+      ${match.date ? `<span style="font-size:12px;color:var(--text-dim)">${formatDate(match.date)}</span>` : ''}
+    </div>
+  `
+
+  if (match.notes) {
+    html += `
+      <div class="md-notes">
+        <div class="md-notes-label">Info</div>
+        <div class="md-notes-text">${match.notes.replace(/\n/g, '<br>')}</div>
+      </div>
+    `
+  }
+
+  html += `<div class="md-section"><div class="md-section-label">Jouw voorspelling</div>`
+  if (myPred?.pred_home != null) {
+    html += `<div style="font-size:26px;font-weight:800;letter-spacing:-0.02em">${myPred.pred_home} – ${myPred.pred_away}</div>`
+    if (isPlayed) {
+      const pts   = calcPoints(match, myPred)
+      const color = pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
+      html += `<div style="font-size:13px;color:${color};font-weight:600;margin-top:4px">${pts} ptn</div>`
+    }
+  } else {
+    html += `<div style="font-size:13px;color:var(--text-dim)">Geen voorspelling ingevoerd</div>`
+  }
+  html += `</div>`
+
+  if (globalLocked || isPlayed) {
+    html += `<div class="md-section"><div class="md-section-label">Alle voorspellingen</div>`
+    ;(participants || []).forEach(p => {
+      const pred   = predMap[p.id]
+      const hasPred = pred?.pred_home != null
+      const isMe   = p.id === currentParticipant.id
+      const pts    = isPlayed && hasPred ? calcPoints(match, pred) : null
+      const color  = pts !== null
+        ? pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
+        : ''
+      html += `
+        <div class="md-pred-row">
+          <div class="md-pred-name${isMe ? ' is-me' : ''}">${p.name}${isMe ? ' ★' : ''}</div>
+          <div style="text-align:right">
+            <div class="md-pred-score">${hasPred ? `${pred.pred_home} – ${pred.pred_away}` : `<span style="color:var(--text-dim);font-size:13px">—</span>`}</div>
+            ${pts !== null ? `<div class="md-pred-pts" style="color:${color}">${pts} ptn</div>` : ''}
+          </div>
+        </div>
+      `
+    })
+    html += `</div>`
+  } else {
+    html += `
+      <div class="md-lock-msg">
+        <div style="font-size:24px;margin-bottom:8px">🔒</div>
+        <div style="font-size:13px;color:var(--text-dim);line-height:1.5">Voorspellingen van anderen zijn zichtbaar zodra de eerste wedstrijd is begonnen.</div>
+      </div>
+    `
+  }
+
+  body.innerHTML = html
+  document.getElementById('md-close-btn').addEventListener('click', closeMatchDetail)
+  document.getElementById('md-backdrop').addEventListener('click', closeMatchDetail, { once: true })
+}
+
+function closeMatchDetail() {
+  document.getElementById('match-detail-overlay').classList.add('hidden')
+  document.body.style.overflow = ''
+}
+
 function calcPoints(match, pred) {
   if (pred.pred_home == null || pred.pred_away == null) return 0
   const ko = match.phase === 'knockout'
@@ -334,9 +449,13 @@ async function loadHome() {
   const tilesEl = document.getElementById('home-tiles')
   tilesEl.innerHTML = ''
 
-  const openMatches = (matches || []).filter(m => m.score_home === null && m.score_away === null)
-  const recentPlayed = played.slice(-2)
-  const tileMatches = [...openMatches.slice(0, 5), ...recentPlayed]
+  const openMatches = (matches || []).filter(m => m.score_home === null && m.score_away === null && m.date)
+  const nextDate = openMatches.length > 0
+    ? new Date(openMatches[0].date).toDateString()
+    : null
+  const tileMatches = nextDate
+    ? openMatches.filter(m => new Date(m.date).toDateString() === nextDate)
+    : []
 
   if (tileMatches.length === 0) {
     tilesEl.innerHTML = '<p style="color:var(--text-dim);font-size:13px;padding:4px 0">Geen wedstrijden</p>'
@@ -617,7 +736,7 @@ function buildMatchTile(match, pred, isLocked, isPlayed) {
       </div>
     </div>
   `
-  tile.addEventListener('click', () => switchTab('matches'))
+  tile.addEventListener('click', () => openMatchDetail(match))
   return tile
 }
 
@@ -689,7 +808,13 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
       </div>
     </div>
     <div class="match-bottom" id="mb-${match.id}"></div>
+    <button class="detail-btn match-detail-trigger" style="margin-top:10px;width:100%;text-align:center;padding:6px 0;border-top:1px solid rgba(255,255,255,0.05)">Andere voorspellingen →</button>
   `
+
+  card.querySelector('.match-detail-trigger').addEventListener('click', e => {
+    e.stopPropagation()
+    openMatchDetail(match)
+  })
 
   const bottom = card.querySelector(`#mb-${match.id}`)
 
