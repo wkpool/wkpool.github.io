@@ -471,7 +471,6 @@ async function loadHome() {
   // Upcoming list: next 3 future matches not yet played
   const upcoming = (matches || [])
     .filter(m => m.date && new Date(m.date) > now && m.score_home === null && m.score_away === null)
-    .slice(0, 3)
 
   const upcomingEl = document.getElementById('home-upcoming')
   upcomingEl.innerHTML = ''
