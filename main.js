@@ -295,34 +295,35 @@ async function openMatchDetail(match) {
   }
   html += `</div>`
 
-  if (globalLocked || isPlayed) {
-    html += `<div class="md-section"><div class="md-section-label">Alle voorspellingen</div>`
-    ;(participants || []).forEach(p => {
-      const pred   = predMap[p.id]
-      const hasPred = pred?.pred_home != null
-      const isMe   = p.id === currentParticipant.id
-      const pts    = isPlayed && hasPred ? calcPoints(match, pred) : null
-      const color  = pts !== null
-        ? pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
-        : ''
-      html += `
-        <div class="md-pred-row">
-          <div class="md-pred-name${isMe ? ' is-me' : ''}">${p.name}${isMe ? ' ★' : ''}</div>
-          <div style="text-align:right">
-            <div class="md-pred-score">${hasPred ? `${pred.pred_home} – ${pred.pred_away}` : `<span style="color:var(--text-dim);font-size:13px">—</span>`}</div>
-            ${pts !== null ? `<div class="md-pred-pts" style="color:${color}">${pts} ptn</div>` : ''}
-          </div>
-        </div>
-      `
-    })
-    html += `</div>`
-  } else {
+  html += `<div class="md-section"><div class="md-section-label">Alle voorspellingen</div>`
+  ;(participants || []).forEach(p => {
+    const pred    = predMap[p.id]
+    const hasPred = pred?.pred_home != null
+    const isMe    = p.id === currentParticipant.id
+    const isClaude = p.name === 'Claude'
+    const visible  = globalLocked || isPlayed || isClaude || isMe
+    const pts     = isPlayed && hasPred ? calcPoints(match, pred) : null
+    const color   = pts !== null
+      ? pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
+      : ''
+    const nameLabel = isClaude
+      ? `${p.name} <span style="font-size:10px;background:rgba(180,138,245,0.15);color:#b48af5;border:1px solid rgba(180,138,245,0.3);border-radius:99px;padding:1px 7px;font-weight:700;vertical-align:middle">AI</span>`
+      : `${p.name}${isMe ? ' ★' : ''}`
     html += `
-      <div class="md-lock-msg">
-        <div style="font-size:24px;margin-bottom:8px">🔒</div>
-        <div style="font-size:13px;color:var(--text-dim);line-height:1.5">Voorspellingen van anderen zijn zichtbaar zodra de eerste wedstrijd is begonnen.</div>
+      <div class="md-pred-row">
+        <div class="md-pred-name${isMe ? ' is-me' : ''}">${nameLabel}</div>
+        <div style="text-align:right">
+          ${visible && hasPred
+            ? `<div class="md-pred-score">${pred.pred_home} – ${pred.pred_away}</div>${pts !== null ? `<div class="md-pred-pts" style="color:${color}">${pts} ptn</div>` : ''}`
+            : `<div style="color:var(--text-dim);font-size:13px">🔒</div>`
+          }
+        </div>
       </div>
     `
+  })
+  html += `</div>`
+  if (!globalLocked && !isPlayed) {
+    html += `<div style="font-size:11px;color:var(--text-dim);text-align:center;padding:4px 0 8px">Andere voorspellingen zijn zichtbaar na de eerste wedstrijd.</div>`
   }
 
   body.innerHTML = html
