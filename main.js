@@ -466,14 +466,7 @@ async function loadHome() {
   }
 
   // Laatste resultaten: last 3 played matches
-  // TEMP FAKE DATA — remove before go-live
-  const fakeResults = [
-    { id: 1, home: 'Mexico', away: 'Zuid-Afrika', home_flag: null, away_flag: null, score_home: 2, score_away: 0, phase: 'group', poule: 'A' },
-    { id: 13, home: 'Brazilië', away: 'Marokko', home_flag: null, away_flag: null, score_home: 1, score_away: 1, phase: 'group', poule: 'C' },
-    { id: 31, home: 'Nederland', away: 'Japan', home_flag: null, away_flag: null, score_home: 3, score_away: 1, phase: 'group', poule: 'F' },
-  ]
-  const fakePreds = { 1: { pred_home: 2, pred_away: 0 }, 13: { pred_home: 2, pred_away: 1 }, 31: { pred_home: 3, pred_away: 1 } }
-  const recentResults = fakeResults
+  const recentResults = played.slice(-3).reverse()
   const resultsEl = document.getElementById('home-results')
   resultsEl.innerHTML = ''
 
@@ -481,7 +474,7 @@ async function loadHome() {
     resultsEl.innerHTML = '<p class="empty-state">Nog geen gespeelde wedstrijden</p>'
   } else {
     recentResults.forEach(m => {
-      const pred = fakePreds[m.id] ?? myPredMap[m.id]
+      const pred = myPredMap[m.id]
       resultsEl.appendChild(buildResultItem(m, pred))
     })
   }
