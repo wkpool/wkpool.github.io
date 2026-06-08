@@ -300,15 +300,12 @@ async function openMatchDetail(match) {
     const pred    = predMap[p.id]
     const hasPred = pred?.pred_home != null
     const isMe    = p.id === currentParticipant.id
-    const isClaude = p.name === 'Claude'
-    const visible  = globalLocked || isPlayed || isClaude || isMe
+    const visible  = globalLocked || isPlayed || isMe
     const pts     = isPlayed && hasPred ? calcPoints(match, pred) : null
     const color   = pts !== null
       ? pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
       : ''
-    const nameLabel = isClaude
-      ? `${p.name} <span style="font-size:10px;background:rgba(180,138,245,0.15);color:#b48af5;border:1px solid rgba(180,138,245,0.3);border-radius:99px;padding:1px 7px;font-weight:700;vertical-align:middle">AI</span>`
-      : `${p.name}${isMe ? ' ★' : ''}`
+    const nameLabel = `${p.name}${isMe ? ' ★' : ''}`
     html += `
       <div class="md-pred-row">
         <div class="md-pred-name${isMe ? ' is-me' : ''}">${nameLabel}</div>
@@ -468,20 +465,24 @@ async function loadHome() {
     })
   }
 
-  // Upcoming list: next 3 future matches not yet played
-  const upcoming = (matches || [])
-    .filter(m => m.date && new Date(m.date) > now && m.score_home === null && m.score_away === null)
+  // Laatste resultaten: last 3 played matches
+  // TEMP FAKE DATA — remove before go-live
+  const fakeResults = [
+    { id: 1, home: 'Mexico', away: 'Zuid-Afrika', home_flag: null, away_flag: null, score_home: 2, score_away: 0, phase: 'group', poule: 'A' },
+    { id: 13, home: 'Brazilië', away: 'Marokko', home_flag: null, away_flag: null, score_home: 1, score_away: 1, phase: 'group', poule: 'C' },
+    { id: 31, home: 'Nederland', away: 'Japan', home_flag: null, away_flag: null, score_home: 3, score_away: 1, phase: 'group', poule: 'F' },
+  ]
+  const fakePreds = { 1: { pred_home: 2, pred_away: 0 }, 13: { pred_home: 2, pred_away: 1 }, 31: { pred_home: 3, pred_away: 1 } }
+  const recentResults = fakeResults
+  const resultsEl = document.getElementById('home-results')
+  resultsEl.innerHTML = ''
 
-  const upcomingEl = document.getElementById('home-upcoming')
-  upcomingEl.innerHTML = ''
-
-  if (upcoming.length === 0) {
-    upcomingEl.innerHTML = '<p class="empty-state">Geen aankomende wedstrijden</p>'
+  if (recentResults.length === 0) {
+    resultsEl.innerHTML = '<p class="empty-state">Nog geen gespeelde wedstrijden</p>'
   } else {
-    upcoming.forEach(m => {
-      const pred = myPredMap[m.id]
-      const hasPred = pred?.pred_home != null
-      upcomingEl.appendChild(buildUpcomingItem(m, hasPred))
+    recentResults.forEach(m => {
+      const pred = fakePreds[m.id] ?? myPredMap[m.id]
+      resultsEl.appendChild(buildResultItem(m, pred))
     })
   }
 }
@@ -738,6 +739,31 @@ function buildMatchTile(match, pred, isLocked, isPlayed) {
   `
   tile.addEventListener('click', () => openMatchDetail(match))
   return tile
+}
+
+function buildResultItem(match, pred) {
+  const item = document.createElement('div')
+  item.className = 'upcoming-item'
+  const pts      = pred?.pred_home != null ? calcPoints(match, pred) : null
+  const maxExact = match.phase === 'knockout' ? 10 : 5
+  const ptsColor = pts === null ? 'var(--text-dim)'
+    : pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--pink)'
+  const ptsLabel = pts === null ? '—' : `+${pts}`
+  const predStr  = pred?.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
+
+  item.innerHTML = `
+    <div class="upcoming-icon" style="background:${tileColor(match.id)}">${flag(match.home, match.home_flag)}</div>
+    <div class="upcoming-info">
+      <div class="upcoming-name">${match.home || '?'} vs ${match.away || '?'}</div>
+      <div class="upcoming-sub">Uitslag: ${match.score_home}–${match.score_away} · Jij: ${predStr}</div>
+    </div>
+    <div class="upcoming-right" style="align-items:flex-end">
+      <span style="font-size:15px;font-weight:800;color:${ptsColor}">${ptsLabel}</span>
+      <span style="font-size:10px;color:var(--text-dim)">ptn</span>
+    </div>
+  `
+  item.addEventListener('click', () => openMatchDetail(match))
+  return item
 }
 
 function buildUpcomingItem(match, hasPred) {
