@@ -301,7 +301,7 @@ async function openMatchDetail(match) {
   html += `</div>`
 
   html += `<div class="md-section"><div class="md-section-label">Alle voorspellingen</div>`
-  ;(participants || []).forEach(p => {
+  ;(participants || []).filter(p => p.id !== 22).forEach(p => {
     const pred    = predMap[p.id]
     const hasPred = pred?.pred_home != null
     const isMe    = p.id === currentParticipant.id
@@ -436,7 +436,7 @@ async function loadHome() {
   const now = new Date()
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
 
-  const scores = calcScores(participants, played, predictions)
+  const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
   const myScore = scores.find(p => p.id === currentParticipant.id) || { points: 0, exact: 0 }
   const myRank  = scores.indexOf(myScore) + 1
 
@@ -495,7 +495,7 @@ async function loadScoreboard() {
   ])
 
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
-  const scores = calcScores(participants, played, predictions)
+  const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
 
   document.getElementById('sb-sub').textContent = `WK Pool 2026 · ${scores.length} deelnemers`
 
