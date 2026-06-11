@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude's Voorspellingen</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #111118; --card: #1e1e2a; --border: rgba(255,255,255,0.07);
+      --pink: #ff4d6d; --purple-l: #b48af5; --teal: #00d4aa;
+      --text: rgba(255,255,255,0.92); --text-mid: rgba(255,255,255,0.55);
+      --text-dim: rgba(255,255,255,0.28); --font: 'Poppins', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 10%, rgba(124,92,191,0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,77,109,0.06) 0%, transparent 55%);
+    }
+
+    .hidden { display: none !important; }
+
+    /* Login */
+    #login-section {
+      position: relative; z-index: 5; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+    }
+    .login-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 24px; padding: 2rem 1.5rem;
+      max-width: 380px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    }
+    .login-logo { font-size: 40px; margin-bottom: 0.75rem; }
+    .login-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--purple-l); margin-bottom: 0.4rem; }
+    .login-title { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1.25rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .input-group .btn-primary { width: 100%; justify-content: center; }
+    .dark-input {
+      padding: 0.6rem 0.9rem; background: #22222e;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      font-family: var(--font); font-size: 15px; color: var(--text); outline: none;
+    }
+    .dark-input:focus { border-color: var(--purple-l); box-shadow: 0 0 0 3px rgba(180,138,245,0.18); }
+    .dark-input::placeholder { color: var(--text-dim); }
+    .btn-primary {
+      padding: 0.6rem 1.1rem;
+      background: linear-gradient(135deg, #9b72e8, #7c5cbf);
+      color: white; border: none; border-radius: 10px;
+      font-family: var(--font); font-size: 15px; font-weight: 600;
+      cursor: pointer; box-shadow: 0 8px 20px rgba(124,92,191,0.3);
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .error-msg { font-size: 13px; color: var(--pink); margin-top: 0.5rem; }
+
+    /* App */
+    #app-section { position: relative; z-index: 5; max-width: 720px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+    .page-header { margin-bottom: 1.5rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple-l); margin-bottom: 4px; }
+    .page-title { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+    .page-sub { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+    .group-label {
+      font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-dim); margin: 1.25rem 0 0.5rem;
+    }
+
+    .pred-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 14px 16px; margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+
+    .pred-teams { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .pred-flag { font-size: 22px; flex-shrink: 0; }
+    .pred-vs { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+    .pred-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .pred-score {
+      font-size: 18px; font-weight: 800; letter-spacing: -0.02em;
+      color: var(--purple-l); flex-shrink: 0;
+    }
+
+    .pred-date { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+    .stats-bar {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 14px 16px; margin-bottom: 1.5rem;
+      display: flex; gap: 24px;
+    }
+    .stat { text-align: center; }
+    .stat-val { font-size: 22px; font-weight: 800; color: var(--purple-l); }
+    .stat-lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em; }
+  </style>
+</head>
+<body>
+
+<div id="login-section">
+  <div class="login-card">
+    <div class="login-logo">🤖</div>
+    <div class="login-eyebrow">WK Pool 2026</div>
+    <div class="login-title">Claude's voorspellingen</div>
+    <div class="input-group">
+      <input type="password" class="dark-input" id="wachtwoord-input" placeholder="Wachtwoord" />
+      <button class="btn-primary" id="login-btn">Bekijken</button>
+    </div>
+    <p class="error-msg hidden" id="login-error">Onjuist wachtwoord</p>
+  </div>
+</div>
+
+<div id="app-section" class="hidden">
+  <div class="page-header">
+    <div class="page-eyebrow">Privé overzicht</div>
+    <div class="page-title">🤖 Claude's voorspellingen</div>
+    <div class="page-sub" id="page-sub">Alle groepsfase voorspellingen</div>
+  </div>
+  <div class="stats-bar" id="stats-bar"></div>
+  <div id="predictions-list"></div>
+</div>
+
+<script>
+  const WACHTWOORD = 'afblijven'
+  document.getElementById('login-btn').addEventListener('click', checkWachtwoord)
+  document.getElementById('wachtwoord-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkWachtwoord() })
+
+  function checkWachtwoord() {
+    const input = document.getElementById('wachtwoord-input')
+    if (input.value === WACHTWOORD) {
+      sessionStorage.setItem('claude_auth', '1')
+      document.dispatchEvent(new CustomEvent('auth-ok'))
+    } else {
+      document.getElementById('login-error').classList.remove('hidden')
+      input.style.borderColor = 'var(--pink)'
+      setTimeout(() => { input.style.borderColor = '' }, 1500)
+    }
+  }
+</script>
+
+<script type="module">
+  import { supabase } from './supabase.js'
+
+  function show() {
+    document.getElementById('login-section').classList.add('hidden')
+    document.getElementById('app-section').classList.remove('hidden')
+    laad()
+  }
+
+  document.addEventListener('auth-ok', show)
+  if (sessionStorage.getItem('claude_auth') === '1') show()
+
+  function formatDate(d) {
+    return new Date(d).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  }
+
+  async function laad() {
+    const [{ data: matches }, { data: predictions }] = await Promise.all([
+      supabase.from('matches').select('*').order('date'),
+      supabase.from('predictions').select('*').eq('participant_id', 22),
+    ])
+
+    const predMap = {}
+    ;(predictions || []).forEach(p => { predMap[p.match_id] = p })
+
+    document.getElementById('page-sub').textContent = `${(predictions || []).length} van ${(matches || []).length} wedstrijden voorspeld`
+
+    // Stats
+    const played = (matches || []).filter(m => m.score_home !== null)
+    let pts = 0, exact = 0, goed = 0
+    played.forEach(m => {
+      const pred = predMap[m.id]
+      if (!pred || pred.pred_home == null) return
+      const ko = m.phase === 'knockout'
+      const base = ko ? 6 : 3
+      if (m.score_home === pred.pred_home && m.score_away === pred.pred_away) { pts += base + (ko ? 4 : 2); exact++ }
+      else {
+        const mw = Math.sign(m.score_home - m.score_away), pw = Math.sign(pred.pred_home - pred.pred_away)
+        if (mw === pw) {
+          const diff = (m.score_home - m.score_away) === (pred.pred_home - pred.pred_away)
+          pts += base + (diff ? (ko ? 2 : 1) : 0); goed++
+        }
+      }
+    })
+
+    document.getElementById('stats-bar').innerHTML = `
+      <div class="stat"><div class="stat-val">${pts}</div><div class="stat-lbl">Punten</div></div>
+      <div class="stat"><div class="stat-val">${exact}</div><div class="stat-lbl">Exact</div></div>
+      <div class="stat"><div class="stat-val">${goed}</div><div class="stat-lbl">Goed</div></div>
+      <div class="stat"><div class="stat-val">${played.length}</div><div class="stat-lbl">Gespeeld</div></div>
+    `
+
+    const list = document.getElementById('predictions-list')
+    list.innerHTML = ''
+
+    const groups = [...new Set((matches || []).map(m => m.poule).filter(Boolean))].sort()
+    groups.forEach(poule => {
+      const label = document.createElement('div')
+      label.className = 'group-label'
+      label.textContent = `Groep ${poule}`
+      list.appendChild(label)
+
+      ;(matches || []).filter(m => m.poule === poule).forEach(m => {
+        const pred = predMap[m.id]
+        const card = document.createElement('div')
+        card.className = 'pred-card'
+        const homeFlag = m.home_flag || '🏳️'
+        const awayFlag = m.away_flag || '🏳️'
+        card.innerHTML = `
+          <div>
+            <div class="pred-teams">
+              <span class="pred-flag">${homeFlag}</span>
+              <span class="pred-name">${m.home}</span>
+              <span class="pred-vs">vs</span>
+              <span class="pred-name">${m.away}</span>
+              <span class="pred-flag">${awayFlag}</span>
+            </div>
+            <div class="pred-date">${m.date ? formatDate(m.date) : ''}</div>
+          </div>
+          <div class="pred-score">${pred?.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'}</div>
+        `
+        list.appendChild(card)
+      })
+    })
+  }
+</script>
+</body>
+</html>
