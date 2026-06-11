@@ -2,6 +2,21 @@ import { supabase } from './supabase.js'
 
 let currentParticipant = null
 
+async function fetchAllPredictions(query = {}) {
+  const all = []
+  let from = 0
+  const pageSize = 1000
+  while (true) {
+    let q = supabase.from('predictions').select('*').range(from, from + pageSize - 1)
+    if (query.participant_id) q = q.eq('participant_id', query.participant_id)
+    const { data } = await q
+    if (data) all.push(...data)
+    if (!data || data.length < pageSize) break
+    from += pageSize
+  }
+  return all
+}
+
 // Flag emoji lookup — covers all WC 2026 participants + common variants (Dutch & English)
 const FLAGS = {
   // Dutch names
@@ -427,10 +442,10 @@ function switchTab(tab) {
 // ── Home ──────────────────────────────────────────────────
 
 async function loadHome() {
-  const [{ data: participants }, { data: matches }, { data: predictions }] = await Promise.all([
+  const [{ data: participants }, { data: matches }, predictions] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*').order('date'),
-    supabase.from('predictions').select('*'),
+    fetchAllPredictions(),
   ])
 
   const now = new Date()
@@ -488,10 +503,10 @@ async function loadHome() {
 // ── Scoreboard ────────────────────────────────────────────
 
 async function loadScoreboard() {
-  const [{ data: participants }, { data: matches }, { data: predictions }] = await Promise.all([
+  const [{ data: participants }, { data: matches }, predictions] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*'),
-    supabase.from('predictions').select('*'),
+    fetchAllPredictions(),
   ])
 
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
