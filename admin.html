@@ -107,23 +107,17 @@
 
     .error-msg { font-size: 13px; color: var(--red); margin-top: 0.5rem; }
 
-    /* ── NAV ── */
-    .app-nav {
+    /* ── TOP HEADER ── */
+    .app-header {
       position: sticky; top: 0; z-index: 100;
       background: rgba(26,26,36,0.96);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
+      padding: 0 1.25rem;
+      height: 52px;
+      display: flex; align-items: center; gap: 0.6rem;
     }
-
-    .nav-inner {
-      max-width: 720px; margin: 0 auto;
-      padding: 0.6rem 1.25rem 0;
-      display: flex; flex-direction: column; gap: 0.4rem;
-      position: relative; z-index: 5;
-    }
-
-    .nav-top { display: flex; align-items: center; gap: 0.6rem; }
 
     .nav-brand { font-weight: 800; font-size: 17px; letter-spacing: -0.03em; }
 
@@ -135,22 +129,34 @@
       border-radius: 99px; padding: 2px 10px;
     }
 
-    .nav-tabs { display: flex; gap: 2px; padding-bottom: 0.4rem; }
-
-    .nav-tab {
-      padding: 0.35rem 0.9rem; border: none; background: none;
-      font-family: var(--font); font-size: 14px; font-weight: 400;
-      cursor: pointer; color: var(--text-mid);
-      border-radius: 8px; transition: all .15s;
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      height: 72px;
+      background: rgba(26,26,36,0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-around;
+      padding: 0 16px 10px;
     }
 
-    .nav-tab.active { color: var(--text); font-weight: 600; background: rgba(255,255,255,0.06); }
-    .nav-tab:hover:not(.active) { color: var(--text); }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      cursor: pointer; padding: 0 16px; background: none; border: none;
+      font-family: var(--font);
+    }
+
+    .nav-icon  { font-size: 20px; color: var(--text-dim); transition: color .15s; }
+    .nav-label { font-size: 9px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .06em; }
+
+    .nav-item.active .nav-icon  { color: var(--pink); filter: drop-shadow(0 0 6px rgba(255,77,109,0.5)); }
+    .nav-item.active .nav-label { color: var(--pink); }
 
     /* ── MAIN ── */
     main {
       max-width: 720px; margin: 0 auto;
-      padding: 1.5rem 1.25rem 3rem;
+      padding: 1.5rem 1.25rem 6rem;
       position: relative; z-index: 5;
     }
 
@@ -308,18 +314,24 @@
 
 <!-- ADMIN APP -->
 <div id="admin-section" class="hidden">
-  <nav class="app-nav">
-    <div class="nav-inner">
-      <div class="nav-top">
-        <div class="nav-brand">WK Pool 2026</div>
-        <span class="admin-badge">Admin</span>
-      </div>
-      <div class="nav-tabs">
-        <button class="nav-tab active" data-tab="deelnemers">Deelnemers</button>
-        <button class="nav-tab" data-tab="uitslagen">Uitslagen</button>
-        <button class="nav-tab" data-tab="voorspellingen">Voorspellingen</button>
-      </div>
-    </div>
+  <header class="app-header">
+    <div class="nav-brand">WK Pool 2026</div>
+    <span class="admin-badge">Admin</span>
+  </header>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="deelnemers">
+      <div class="nav-icon">👥</div>
+      <div class="nav-label">Deelnemers</div>
+    </button>
+    <button class="nav-item" data-tab="uitslagen">
+      <div class="nav-icon">⚽</div>
+      <div class="nav-label">Uitslagen</div>
+    </button>
+    <button class="nav-item" data-tab="voorspellingen">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">Voorspellingen</div>
+    </button>
   </nav>
 
   <main>
@@ -381,15 +393,15 @@
   document.addEventListener('admin-login', toonAdmin)
   if (sessionStorage.getItem('admin_auth') === '1') toonAdmin()
 
-  document.querySelectorAll('.nav-tab').forEach(btn => {
+  document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => toonTab(btn.dataset.tab))
   })
 
   function toonTab(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'))
-    document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'))
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'))
     document.getElementById(`tab-${tab}`).classList.remove('hidden')
-    document.querySelector(`.nav-tab[data-tab="${tab}"]`).classList.add('active')
+    document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active')
     if (tab === 'deelnemers')    laadDeelnemers()
     if (tab === 'uitslagen')     laadUitslagen()
     if (tab === 'voorspellingen') laadVoorspellingen()
