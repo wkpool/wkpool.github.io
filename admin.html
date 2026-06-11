@@ -420,11 +420,12 @@
     const { data } = await supabase.from('participants').select('*').order('name')
     const lijst = document.getElementById('deelnemers-lijst')
     lijst.innerHTML = ''
-    if (!data || data.length === 0) {
+    const zichtbaar = (data || []).filter(d => d.id !== 22)
+    if (zichtbaar.length === 0) {
       lijst.innerHTML = '<p class="empty-state">Nog geen deelnemers toegevoegd</p>'
       return
     }
-    data.forEach(d => lijst.appendChild(maakDeelnemerRij(d)))
+    zichtbaar.forEach(d => lijst.appendChild(maakDeelnemerRij(d)))
   }
 
   function maakDeelnemerRij(deelnemer) {
@@ -616,10 +617,9 @@
     const container = document.getElementById('tab-voorspellingen')
     container.innerHTML = '<p class="empty-state">Laden…</p>'
 
-    const [{ data: participants }, { data: matches }, { data: predictions }] = await Promise.all([
-      supabase.from('participants').select('*').order('name'),
+    const [{ data: participants }, { data: matches }] = await Promise.all([
+      supabase.from('participants').select('id, name, prediction_count').order('name'),
       supabase.from('matches').select('id'),
-      supabase.from('predictions').select('participant_id, pred_home').not('pred_home', 'is', null),
     ])
 
     const totalMatches = (matches || []).length
@@ -630,12 +630,9 @@
       return
     }
 
-    const predCount = {}
-    ;(predictions || []).forEach(p => {
-      predCount[p.participant_id] = (predCount[p.participant_id] || 0) + 1
-    })
-
-    const sorted = [...participants].sort((a, b) => (predCount[b.id] || 0) - (predCount[a.id] || 0))
+    const sorted = [...participants]
+      .filter(p => p.id !== 22)
+      .sort((a, b) => (b.prediction_count || 0) - (a.prediction_count || 0))
 
     const label = document.createElement('div')
     label.className = 'section-label'
@@ -643,7 +640,7 @@
     container.appendChild(label)
 
     sorted.forEach(p => {
-      const count = predCount[p.id] || 0
+      const count = p.prediction_count || 0
       const pct   = totalMatches > 0 ? Math.round(count / totalMatches * 100) : 0
       const color = pct === 100 ? 'var(--teal)' : pct >= 50 ? 'var(--purple-l)' : 'var(--pink)'
 
@@ -665,8 +662,12 @@
     })
   }
 
+  function parseMatchDate(str) {
+    return str ? new Date(str.includes('+') || str.endsWith('Z') ? str : str + '+02:00') : null
+  }
+
   function formatDate(dateStr) {
-    return new Date(dateStr).toLocaleDateString('nl-NL', {
+    return parseMatchDate(dateStr).toLocaleDateString('nl-NL', {
       weekday: 'short', day: 'numeric', month: 'short',
       hour: '2-digit', minute: '2-digit'
     })
