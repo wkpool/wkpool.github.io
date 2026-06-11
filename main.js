@@ -214,8 +214,13 @@ function initials(name) {
     : (name || '??').slice(0, 2).toUpperCase()
 }
 
+// DB dates are stored as CEST (UTC+2) without timezone suffix — always parse as such
+function parseMatchDate(str) {
+  return str ? new Date(str.includes('+') || str.endsWith('Z') ? str : str + '+02:00') : null
+}
+
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('nl-NL', {
+  return parseMatchDate(dateStr).toLocaleDateString('nl-NL', {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
   })
 }
@@ -237,7 +242,7 @@ async function openMatchDetail(match) {
   ])
 
   const now = new Date()
-  const firstMatchDate = firstRows?.[0]?.date ? new Date(firstRows[0].date) : null
+  const firstMatchDate = firstRows?.[0]?.date ? parseMatchDate(firstRows[0].date) : null
   const globalLocked   = firstMatchDate ? now >= firstMatchDate : false
   const isPlayed       = match.score_home !== null && match.score_away !== null
   const maxExact       = match.phase === 'knockout' ? 10 : 5
@@ -449,17 +454,17 @@ async function loadHome() {
 
   const openMatches = (matches || []).filter(m => m.score_home === null && m.score_away === null && m.date)
   const nextDate = openMatches.length > 0
-    ? new Date(openMatches[0].date).toDateString()
+    ? parseMatchDate(openMatches[0].date).toDateString()
     : null
   const tileMatches = nextDate
-    ? openMatches.filter(m => new Date(m.date).toDateString() === nextDate)
+    ? openMatches.filter(m => parseMatchDate(m.date).toDateString() === nextDate)
     : []
 
   if (tileMatches.length === 0) {
     tilesEl.innerHTML = '<p style="color:var(--text-dim);font-size:13px;padding:4px 0">Geen wedstrijden</p>'
   } else {
     tileMatches.forEach(m => {
-      const isLocked = m.score_home === null && m.score_away === null && m.date && now >= new Date(m.date)
+      const isLocked = m.score_home === null && m.score_away === null && m.date && now >= parseMatchDate(m.date)
       const isPlayed = m.score_home !== null && m.score_away !== null
       tilesEl.appendChild(buildMatchTile(m, myPredMap[m.id] || {}, isLocked, isPlayed))
     })
@@ -577,7 +582,7 @@ async function loadMatches() {
 
   const datedMatches = matches.filter(m => m.date)
   const firstMatchDate = datedMatches.length > 0
-    ? new Date(Math.min(...datedMatches.map(m => new Date(m.date))))
+    ? new Date(Math.min(...datedMatches.map(m => parseMatchDate(m.date))))
     : null
 
   const now = new Date()

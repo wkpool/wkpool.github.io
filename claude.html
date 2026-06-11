@@ -154,8 +154,12 @@
   document.addEventListener('auth-ok', show)
   if (sessionStorage.getItem('claude_auth') === '1') show()
 
+  function parseMatchDate(str) {
+    return str ? new Date(str.includes('+') || str.endsWith('Z') ? str : str + '+02:00') : null
+  }
+
   function formatDate(d) {
-    return new Date(d).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    return parseMatchDate(d).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   }
 
   async function laad() {
