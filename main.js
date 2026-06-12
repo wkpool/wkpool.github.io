@@ -507,18 +507,29 @@ async function loadHome() {
     })
   }
 
-  // Laatste resultaten: last 3 played matches
-  const recentResults = played.slice(-3).reverse()
+  // Laatste resultaten
+  const allResults = [...played].reverse()
   const resultsEl = document.getElementById('home-results')
   resultsEl.innerHTML = ''
 
-  if (recentResults.length === 0) {
+  if (allResults.length === 0) {
     resultsEl.innerHTML = '<p class="empty-state">Nog geen gespeelde wedstrijden</p>'
   } else {
-    recentResults.forEach(m => {
-      const pred = myPredMap[m.id]
-      resultsEl.appendChild(buildResultItem(m, pred))
-    })
+    const initial = 3
+    allResults.slice(0, initial).forEach(m => resultsEl.appendChild(buildResultItem(m, myPredMap[m.id])))
+
+    if (allResults.length > initial) {
+      const more = allResults.slice(initial)
+      const moreBtn = document.createElement('button')
+      moreBtn.className = 'detail-btn'
+      moreBtn.style.cssText = 'width:100%;margin-top:6px;text-align:center'
+      moreBtn.textContent = `Toon meer (${more.length})`
+      moreBtn.addEventListener('click', () => {
+        more.forEach(m => resultsEl.insertBefore(buildResultItem(m, myPredMap[m.id]), moreBtn))
+        moreBtn.remove()
+      })
+      resultsEl.appendChild(moreBtn)
+    }
   }
 }
 
