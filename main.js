@@ -450,6 +450,9 @@ async function loadHome() {
 
   const now = new Date()
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
+  const datedMatches = (matches || []).filter(m => m.date)
+  const firstMatchDate = datedMatches.length > 0 ? new Date(Math.min(...datedMatches.map(m => parseMatchDate(m.date)))) : null
+  const globalLocked = firstMatchDate ? now >= firstMatchDate : false
 
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
   const myScore = scores.find(p => p.id === currentParticipant.id) || { points: 0, exact: 0 }
@@ -479,7 +482,7 @@ async function loadHome() {
     tilesEl.innerHTML = '<p style="color:var(--text-dim);font-size:13px;padding:4px 0">Geen wedstrijden</p>'
   } else {
     tileMatches.forEach(m => {
-      const isLocked = m.score_home === null && m.score_away === null && m.date && now >= parseMatchDate(m.date)
+      const isLocked = globalLocked || (m.date && now >= parseMatchDate(m.date))
       const isPlayed = m.score_home !== null && m.score_away !== null
       tilesEl.appendChild(buildMatchTile(m, myPredMap[m.id] || {}, isLocked, isPlayed))
     })
@@ -718,7 +721,7 @@ function buildMatchTile(match, pred, isLocked, isPlayed) {
     badgeHtml = `<div class="tile-badge">${pts === maxExact ? '⚡ Exact' : pts > 0 ? '✓ Goed' : '✗ Mis'}</div>`
   } else if (isLocked) {
     statusCls = 't-locked'
-    badgeHtml = '<div class="tile-badge">⏸ Gesloten</div>'
+    badgeHtml = ''
   } else {
     statusCls = 't-open'
     badgeHtml = '<div class="tile-badge"><span class="live-dot"></span> Open</div>'
@@ -860,7 +863,9 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
   if (isPlayed) {
     const pts = calcPoints(match, pred)
     const ptClass = `pts-${pts}`
-    const ptLabel = pts === 2 ? '⚡ Exact' : pts === 1 ? '✓ Winnaar goed' : '✗ 0 punten'
+    const maxExact = match.phase === 'knockout' ? 10 : 5
+    const base     = match.phase === 'knockout' ? 6 : 3
+    const ptLabel  = pts === maxExact ? `⚡ Exact · ${pts} ptn` : pts >= base ? `✓ Goed · ${pts} ptn` : '✗ 0 punten'
     bottom.innerHTML = `
       <span class="played-meta">Uitslag: ${match.score_home}–${match.score_away} · Jij: ${pred.pred_home ?? '—'}–${pred.pred_away ?? '—'}</span>
       <span class="pts-tag ${ptClass}">${ptLabel}</span>
@@ -905,8 +910,11 @@ function calcScores(participants, playedMatches, predictions) {
       if (match) {
         const pts = calcPoints(match, pred)
         points += pts
-        if (pts === 2) exact++
-        if (pts === 1) goed++
+        const ko = match.phase === 'knockout'
+        const maxExact = ko ? 10 : 5
+        const base     = ko ? 6  : 3
+        if (pts === maxExact) exact++
+        else if (pts >= base) goed++
       }
     })
     return { ...p, points, exact, goed }
