@@ -194,6 +194,25 @@ function flag(name, stored) {
   return FLAGS[key] || FLAGS[name.toLowerCase().trim()] || '🏳'
 }
 
+const TLA = {
+  'mexico': 'MEX', 'zuid-afrika': 'RSA', 'zuid-korea': 'KOR', 'tsjechië': 'CZE',
+  'canada': 'CAN', 'bosnië-herzegovina': 'BIH', 'verenigde staten': 'USA', 'paraguay': 'PAR',
+  'qatar': 'QAT', 'zwitserland': 'SUI', 'brazilië': 'BRA', 'marokko': 'MAR',
+  'haïti': 'HAI', 'schotland': 'SCO', 'australië': 'AUS', 'turkije': 'TUR',
+  'duitsland': 'GER', 'curaçao': 'CUW', 'nederland': 'NED', 'japan': 'JPN',
+  'ivoorkust': 'CIV', 'ecuador': 'ECU', 'zweden': 'SWE', 'tunesië': 'TUN',
+  'spanje': 'ESP', 'kaapverdië': 'CPV', 'belgië': 'BEL', 'egypte': 'EGY',
+  'saoedi-arabië': 'KSA', 'uruguay': 'URU', 'iran': 'IRN', 'nieuw-zeeland': 'NZL',
+  'frankrijk': 'FRA', 'senegal': 'SEN', 'irak': 'IRQ', 'noorwegen': 'NOR',
+  'argentinië': 'ARG', 'algerije': 'ALG', 'oostenrijk': 'AUT', 'jordanië': 'JOR',
+  'portugal': 'POR', 'congo': 'COD', 'engeland': 'ENG', 'kroatië': 'CRO',
+  'ghana': 'GHA', 'panama': 'PAN', 'oezbekistan': 'UZB', 'colombia': 'COL',
+}
+
+function tla(name) {
+  return TLA[(name || '').toLowerCase()] || (name || '').slice(0, 3).toUpperCase()
+}
+
 const AVATAR_COLORS = [
   'linear-gradient(135deg,#7c5cbf,#5a3fa0)',
   'linear-gradient(135deg,#ff4d6d,#e84393)',
@@ -555,11 +574,13 @@ async function loadScoreboard() {
     podiumEl.appendChild(pod)
   })
 
-  // Leaderboard list (4th+)
+  // Leaderboard list (all, with tied ranks)
   const lbEl = document.getElementById('lb-list')
   lbEl.innerHTML = ''
-  scores.slice(3).forEach((p, i) => {
-    lbEl.appendChild(buildLbItem(p, i + 4))
+  let rank = 1
+  scores.forEach((p, i) => {
+    if (i > 0 && p.points < scores[i - 1].points) rank = i + 1
+    lbEl.appendChild(buildLbItem(p, rank))
   })
 }
 
@@ -745,11 +766,11 @@ function buildMatchTile(match, pred, isLocked, isPlayed) {
     <div class="tile-scores">
       <div>
         <div class="tile-score-num">${homeScore}</div>
-        <div class="tile-score-lbl">${(match.home || '').slice(0, 8)}</div>
+        <div class="tile-score-lbl">${tla(match.home)}</div>
       </div>
       <div style="text-align:right">
         <div class="tile-score-num">${awayScore}</div>
-        <div class="tile-score-lbl">${(match.away || '').slice(0, 8)}</div>
+        <div class="tile-score-lbl">${tla(match.away)}</div>
       </div>
     </div>
   `
@@ -831,6 +852,10 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
   const homeFlag = `<div class="match-flag">${flag(match.home, match.home_flag)}</div>`
   const awayFlag = `<div class="match-flag">${flag(match.away, match.away_flag)}</div>`
 
+  const vsMiddle = isPlayed
+    ? `<div class="match-vs-score">${match.score_home} – ${match.score_away}</div>`
+    : `<div class="match-vs-time">${match.date ? formatDate(match.date) : ''}</div>`
+
   card.innerHTML = `
     <div class="match-card-top">
       <span class="match-group" ${match.poule && groupColorMap[match.poule] ? `style="background:${groupColorMap[match.poule].bg};border-color:${groupColorMap[match.poule].border};color:${groupColorMap[match.poule].text}"` : ''}>${match.poule ? `Groep ${match.poule}` : ''}</span>
@@ -842,7 +867,7 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
         <div class="match-team-name">${match.home || '?'}</div>
       </div>
       <div class="match-vs">
-        <div class="match-vs-time">${match.date ? formatDate(match.date) : ''}</div>
+        ${vsMiddle}
       </div>
       <div class="match-team">
         ${awayFlag}
@@ -862,13 +887,13 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
 
   if (isPlayed) {
     const pts = calcPoints(match, pred)
-    const ptClass = `pts-${pts}`
     const maxExact = match.phase === 'knockout' ? 10 : 5
     const base     = match.phase === 'knockout' ? 6 : 3
     const ptLabel  = pts === maxExact ? `⚡ Exact · ${pts} ptn` : pts >= base ? `✓ Goed · ${pts} ptn` : '✗ 0 punten'
+    const predStr  = pred.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
     bottom.innerHTML = `
-      <span class="played-meta">Uitslag: ${match.score_home}–${match.score_away} · Jij: ${pred.pred_home ?? '—'}–${pred.pred_away ?? '—'}</span>
-      <span class="pts-tag ${ptClass}">${ptLabel}</span>
+      <span class="pts-tag pts-pred">Jouw voorspelling: ${predStr}</span>
+      <span class="pts-tag pts-${pts > 0 ? 'good' : 'miss'}">${ptLabel}</span>
     `
   } else if (isLocked) {
     const hasPred = pred.pred_home != null
