@@ -888,13 +888,14 @@ function buildResultItem(match, pred) {
   const draw = match.score_home === match.score_away
   const homeWon = match.score_home > match.score_away
   const iconContent = draw
-    ? `<span style="font-size:18px;line-height:1">${flag(match.home, match.home_flag)}</span><span style="font-size:18px;line-height:1">${flag(match.away, match.away_flag)}</span>`
+    ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;clip-path:polygon(0 0,100% 0,0 100%)">${flag(match.home, match.home_flag)}</div>
+       <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;clip-path:polygon(100% 0,100% 100%,0 100%)">${flag(match.away, match.away_flag)}</div>`
     : homeWon
       ? flag(match.home, match.home_flag)
       : flag(match.away, match.away_flag)
 
   item.innerHTML = `
-    <div class="upcoming-icon" style="background:${tileColor(match.id)};display:flex;align-items:center;justify-content:center;gap:2px">${iconContent}</div>
+    <div class="upcoming-icon${draw ? ' icon-draw' : ''}" style="background:${tileColor(match.id)};${draw ? 'position:relative;overflow:hidden' : 'display:flex;align-items:center;justify-content:center;font-size:32px'}">${iconContent}</div>
     <div class="upcoming-info">
       <div class="upcoming-name">${match.home || '?'} vs ${match.away || '?'}</div>
       <div class="upcoming-sub">Uitslag: ${match.score_home}–${match.score_away} · Jij: ${predStr}</div>
