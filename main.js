@@ -2,6 +2,7 @@ import { supabase } from './supabase.js'
 
 let currentParticipant = null
 const shirtStore = {} // participantId → { type, c1, c2 }
+let _clipId = 0
 
 async function fetchAllPredictions(query = {}) {
   const all = []
@@ -312,10 +313,10 @@ function shirtSvg(name, custom = null) {
   } else {
     design = SHIRT_DESIGNS[strHash(name) % SHIRT_DESIGNS.length]
   }
-  const clipId = 'sc' + strHash(name)
+  const clipId = 'sc' + (++_clipId)
   const shirtPath = 'M35,12 L10,24 L16,42 L28,36 L28,88 L72,88 L72,36 L84,42 L90,24 L65,12 Q50,22 35,12 Z'
-  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
-    <rect width="100" height="100" rx="50" fill="#1a1a28"/>
+  return `<svg viewBox="-10 -10 120 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
+    <rect x="-10" y="-10" width="120" height="120" rx="60" fill="#1a1a28"/>
     <defs><clipPath id="${clipId}"><path d="${shirtPath}"/></clipPath></defs>
     <g clip-path="url(#${clipId})">${shirtPattern(design.type, design.c1, design.c2)}</g>
     <path d="M35,12 Q50,22 65,12 L57,27 Q50,33 43,27 Z" fill="${design.collar}"/>
@@ -323,7 +324,7 @@ function shirtSvg(name, custom = null) {
   </svg>`
 }
 
-function shirtSvgForP(p) { return shirtSvg(p.name, shirtStore[p.id] || null) }
+function shirtSvgForP(p) { return shirtSvg(p.name, p.shirt || shirtStore[p.id] || null) }
 
 // DB dates are stored as CEST (UTC+2) without timezone suffix — always parse as such
 function parseMatchDate(str) {
@@ -552,6 +553,8 @@ async function loadHome() {
   const globalLocked = firstMatchDate ? now >= firstMatchDate : false
 
   ;(participants || []).forEach(p => { if (p.shirt) shirtStore[p.id] = p.shirt })
+  const freshMe = (participants || []).find(p => p.id === currentParticipant.id)
+  if (freshMe?.shirt) { currentParticipant.shirt = freshMe.shirt; localStorage.setItem('wkpool_participant', JSON.stringify(currentParticipant)) }
   document.getElementById('nav-avatar').innerHTML = shirtSvgForP(currentParticipant)
 
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
@@ -656,8 +659,9 @@ async function loadScoreboard() {
       const ptColor = rank === 1 ? 'var(--amber)' : rank === 2 ? 'var(--purple-l)' : 'var(--pink)'
 
       pod.innerHTML = `
-        <div class="pod-avatar" style="background:none;padding:0;overflow:hidden;position:relative">
-          ${shirtSvgForP(player)}${crown}
+        <div class="pod-avatar" style="background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;position:relative">
+          <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(player)}</div>
+          ${crown}
         </div>
         <div class="pod-name">${player.name.split(' ')[0]}${isMe ? ' (jij)' : ''}</div>
         <div class="pod-pts" style="color:${ptColor}">${player.points}</div>
@@ -928,7 +932,9 @@ function buildLbItem(p, rank) {
   item.className = `lb-item${isMe ? ' me' : ''}`
   item.innerHTML = `
     <div class="lb-num${isMe ? ' is-me' : ''}">${rank}</div>
-    <div class="lb-av" style="background:none;padding:0;overflow:hidden">${shirtSvgForP(p)}</div>
+    <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
+      <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(p)}</div>
+    </div>
     <div class="lb-info">
       <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}</div>
       <div class="lb-detail">${p.exact} exact · ${p.goed} goed</div>
