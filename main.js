@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js'
 
 let currentParticipant = null
+const shirtStore = {} // participantId → { type, c1, c2 }
 
 async function fetchAllPredictions(query = {}) {
   const all = []
@@ -248,6 +249,82 @@ function initials(name) {
     : (name || '??').slice(0, 2).toUpperCase()
 }
 
+const SHIRT_DESIGNS = [
+  { type: 'solid',    c1: '#e63950', c2: '#ffffff', collar: '#a8001e' },
+  { type: 'hstripes', c1: '#0369a1', c2: '#ffffff', collar: '#075985' },
+  { type: 'vstripes', c1: '#1c1c24', c2: '#ffffff', collar: '#333' },
+  { type: 'sash',     c1: '#22c55e', c2: '#ffffff', collar: '#15803d' },
+  { type: 'half',     c1: '#9b6de8', c2: '#f97316', collar: '#6a3bc4' },
+  { type: 'solid',    c1: '#f59e0b', c2: '#b45309', collar: '#92400e' },
+  { type: 'hstripes', c1: '#e84393', c2: '#ffffff', collar: '#9d1c5e' },
+  { type: 'panel',    c1: '#38bdf8', c2: '#0369a1', collar: '#075985' },
+  { type: 'vstripes', c1: '#e63950', c2: '#1c1c24', collar: '#a8001e' },
+  { type: 'sash',     c1: '#1c1c24', c2: '#f59e0b', collar: '#92400e' },
+  { type: 'hoops',    c1: '#e63950', c2: '#ffffff', collar: '#a8001e' },
+  { type: 'panel',    c1: '#a78bfa', c2: '#4338ca', collar: '#3730a3' },
+  { type: 'chevron',  c1: '#0ea5e9', c2: '#ffffff', collar: '#0369a1' },
+  { type: 'hoops',    c1: '#f97316', c2: '#1c1c24', collar: '#c2410c' },
+  { type: 'chevron',  c1: '#22c55e', c2: '#f59e0b', collar: '#15803d' },
+  { type: 'half',     c1: '#14b8a6', c2: '#6366f1', collar: '#0f766e' },
+]
+
+function shirtPattern(type, c1, c2) {
+  switch (type) {
+    case 'solid':
+      return `<rect width="100" height="100" fill="${c1}"/>`
+    case 'hstripes':
+      return `<rect width="100" height="100" fill="${c1}"/>
+        <rect width="100" y="20" height="15" fill="${c2}"/>
+        <rect width="100" y="50" height="15" fill="${c2}"/>
+        <rect width="100" y="80" height="15" fill="${c2}"/>`
+    case 'vstripes':
+      return `<rect width="100" height="100" fill="${c1}"/>
+        <rect x="18" width="11" height="100" fill="${c2}"/>
+        <rect x="40" width="11" height="100" fill="${c2}"/>
+        <rect x="62" width="11" height="100" fill="${c2}"/>
+        <rect x="84" width="11" height="100" fill="${c2}"/>`
+    case 'sash':
+      return `<rect width="100" height="100" fill="${c1}"/>
+        <polygon points="22,0 62,0 78,100 38,100" fill="${c2}"/>`
+    case 'half':
+      return `<rect width="50" height="100" fill="${c1}"/>
+        <rect x="50" width="50" height="100" fill="${c2}"/>`
+    case 'panel':
+      return `<rect width="100" height="100" fill="${c2}"/>
+        <rect x="27" width="46" height="100" fill="${c1}"/>`
+    case 'hoops':
+      return `<rect width="100" height="100" fill="${c1}"/>
+        <rect width="100" y="28" height="16" fill="${c2}"/>
+        <rect width="100" y="60" height="16" fill="${c2}"/>`
+    case 'chevron':
+      return `<rect width="100" height="100" fill="${c1}"/>
+        <polygon points="0,48 50,68 100,48 100,62 50,82 0,62" fill="${c2}"/>`
+    default:
+      return `<rect width="100" height="100" fill="${c1}"/>`
+  }
+}
+
+function shirtSvg(name, custom = null) {
+  const ini = initials(name)
+  let design
+  if (custom && custom.type && custom.c1) {
+    design = { type: custom.type, c1: custom.c1, c2: custom.c2 || '#ffffff', collar: custom.c2 || '#ffffff' }
+  } else {
+    design = SHIRT_DESIGNS[strHash(name) % SHIRT_DESIGNS.length]
+  }
+  const clipId = 'sc' + strHash(name)
+  const shirtPath = 'M35,12 L10,24 L16,42 L28,36 L28,88 L72,88 L72,36 L84,42 L90,24 L65,12 Q50,22 35,12 Z'
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
+    <rect width="100" height="100" rx="50" fill="#1a1a28"/>
+    <defs><clipPath id="${clipId}"><path d="${shirtPath}"/></clipPath></defs>
+    <g clip-path="url(#${clipId})">${shirtPattern(design.type, design.c1, design.c2)}</g>
+    <path d="M35,12 Q50,22 65,12 L57,27 Q50,33 43,27 Z" fill="${design.collar}"/>
+    <text x="50" y="67" text-anchor="middle" dominant-baseline="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="20" fill="white" stroke="rgba(0,0,0,0.5)" stroke-width="3" paint-order="stroke">${ini}</text>
+  </svg>`
+}
+
+function shirtSvgForP(p) { return shirtSvg(p.name, shirtStore[p.id] || null) }
+
 // DB dates are stored as CEST (UTC+2) without timezone suffix — always parse as such
 function parseMatchDate(str) {
   return str ? new Date(str.includes('+') || str.endsWith('Z') ? str : str + '+02:00') : null
@@ -434,8 +511,9 @@ function showApp() {
   document.getElementById('app-section').classList.remove('hidden')
 
   const name = currentParticipant.name
+  if (currentParticipant.shirt) shirtStore[currentParticipant.id] = currentParticipant.shirt
   document.getElementById('greeting-name').textContent = `Hoi ${name.split(' ')[0]} 👋`
-  document.getElementById('nav-avatar').textContent = initials(name)
+  document.getElementById('nav-avatar').innerHTML = shirtSvgForP(currentParticipant)
 
   switchTab('home')
 }
@@ -472,6 +550,9 @@ async function loadHome() {
   const datedMatches = (matches || []).filter(m => m.date)
   const firstMatchDate = datedMatches.length > 0 ? new Date(Math.min(...datedMatches.map(m => parseMatchDate(m.date)))) : null
   const globalLocked = firstMatchDate ? now >= firstMatchDate : false
+
+  ;(participants || []).forEach(p => { if (p.shirt) shirtStore[p.id] = p.shirt })
+  document.getElementById('nav-avatar').innerHTML = shirtSvgForP(currentParticipant)
 
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
   const myScore = scores.find(p => p.id === currentParticipant.id) || { points: 0, exact: 0 }
@@ -542,6 +623,7 @@ async function loadScoreboard() {
     fetchAllPredictions(),
   ])
 
+  ;(participants || []).forEach(p => { if (p.shirt) shirtStore[p.id] = p.shirt })
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
 
@@ -574,8 +656,8 @@ async function loadScoreboard() {
       const ptColor = rank === 1 ? 'var(--amber)' : rank === 2 ? 'var(--purple-l)' : 'var(--pink)'
 
       pod.innerHTML = `
-        <div class="pod-avatar" style="background:${avatarColor(player.name)}">
-          ${crown}${initials(player.name)}
+        <div class="pod-avatar" style="background:none;padding:0;overflow:hidden;position:relative">
+          ${shirtSvgForP(player)}${crown}
         </div>
         <div class="pod-name">${player.name.split(' ')[0]}${isMe ? ' (jij)' : ''}</div>
         <div class="pod-pts" style="color:${ptColor}">${player.points}</div>
@@ -799,8 +881,16 @@ function buildResultItem(match, pred) {
   const ptsLabel = pts === null ? '—' : `+${pts}`
   const predStr  = pred?.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
 
+  const draw = match.score_home === match.score_away
+  const homeWon = match.score_home > match.score_away
+  const iconContent = draw
+    ? `<span style="font-size:18px;line-height:1">${flag(match.home, match.home_flag)}</span><span style="font-size:18px;line-height:1">${flag(match.away, match.away_flag)}</span>`
+    : homeWon
+      ? flag(match.home, match.home_flag)
+      : flag(match.away, match.away_flag)
+
   item.innerHTML = `
-    <div class="upcoming-icon" style="background:${tileColor(match.id)}">${flag(match.home, match.home_flag)}</div>
+    <div class="upcoming-icon" style="background:${tileColor(match.id)};display:flex;align-items:center;justify-content:center;gap:2px">${iconContent}</div>
     <div class="upcoming-info">
       <div class="upcoming-name">${match.home || '?'} vs ${match.away || '?'}</div>
       <div class="upcoming-sub">Uitslag: ${match.score_home}–${match.score_away} · Jij: ${predStr}</div>
@@ -838,7 +928,7 @@ function buildLbItem(p, rank) {
   item.className = `lb-item${isMe ? ' me' : ''}`
   item.innerHTML = `
     <div class="lb-num${isMe ? ' is-me' : ''}">${rank}</div>
-    <div class="lb-av" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
+    <div class="lb-av" style="background:none;padding:0;overflow:hidden">${shirtSvgForP(p)}</div>
     <div class="lb-info">
       <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}</div>
       <div class="lb-detail">${p.exact} exact · ${p.goed} goed</div>
@@ -1008,6 +1098,111 @@ document.addEventListener('click', e => {
 
   const navItem = e.target.closest('.nav-item[data-tab]')
   if (navItem) { switchTab(navItem.dataset.tab); return }
+
+  if (e.target.closest('.avatar-ring')) { openShirtEditor(); return }
 })
+
+// ── Shirt Editor ──────────────────────────────────────────
+
+const SHIRT_PALETTE = [
+  '#ff4d6d', '#e84393', '#9b6de8', '#b48af5',
+  '#6366f1', '#0ea5e9', '#38bdf8', '#14b8a6',
+  '#00d4aa', '#22c55e', '#f59e0b', '#ffb800',
+  '#f97316', '#ef4444', '#ffffff', '#1c1c24',
+]
+
+const PATTERN_NAMES = { solid: 'Effen', hstripes: 'H-Strepen', vstripes: 'V-Strepen', sash: 'Sash', half: 'Half', panel: 'Panel', hoops: 'Hoops', chevron: 'Chevron' }
+const PATTERNS = ['solid', 'hstripes', 'vstripes', 'sash', 'half', 'panel', 'hoops', 'chevron']
+
+let editorShirt = { type: 'solid', c1: '#ff4d6d', c2: '#ffffff' }
+
+function openShirtEditor() {
+  const stored = shirtStore[currentParticipant.id]
+  if (stored) {
+    editorShirt = { type: stored.type || 'solid', c1: stored.c1 || '#ff4d6d', c2: stored.c2 || '#ffffff' }
+  } else {
+    const d = SHIRT_DESIGNS[strHash(currentParticipant.name) % SHIRT_DESIGNS.length]
+    editorShirt = { type: d.type, c1: d.c1, c2: d.c2 }
+  }
+  renderShirtEditor()
+  document.getElementById('shirt-editor-overlay').classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+  document.getElementById('se-save-btn').onclick = saveShirt
+  document.getElementById('se-close-btn').onclick = closeShirtEditor
+  document.getElementById('se-backdrop').onclick = closeShirtEditor
+}
+
+function closeShirtEditor() {
+  document.getElementById('shirt-editor-overlay').classList.add('hidden')
+  document.body.style.overflow = ''
+}
+
+function renderShirtEditor() {
+  document.getElementById('se-preview').innerHTML = shirtSvg(currentParticipant.name, editorShirt)
+
+  const patsEl = document.getElementById('se-patterns')
+  patsEl.innerHTML = ''
+  PATTERNS.forEach(type => {
+    const shirtPath = 'M35,12 L10,24 L16,42 L28,36 L28,88 L72,88 L72,36 L84,42 L90,24 L65,12 Q50,22 35,12 Z'
+    const clipId = 'sthe_' + type
+    const btn = document.createElement('button')
+    btn.className = `se-pat-btn${editorShirt.type === type ? ' active' : ''}`
+    btn.innerHTML = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
+      <rect width="100" height="100" fill="#14141e"/>
+      <defs><clipPath id="${clipId}"><path d="${shirtPath}"/></clipPath></defs>
+      <g clip-path="url(#${clipId})">${shirtPattern(type, editorShirt.c1, editorShirt.c2)}</g>
+      <path d="M35,12 Q50,22 65,12 L57,27 Q50,33 43,27 Z" fill="${editorShirt.c2}"/>
+    </svg>
+    <div class="se-pat-lbl">${PATTERN_NAMES[type]}</div>`
+    btn.addEventListener('click', () => { editorShirt.type = type; renderShirtEditor() })
+    patsEl.appendChild(btn)
+  })
+
+  const c1El = document.getElementById('se-colors-1')
+  c1El.innerHTML = ''
+  SHIRT_PALETTE.forEach(hex => {
+    const sw = document.createElement('div')
+    sw.className = `se-swatch${editorShirt.c1 === hex ? ' active' : ''}`
+    sw.style.background = hex
+    if (hex === '#1c1c24') sw.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,0.15)'
+    sw.addEventListener('click', () => { editorShirt.c1 = hex; renderShirtEditor() })
+    c1El.appendChild(sw)
+  })
+
+  const c2El = document.getElementById('se-colors-2')
+  c2El.innerHTML = ''
+  SHIRT_PALETTE.forEach(hex => {
+    const sw = document.createElement('div')
+    sw.className = `se-swatch${editorShirt.c2 === hex ? ' active' : ''}`
+    sw.style.background = hex
+    if (hex === '#1c1c24') sw.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,0.15)'
+    sw.addEventListener('click', () => { editorShirt.c2 = hex; renderShirtEditor() })
+    c2El.appendChild(sw)
+  })
+}
+
+async function saveShirt() {
+  const btn = document.getElementById('se-save-btn')
+  btn.disabled = true
+  btn.textContent = 'Opslaan…'
+
+  const shirt = { type: editorShirt.type, c1: editorShirt.c1, c2: editorShirt.c2 }
+
+  const { error } = await supabase.from('participants').update({ shirt }).eq('id', currentParticipant.id)
+
+  if (error) {
+    btn.textContent = 'Fout! Probeer opnieuw'
+    setTimeout(() => { btn.textContent = 'Shirt opslaan'; btn.disabled = false }, 2000)
+    return
+  }
+
+  shirtStore[currentParticipant.id] = shirt
+  currentParticipant.shirt = shirt
+  localStorage.setItem('wkpool_participant', JSON.stringify(currentParticipant))
+  document.getElementById('nav-avatar').innerHTML = shirtSvgForP(currentParticipant)
+
+  btn.textContent = '✓ Opgeslagen!'
+  setTimeout(() => { closeShirtEditor(); btn.textContent = 'Shirt opslaan'; btn.disabled = false }, 900)
+}
 
 init()

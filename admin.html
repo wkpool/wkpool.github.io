@@ -194,9 +194,7 @@
 
     .deelnemer-avatar {
       width: 32px; height: 32px; border-radius: 50%;
-      background: linear-gradient(135deg, #9b6de8, #ff4d6d);
-      color: white; font-size: 12px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      flex-shrink: 0; overflow: hidden;
     }
 
     .deelnemer-naam { font-size: 15px; font-weight: 600; }
@@ -415,6 +413,59 @@
       : (naam || '??').slice(0, 2).toUpperCase()
   }
 
+  const SHIRT_DESIGNS = [
+    { type: 'solid',    c1: '#e63950', c2: '#ffffff', collar: '#a8001e' },
+    { type: 'hstripes', c1: '#0369a1', c2: '#ffffff', collar: '#075985' },
+    { type: 'vstripes', c1: '#1c1c24', c2: '#ffffff', collar: '#333' },
+    { type: 'sash',     c1: '#22c55e', c2: '#ffffff', collar: '#15803d' },
+    { type: 'half',     c1: '#9b6de8', c2: '#f97316', collar: '#6a3bc4' },
+    { type: 'solid',    c1: '#f59e0b', c2: '#b45309', collar: '#92400e' },
+    { type: 'hstripes', c1: '#e84393', c2: '#ffffff', collar: '#9d1c5e' },
+    { type: 'panel',    c1: '#38bdf8', c2: '#0369a1', collar: '#075985' },
+    { type: 'vstripes', c1: '#e63950', c2: '#1c1c24', collar: '#a8001e' },
+    { type: 'sash',     c1: '#1c1c24', c2: '#f59e0b', collar: '#92400e' },
+    { type: 'hoops',    c1: '#e63950', c2: '#ffffff', collar: '#a8001e' },
+    { type: 'panel',    c1: '#a78bfa', c2: '#4338ca', collar: '#3730a3' },
+    { type: 'chevron',  c1: '#0ea5e9', c2: '#ffffff', collar: '#0369a1' },
+    { type: 'hoops',    c1: '#f97316', c2: '#1c1c24', collar: '#c2410c' },
+    { type: 'chevron',  c1: '#22c55e', c2: '#f59e0b', collar: '#15803d' },
+    { type: 'half',     c1: '#14b8a6', c2: '#6366f1', collar: '#0f766e' },
+  ]
+
+  function strHash(s) {
+    let h = 0
+    for (const c of String(s || '')) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff
+    return Math.abs(h)
+  }
+
+  function shirtPattern(type, c1, c2) {
+    switch (type) {
+      case 'solid':    return `<rect width="100" height="100" fill="${c1}"/>`
+      case 'hstripes': return `<rect width="100" height="100" fill="${c1}"/><rect width="100" y="20" height="15" fill="${c2}"/><rect width="100" y="50" height="15" fill="${c2}"/><rect width="100" y="80" height="15" fill="${c2}"/>`
+      case 'vstripes': return `<rect width="100" height="100" fill="${c1}"/><rect x="18" width="11" height="100" fill="${c2}"/><rect x="40" width="11" height="100" fill="${c2}"/><rect x="62" width="11" height="100" fill="${c2}"/><rect x="84" width="11" height="100" fill="${c2}"/>`
+      case 'sash':     return `<rect width="100" height="100" fill="${c1}"/><polygon points="22,0 62,0 78,100 38,100" fill="${c2}"/>`
+      case 'half':     return `<rect width="50" height="100" fill="${c1}"/><rect x="50" width="50" height="100" fill="${c2}"/>`
+      case 'panel':    return `<rect width="100" height="100" fill="${c2}"/><rect x="27" width="46" height="100" fill="${c1}"/>`
+      case 'hoops':    return `<rect width="100" height="100" fill="${c1}"/><rect width="100" y="28" height="16" fill="${c2}"/><rect width="100" y="60" height="16" fill="${c2}"/>`
+      case 'chevron':  return `<rect width="100" height="100" fill="${c1}"/><polygon points="0,48 50,68 100,48 100,62 50,82 0,62" fill="${c2}"/>`
+      default:         return `<rect width="100" height="100" fill="${c1}"/>`
+    }
+  }
+
+  function shirtSvg(naam) {
+    const ini = initialen(naam)
+    const design = SHIRT_DESIGNS[strHash(naam) % SHIRT_DESIGNS.length]
+    const clipId = 'sc' + strHash(naam)
+    const shirtPath = 'M35,12 L10,24 L16,42 L28,36 L28,88 L72,88 L72,36 L84,42 L90,24 L65,12 Q50,22 35,12 Z'
+    return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
+      <rect width="100" height="100" rx="50" fill="#1a1a28"/>
+      <defs><clipPath id="${clipId}"><path d="${shirtPath}"/></clipPath></defs>
+      <g clip-path="url(#${clipId})">${shirtPattern(design.type, design.c1, design.c2)}</g>
+      <path d="M35,12 Q50,22 65,12 L57,27 Q50,33 43,27 Z" fill="${design.collar}"/>
+      <text x="50" y="67" text-anchor="middle" dominant-baseline="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="20" fill="white" stroke="rgba(0,0,0,0.5)" stroke-width="3" paint-order="stroke">${ini}</text>
+    </svg>`
+  }
+
   // ── Deelnemers ──────────────────────────────────────────
 
   async function laadDeelnemers() {
@@ -437,7 +488,7 @@
     row.innerHTML = `
       <div class="deelnemer-top">
         <div class="deelnemer-info">
-          <div class="deelnemer-avatar">${initialen(deelnemer.name)}</div>
+          <div class="deelnemer-avatar" style="background:none;padding:0;overflow:hidden">${shirtSvg(deelnemer.name)}</div>
           <span class="deelnemer-naam">${deelnemer.name}</span>
         </div>
         <button class="btn-destructive verwijder-btn">Verwijder</button>
@@ -650,7 +701,7 @@
       row.innerHTML = `
         <div class="pred-top">
           <div class="deelnemer-info">
-            <div class="deelnemer-avatar">${initialen(p.name)}</div>
+            <div class="deelnemer-avatar" style="background:none;padding:0;overflow:hidden">${shirtSvg(p.name)}</div>
             <span class="deelnemer-naam">${p.name}</span>
           </div>
           <span class="pred-count" style="color:${color}">${count} / ${totalMatches}</span>

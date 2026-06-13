@@ -119,13 +119,15 @@
       width: 44px; height: 44px; border-radius: 50%;
       background: linear-gradient(135deg, #9b6de8, #ff4d6d);
       padding: 2px; flex-shrink: 0;
+      cursor: pointer;
+      transition: transform .15s;
     }
+    .avatar-ring:hover { transform: scale(1.08); }
 
     .avatar-inner {
       width: 100%; height: 100%; border-radius: 50%;
       background: var(--bg2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; font-weight: 800;
+      overflow: hidden;
     }
 
     /* ── HERO CARD ── */
@@ -736,6 +738,122 @@
     }
 
     .detail-btn:hover { opacity: 1; }
+
+    /* ── SHIRT EDITOR OVERLAY ── */
+    #shirt-editor-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+
+    .se-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .se-sheet {
+      position: relative; z-index: 1;
+      background: #1a1a26;
+      border-radius: 24px 24px 0 0;
+      border-top: 1px solid rgba(255,255,255,0.09);
+      max-height: 88vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .se-handle {
+      width: 36px; height: 4px;
+      background: rgba(255,255,255,0.14);
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+
+    .se-body { padding: 10px 20px 52px; }
+
+    .se-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0 4px;
+    }
+
+    .se-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+
+    .se-preview-wrap {
+      display: flex; justify-content: center;
+      padding: 18px 0 22px;
+    }
+
+    .se-preview-ring {
+      width: 96px; height: 96px; border-radius: 50%;
+      background: linear-gradient(135deg, #9b6de8, #ff4d6d);
+      padding: 3px;
+    }
+
+    .se-preview-inner {
+      width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
+    }
+
+    .se-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-dim);
+      margin: 16px 0 8px;
+    }
+
+    .se-patterns {
+      display: flex; gap: 8px;
+      overflow-x: auto; padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .se-patterns::-webkit-scrollbar { display: none; }
+
+    .se-pat-btn {
+      flex-shrink: 0; width: 60px; height: 60px;
+      border-radius: 14px; overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.08);
+      cursor: pointer; background: none; padding: 0;
+      transition: border-color .15s, transform .1s;
+      position: relative;
+    }
+
+    .se-pat-btn:hover { transform: scale(1.05); border-color: rgba(255,255,255,0.2); }
+    .se-pat-btn.active { border-color: var(--pink); box-shadow: 0 0 0 1px var(--pink); }
+
+    .se-pat-lbl {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.55);
+      font-size: 7px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .03em; color: white; text-align: center; padding: 3px 0;
+    }
+
+    .se-swatches {
+      display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 2px;
+    }
+
+    .se-swatch {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.08);
+      cursor: pointer; transition: border-color .15s, transform .1s;
+    }
+
+    .se-swatch:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.3); }
+
+    .se-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.35);
+      transform: scale(1.12);
+    }
+
+    .btn-save-shirt {
+      width: 100%; margin-top: 22px; padding: 15px;
+      background: linear-gradient(135deg, #9b72e8, #7c5cbf);
+      color: white; border: none; border-radius: 14px;
+      font-family: var(--font); font-size: 16px; font-weight: 700;
+      cursor: pointer; box-shadow: 0 8px 20px rgba(124,92,191,0.3);
+      transition: opacity .15s;
+    }
+
+    .btn-save-shirt:hover { opacity: 0.88; }
+    .btn-save-shirt:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -931,6 +1049,32 @@
 </div>
 
 <script type="module" src="main.js"></script>
+
+<!-- SHIRT EDITOR OVERLAY -->
+<div id="shirt-editor-overlay" class="hidden">
+  <div class="se-backdrop" id="se-backdrop"></div>
+  <div class="se-sheet">
+    <div class="se-handle"></div>
+    <div class="se-body">
+      <div class="se-header">
+        <div class="se-title">Jouw shirt</div>
+        <button class="md-close-btn" id="se-close-btn">✕ Sluit</button>
+      </div>
+      <div class="se-preview-wrap">
+        <div class="se-preview-ring">
+          <div class="se-preview-inner" id="se-preview"></div>
+        </div>
+      </div>
+      <div class="se-label">Patroon</div>
+      <div class="se-patterns" id="se-patterns"></div>
+      <div class="se-label">Kleur 1</div>
+      <div class="se-swatches" id="se-colors-1"></div>
+      <div class="se-label">Kleur 2</div>
+      <div class="se-swatches" id="se-colors-2"></div>
+      <button class="btn-save-shirt" id="se-save-btn">Shirt opslaan</button>
+    </div>
+  </div>
+</div>
 
 <!-- MATCH DETAIL OVERLAY -->
 <div id="match-detail-overlay" class="hidden">
