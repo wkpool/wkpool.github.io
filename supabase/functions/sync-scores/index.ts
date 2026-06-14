@@ -4,7 +4,15 @@ const FOOTBALL_API_KEY = Deno.env.get('FOOTBALL_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-Deno.serve(async () => {
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: CORS })
+  }
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
   // Fetch all finished WC matches from football-data.org (1 API call)
@@ -14,13 +22,13 @@ Deno.serve(async () => {
   )
 
   if (!apiRes.ok) {
-    return new Response(JSON.stringify({ error: `API error ${apiRes.status}` }), { status: 500 })
+    return new Response(JSON.stringify({ error: `API error ${apiRes.status}` }), { status: 500, headers: CORS })
   }
 
   const { matches: apiMatches } = await apiRes.json()
 
   if (!apiMatches?.length) {
-    return new Response(JSON.stringify({ updated: 0, message: 'no finished matches yet' }))
+    return new Response(JSON.stringify({ updated: 0, message: 'no finished matches yet' }), { headers: CORS })
   }
 
   // Build lookup: external_id -> fullTime scores
@@ -39,7 +47,7 @@ Deno.serve(async () => {
     .is('score_home', null)
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: CORS })
   }
 
   let updated = 0
@@ -61,6 +69,6 @@ Deno.serve(async () => {
       checked: (dbMatches ?? []).length,
       finished_in_api: apiMatches.length,
     }),
-    { headers: { 'Content-Type': 'application/json' } }
+    { headers: { ...CORS, 'Content-Type': 'application/json' } }
   )
 })

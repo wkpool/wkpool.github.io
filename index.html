@@ -291,6 +291,25 @@
     .sb-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
     .sb-sub   { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
 
+    .sb-tabs { display: flex; gap: 8px; padding: 0 22px 16px; }
+    .sb-tab-btn {
+      padding: 6px 18px; border-radius: 99px;
+      border: 1px solid var(--border); background: var(--card);
+      font-family: var(--font); font-size: 13px; font-weight: 600;
+      color: var(--text-mid); cursor: pointer; transition: all .15s;
+    }
+    .sb-tab-btn.active {
+      background: rgba(255,77,109,0.15);
+      border-color: rgba(255,77,109,0.4);
+      color: var(--pink);
+    }
+
+    .chart-wrap { overflow-x: auto; padding: 0 16px 16px; scrollbar-width: none; }
+    .chart-wrap::-webkit-scrollbar { display: none; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 4px 16px 14px; }
+    .chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; }
+    .chart-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
     .podium-row {
       display: flex; align-items: flex-end; justify-content: center;
       padding: 0 22px 20px;
@@ -341,6 +360,7 @@
       border-radius: 14px; margin-bottom: 8px;
       background: var(--card); border: 1px solid var(--border);
       transition: border-color .15s;
+      cursor: pointer;
     }
 
     .lb-item:hover { border-color: rgba(255,255,255,0.15); }
@@ -376,6 +396,16 @@
     .lb-ptn-val { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
     .lb-ptn-val.is-me { color: var(--pink); }
     .lb-ptn-lbl { font-size: 10px; color: var(--text-dim); }
+
+    .lb-form { display: flex; gap: 3px; margin-top: 5px; }
+    .lb-form-dot {
+      width: 20px; height: 18px; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 800; flex-shrink: 0;
+    }
+    .lfd-miss  { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+    .lfd-some  { background: rgba(180,138,245,0.18); color: var(--purple-l); }
+    .lfd-great { background: rgba(0,212,170,0.18);   color: var(--teal); }
 
     /* ── MATCHES PAGE ── */
     .matches-page-header { padding: 20px 22px 12px; }
@@ -620,11 +650,34 @@
       margin: 0 18px;
     }
 
+    /* ── PARTICIPANT DETAIL ── */
+    .pd-stat-row {
+      display: flex; gap: 8px; margin-bottom: 18px;
+    }
+    .pd-stat {
+      flex: 1; border-radius: 12px; padding: 10px 12px; text-align: center;
+    }
+    .pd-stat-val { font-size: 20px; font-weight: 800; }
+    .pd-stat-lbl { font-size: 10px; color: var(--text-mid); margin-top: 1px; }
+
+    .pd-match-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 8px;
+    }
+    .pd-match-row:last-child { border-bottom: none; }
+    .pd-match-info { flex: 1; min-width: 0; }
+    .pd-match-name { font-size: 13px; font-weight: 600; }
+    .pd-match-sub  { font-size: 11px; color: var(--text-mid); margin-top: 2px; }
+    .pd-match-right { text-align: right; flex-shrink: 0; }
+    .pd-match-result { font-size: 14px; font-weight: 700; }
+    .pd-match-pts { font-size: 11px; font-weight: 700; margin-top: 2px; }
+
     /* ── ANIMATIONS ── */
     @keyframes blink { 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
 
     /* ── MATCH DETAIL OVERLAY ── */
-    #match-detail-overlay {
+    #match-detail-overlay,
+    #participant-detail-overlay {
       position: fixed; inset: 0; z-index: 200;
       display: flex; flex-direction: column; justify-content: flex-end;
     }
@@ -925,8 +978,18 @@
           <div class="sb-title">Scorebord</div>
           <div class="sb-sub" id="sb-sub">WK Pool 2026</div>
         </div>
-        <div class="podium-row" id="podium-row"></div>
-        <div class="lb-list"    id="lb-list"></div>
+        <div class="sb-tabs">
+          <button class="sb-tab-btn active" data-sbtab="stand">Stand</button>
+          <button class="sb-tab-btn" data-sbtab="historie">Historie</button>
+        </div>
+        <div id="sbtab-stand">
+          <div class="podium-row" id="podium-row"></div>
+          <div class="lb-list"    id="lb-list"></div>
+        </div>
+        <div id="sbtab-historie" class="hidden">
+          <div class="chart-legend" id="chart-legend"></div>
+          <div class="chart-wrap" id="chart-wrap"></div>
+        </div>
       </div>
 
       <!-- RULES TAB -->
@@ -1046,7 +1109,7 @@
     </div>
     <div class="nav-item" data-tab="scoreboard">
       <div class="nav-icon">🏆</div>
-      <div class="nav-label">Standen</div>
+      <div class="nav-label">Stand</div>
     </div>
     <div class="nav-item" data-tab="matches">
       <div class="nav-icon">⚽</div>
@@ -1084,6 +1147,15 @@
       <div class="se-swatches" id="se-colors-2"></div>
       <button class="btn-save-shirt" id="se-save-btn">Shirt opslaan</button>
     </div>
+  </div>
+</div>
+
+<!-- PARTICIPANT DETAIL OVERLAY -->
+<div id="participant-detail-overlay" class="hidden">
+  <div class="md-backdrop" id="pd-backdrop"></div>
+  <div class="md-sheet">
+    <div class="md-handle"></div>
+    <div class="md-body" id="participant-detail-body"></div>
   </div>
 </div>
 

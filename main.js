@@ -111,6 +111,12 @@ const TILE_COLORS = [
   'linear-gradient(135deg,#0ea5e9,#0284c7)',
 ]
 
+const CHART_COLORS = [
+  '#ff4d6d', '#9b6de8', '#00d4aa', '#ffb800', '#0ea5e9',
+  '#f97316', '#22c55e', '#ec4899', '#a78bfa', '#38bdf8',
+  '#34d399', '#fb923c', '#f472b6', '#818cf8',
+]
+
 function strHash(s) {
   let h = 0
   for (const c of String(s || '')) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff
@@ -327,6 +333,109 @@ function closeMatchDetail() {
   document.body.style.overflow = ''
 }
 
+function openParticipantDetail(player) {
+  const overlay = document.getElementById('participant-detail-overlay')
+  const body    = document.getElementById('participant-detail-body')
+  overlay.classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+
+  const { matches, predictions, scores } = sbCache
+  const rank = scores.findIndex(s => s.id === player.id) + 1
+
+  const predMap = {}
+  predictions.filter(p => p.participant_id === player.id)
+    .forEach(p => { predMap[p.match_id] = p })
+
+  const played = [...matches]
+    .filter(m => m.score_home !== null && m.score_away !== null)
+    .sort((a, b) => {
+      const da = a.date ? parseMatchDate(a.date) : 0
+      const db = b.date ? parseMatchDate(b.date) : 0
+      return da - db
+    })
+
+  const miss = played.filter(m => {
+    const pred = predMap[m.id]
+    return pred && calcPoints(m, pred) === 0
+  }).length
+
+  const isMe = player.id === currentParticipant.id
+
+  let html = `
+    <div class="md-close-row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
+          <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(player)}</div>
+        </div>
+        <div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em">${player.name}${isMe ? ' <span style="font-size:11px;color:var(--pink);font-weight:700">(jij)</span>' : ''}</div>
+          <div style="font-size:12px;color:var(--text-mid);margin-top:1px">${rank}e positie · ${player.points} punten</div>
+        </div>
+      </div>
+      <button class="md-close-btn" id="pd-close-btn">✕ Sluit</button>
+    </div>
+
+    <div class="pd-stat-row">
+      <div class="pd-stat" style="background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2)">
+        <div class="pd-stat-val" style="color:var(--teal)">${player.exact}</div>
+        <div class="pd-stat-lbl">exact</div>
+      </div>
+      <div class="pd-stat" style="background:rgba(180,138,245,0.1);border:1px solid rgba(180,138,245,0.2)">
+        <div class="pd-stat-val" style="color:var(--purple-l)">${player.goed}</div>
+        <div class="pd-stat-lbl">toto goed</div>
+      </div>
+      <div class="pd-stat" style="background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.2)">
+        <div class="pd-stat-val" style="color:var(--pink)">${miss}</div>
+        <div class="pd-stat-lbl">mis</div>
+      </div>
+    </div>
+  `
+
+  if (played.length === 0) {
+    html += `<div class="md-section"><p style="color:var(--text-dim);font-size:13px;text-align:center;padding:1rem 0">Nog geen gespeelde wedstrijden</p></div>`
+  } else {
+    html += `<div class="md-section"><div class="md-section-label">Gespeelde wedstrijden</div>`
+    played.forEach(match => {
+      const pred = predMap[match.id]
+      const pts  = pred ? calcPoints(match, pred) : null
+      const ko   = match.phase === 'knockout'
+      const maxExact = ko ? 10 : 5
+      const base     = ko ? 6  : 3
+
+      const ptsColor = pts === null ? 'var(--text-dim)'
+        : pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--pink)'
+      const ptsLabel = pts === null ? '—'
+        : pts >= maxExact ? `⚡ +${pts}` : pts > 0 ? `✓ +${pts}` : '✗ 0'
+      const predStr = pred?.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
+      const matchLabel = `${tla(match.home)} – ${tla(match.away)}`
+      const groupLabel = match.poule ? `Groep ${match.poule}` : match.phase === 'knockout' ? 'Knock-out' : ''
+
+      html += `
+        <div class="pd-match-row">
+          <div class="pd-match-info">
+            <div class="pd-match-name">${matchLabel}</div>
+            <div class="pd-match-sub">Jij: ${predStr}${groupLabel ? ' · ' + groupLabel : ''}</div>
+          </div>
+          <div class="pd-match-right">
+            <div class="pd-match-result">${match.score_home}–${match.score_away}</div>
+            <div class="pd-match-pts" style="color:${ptsColor}">${ptsLabel} ptn</div>
+          </div>
+        </div>
+      `
+    })
+    html += `</div>`
+  }
+
+  body.innerHTML = html
+  document.getElementById('pd-close-btn').addEventListener('click', closeParticipantDetail)
+  document.getElementById('pd-backdrop').addEventListener('click', closeParticipantDetail, { once: true })
+}
+
+function closeParticipantDetail() {
+  document.getElementById('participant-detail-overlay').classList.add('hidden')
+  document.body.style.overflow = ''
+}
+
 function calcPoints(match, pred) {
   if (pred.pred_home == null || pred.pred_away == null) return 0
   const ko = match.phase === 'knockout'
@@ -507,6 +616,9 @@ async function loadScoreboard() {
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
 
+  sbCache = { participants: participants || [], matches: matches || [], played, predictions: predictions || [], scores }
+  switchSbTab('stand')
+
   document.getElementById('sb-sub').textContent = `WK Pool 2026 · ${scores.length} deelnemers`
 
   // Podium: order [2nd, 1st, 3rd]
@@ -531,6 +643,8 @@ async function loadScoreboard() {
         <div class="pod-base"></div>
       `
     } else {
+      pod.style.cursor = 'pointer'
+      pod.addEventListener('click', () => openParticipantDetail(player))
       const isMe    = player.id === currentParticipant.id
       const crown   = rank === 1 ? '<span class="pod-crown">👑</span>' : ''
       const ptColor = rank === 1 ? 'var(--amber)' : rank === 2 ? 'var(--purple-l)' : 'var(--pink)'
@@ -558,11 +672,123 @@ async function loadScoreboard() {
   })
 }
 
+function switchSbTab(tab) {
+  document.querySelectorAll('.sb-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.sbtab === tab))
+  document.getElementById('sbtab-stand')?.classList.toggle('hidden', tab !== 'stand')
+  document.getElementById('sbtab-historie')?.classList.toggle('hidden', tab !== 'historie')
+  if (tab === 'historie' && sbCache) renderHistorieChart(sbCache)
+}
+
+function renderHistorieChart({ participants, played, predictions }) {
+  const legendEl = document.getElementById('chart-legend')
+  const wrapEl   = document.getElementById('chart-wrap')
+  if (!legendEl || !wrapEl) return
+
+  const sorted = [...played].sort((a, b) => {
+    const da = a.date ? parseMatchDate(a.date) : 0
+    const db = b.date ? parseMatchDate(b.date) : 0
+    return da - db
+  })
+
+  if (sorted.length === 0) {
+    wrapEl.innerHTML = '<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nog geen gespeelde wedstrijden.</p>'
+    legendEl.innerHTML = ''
+    return
+  }
+
+  const players = participants.filter(p => p.id !== 22)
+
+  const predMaps = {}
+  players.forEach(p => {
+    predMaps[p.id] = {}
+    predictions.filter(pr => pr.participant_id === p.id)
+      .forEach(pr => { predMaps[p.id][pr.match_id] = pr })
+  })
+
+  const playerData = players.map((p, pi) => {
+    let cum = 0
+    const values = [0]
+    sorted.forEach(match => {
+      const pred = predMaps[p.id][match.id]
+      cum += pred ? calcPoints(match, pred) : 0
+      values.push(cum)
+    })
+    return { ...p, values, color: CHART_COLORS[pi % CHART_COLORS.length] }
+  })
+
+  const N = sorted.length
+  const PAD_L = 30, PAD_R = 20, PAD_T = 16, PAD_B = 28
+  const stepX = Math.max(24, Math.min(44, 360 / N))
+  const W = PAD_L + N * stepX + PAD_R
+  const H = 260
+  const drawH = H - PAD_T - PAD_B
+  const maxPts = Math.max(...playerData.map(p => p.values[p.values.length - 1]), 10)
+
+  const rawStep = maxPts / 4
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep || 1)))
+  const tickStep = Math.ceil(rawStep / mag) * mag
+  const yMax = Math.ceil(maxPts / tickStep) * tickStep || tickStep
+  const scaleY = drawH / yMax
+  const ticks = []
+  for (let v = 0; v <= yMax; v += tickStep) ticks.push(v)
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">`
+
+  ticks.forEach(v => {
+    const y = (PAD_T + drawH - v * scaleY).toFixed(1)
+    svg += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`
+    svg += `<text x="${PAD_L - 5}" y="${(+y + 4).toFixed(1)}" text-anchor="end" font-family="Poppins,sans-serif" font-size="9" fill="rgba(255,255,255,0.28)">${v}</text>`
+  })
+
+  const xAxisY = (PAD_T + drawH).toFixed(1)
+  svg += `<line x1="${PAD_L}" y1="${xAxisY}" x2="${W - PAD_R}" y2="${xAxisY}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>`
+
+  sorted.forEach((_, i) => {
+    if (N > 20 && (i + 1) % 5 !== 0 && i !== N - 1) return
+    const x = (PAD_L + (i + 1) * stepX).toFixed(1)
+    svg += `<text x="${x}" y="${H - 8}" text-anchor="middle" font-family="Poppins,sans-serif" font-size="9" fill="rgba(255,255,255,0.28)">${i + 1}</text>`
+  })
+
+  // Draw non-me first so current user renders on top
+  const ordered = [...playerData].sort((a, b) => {
+    if (a.id === currentParticipant.id) return 1
+    if (b.id === currentParticipant.id) return -1
+    return 0
+  })
+
+  ordered.forEach(p => {
+    const isMe = p.id === currentParticipant.id
+    const pts = p.values.map((v, i) => {
+      const x = (PAD_L + i * stepX).toFixed(1)
+      const y = (PAD_T + drawH - v * scaleY).toFixed(1)
+      return `${x},${y}`
+    }).join(' ')
+
+    const lastX = (PAD_L + (p.values.length - 1) * stepX).toFixed(1)
+    const lastY = (PAD_T + drawH - p.values[p.values.length - 1] * scaleY).toFixed(1)
+
+    svg += `<polyline points="${pts}" fill="none" stroke="${p.color}" stroke-width="${isMe ? 2.5 : 1.5}" stroke-opacity="${isMe ? 1 : 0.6}" stroke-linejoin="round" stroke-linecap="round"/>`
+    svg += `<circle cx="${lastX}" cy="${lastY}" r="${isMe ? 4 : 3}" fill="${p.color}" opacity="${isMe ? 1 : 0.75}"/>`
+  })
+
+  svg += '</svg>'
+  wrapEl.innerHTML = svg
+
+  legendEl.innerHTML = playerData.map(p => {
+    const isMe = p.id === currentParticipant.id
+    return `<div class="chart-legend-item">
+      <div class="chart-legend-dot" style="background:${p.color}${isMe ? ';box-shadow:0 0 5px ' + p.color : ''}"></div>
+      <span style="${isMe ? 'color:var(--text);font-weight:700' : 'color:var(--text-mid)'}">${p.name.split(' ')[0]}${isMe ? ' (jij)' : ''}</span>
+    </div>`
+  }).join('')
+}
+
 // ── Matches ───────────────────────────────────────────────
 
 let countdownInterval = null
 let activeGroupFilter = null
 let groupColorMap = {}
+let sbCache = null
 
 const GROUP_COLORS = [
   { bg: 'rgba(155,109,232,0.15)', border: 'rgba(155,109,232,0.4)', text: '#b48af5' }, // purple
@@ -808,6 +1034,17 @@ function buildLbItem(p, rank) {
   const isMe = p.id === currentParticipant.id
   const item = document.createElement('div')
   item.className = `lb-item${isMe ? ' me' : ''}`
+  item.addEventListener('click', () => openParticipantDetail(p))
+
+  let formHtml = ''
+  if (p.form && p.form.length > 0) {
+    const dots = p.form.map(pts => {
+      const cls = pts === 0 ? 'lfd-miss' : pts >= 5 ? 'lfd-great' : 'lfd-some'
+      return `<div class="lb-form-dot ${cls}">${pts}</div>`
+    }).join('')
+    formHtml = `<div class="lb-form">${dots}</div>`
+  }
+
   item.innerHTML = `
     <div class="lb-num${isMe ? ' is-me' : ''}">${rank}</div>
     <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
@@ -815,7 +1052,7 @@ function buildLbItem(p, rank) {
     </div>
     <div class="lb-info">
       <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}</div>
-      <div class="lb-detail">${p.exact} exact · ${p.goed} goed</div>
+      ${formHtml}
     </div>
     <div class="lb-right">
       <div class="lb-pts-val${isMe ? ' is-me' : ''}">${p.points}</div>
@@ -912,22 +1149,35 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
 // ── Helpers ───────────────────────────────────────────────
 
 function calcScores(participants, playedMatches, predictions) {
+  const sorted = [...playedMatches].sort((a, b) => {
+    const da = a.date ? parseMatchDate(a.date) : 0
+    const db = b.date ? parseMatchDate(b.date) : 0
+    return da - db
+  })
+
   return (participants || []).map(p => {
-    const preds = (predictions || []).filter(pr => pr.participant_id === p.id)
+    const predMap = {}
+    ;(predictions || []).filter(pr => pr.participant_id === p.id)
+      .forEach(pr => { predMap[pr.match_id] = pr })
+
     let points = 0, exact = 0, goed = 0
-    preds.forEach(pred => {
-      const match = playedMatches.find(m => m.id === pred.match_id)
-      if (match) {
-        const pts = calcPoints(match, pred)
-        points += pts
-        const ko = match.phase === 'knockout'
-        const maxExact = ko ? 10 : 5
-        const base     = ko ? 6  : 3
+    const allPts = []
+
+    sorted.forEach(match => {
+      const pred = predMap[match.id]
+      const pts = pred ? calcPoints(match, pred) : 0
+      points += pts
+      const ko = match.phase === 'knockout'
+      const maxExact = ko ? 10 : 5
+      const base     = ko ? 6  : 3
+      if (pred) {
         if (pts === maxExact) exact++
         else if (pts >= base) goed++
       }
+      allPts.push(pts)
     })
-    return { ...p, points, exact, goed }
+
+    return { ...p, points, exact, goed, form: allPts.slice(-5) }
   }).sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'nl'))
 }
 
@@ -982,6 +1232,9 @@ document.addEventListener('click', e => {
 
   const navItem = e.target.closest('.nav-item[data-tab]')
   if (navItem) { switchTab(navItem.dataset.tab); return }
+
+  const sbTabBtn = e.target.closest('.sb-tab-btn[data-sbtab]')
+  if (sbTabBtn) { switchSbTab(sbTabBtn.dataset.sbtab); return }
 
   if (e.target.closest('.avatar-ring')) { openShirtEditor(); return }
 })

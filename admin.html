@@ -319,11 +319,11 @@
   </header>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" data-tab="deelnemers">
+    <button class="nav-item" data-tab="deelnemers">
       <div class="nav-icon">👥</div>
       <div class="nav-label">Deelnemers</div>
     </button>
-    <button class="nav-item" data-tab="uitslagen">
+    <button class="nav-item active" data-tab="uitslagen">
       <div class="nav-icon">⚽</div>
       <div class="nav-label">Uitslagen</div>
     </button>
@@ -349,6 +349,13 @@
 
     <!-- Uitslagen -->
     <div id="tab-uitslagen" class="tab-content hidden">
+      <div class="card" style="margin-top:0.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem">
+        <div>
+          <div style="font-size:14px;font-weight:600">Uitslagen ophalen</div>
+          <div style="font-size:12px;color:var(--text-mid);margin-top:2px" id="sync-status">Haalt automatisch op elke 15 min</div>
+        </div>
+        <button class="btn-primary" id="sync-btn" style="white-space:nowrap;flex-shrink:0">⟳ Sync nu</button>
+      </div>
       <div id="uitslagen-lijst"></div>
     </div>
 
@@ -379,14 +386,14 @@
 </script>
 
 <script type="module">
-  import { supabase } from './supabase.js'
+  import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase.js'
 
   const BASE_URL = window.location.origin + window.location.pathname.replace('admin.html', '')
 
   function toonAdmin() {
     document.getElementById('login-section').classList.add('hidden')
     document.getElementById('admin-section').classList.remove('hidden')
-    toonTab('deelnemers')
+    toonTab('uitslagen')
   }
 
   document.addEventListener('admin-login', toonAdmin)
@@ -401,8 +408,8 @@
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'))
     document.getElementById(`tab-${tab}`).classList.remove('hidden')
     document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active')
-    if (tab === 'deelnemers')    laadDeelnemers()
-    if (tab === 'uitslagen')     laadUitslagen()
+    if (tab === 'deelnemers')     laadDeelnemers()
+    if (tab === 'uitslagen')      laadUitslagen()
     if (tab === 'voorspellingen') laadVoorspellingen()
   }
 
@@ -581,13 +588,10 @@
         <button class="btn-primary opslaan-btn" style="margin-left:auto;padding:0.4rem 0.9rem;font-size:14px">Opslaan</button>
         ${heeftUitslag ? `<button class="btn-secondary wis-btn">Wis</button>` : ''}
       </div>
-      <textarea class="notes-input dark-input" id="notes-${match.id}" placeholder="Info / statistieken (optioneel)" style="margin-top:0.75rem;width:100%;min-height:64px;resize:vertical;font-size:13px">${match.notes ?? ''}</textarea>
-      <button class="btn-secondary notes-btn" style="margin-top:0.4rem;font-size:13px;color:var(--purple-l);border-color:rgba(180,138,245,0.3)">Info opslaan</button>
     `
 
     card.querySelector('.opslaan-btn').addEventListener('click', () => slaUitslagOp(match.id, card))
     card.querySelector('.wis-btn')?.addEventListener('click', () => wisUitslag(match.id, card))
-    card.querySelector('.notes-btn').addEventListener('click', () => slaNotesOp(match.id, card))
     return card
   }
 
@@ -662,6 +666,50 @@
     btn.textContent = 'Info opslaan'
     btn.disabled = false
   }
+
+  // ── Sync scores ──────────────────────────────────────────
+
+  document.getElementById('sync-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('sync-btn')
+    const status = document.getElementById('sync-status')
+    btn.disabled = true
+    btn.textContent = '…'
+    status.textContent = 'Bezig met ophalen…'
+    status.style.color = ''
+
+    let data, fetchError
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-scores`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        }
+      })
+      if (!res.ok) {
+        const txt = await res.text()
+        throw new Error(`HTTP ${res.status}: ${txt}`)
+      }
+      data = await res.json()
+    } catch (e) {
+      fetchError = e
+    }
+
+    if (fetchError) {
+      status.textContent = 'Fout: ' + fetchError.message
+      status.style.color = 'var(--red)'
+    } else if (data.updated > 0) {
+      status.textContent = `✓ ${data.updated} uitslag${data.updated !== 1 ? 'en' : ''} bijgewerkt`
+      status.style.color = 'var(--teal)'
+      laadUitslagen()
+    } else {
+      status.textContent = `Geen nieuwe uitslagen (${data.checked ?? 0} gecontroleerd)`
+      status.style.color = 'var(--text-mid)'
+    }
+
+    btn.textContent = '⟳ Sync nu'
+    btn.disabled = false
+  })
 
   // ── Voorspellingen ───────────────────────────────────────
 
