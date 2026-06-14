@@ -178,6 +178,26 @@
     .hero-rank-lbl { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
     .hero-rank-total { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; }
 
+    /* ── DAY WINNER ── */
+    .dw-scroll {
+      display: flex; gap: 10px;
+      padding: 0 18px 8px;
+      overflow-x: auto; scrollbar-width: none;
+      margin-bottom: 6px;
+    }
+    .dw-scroll::-webkit-scrollbar { display: none; }
+    .dw-tile {
+      flex-shrink: 0; width: 130px;
+      background: linear-gradient(135deg, rgba(255,184,0,0.13), rgba(255,184,0,0.04));
+      border: 1px solid rgba(255,184,0,0.25);
+      border-radius: 18px; padding: 12px 13px;
+    }
+    .dw-tile-date { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--amber); margin-bottom: 9px; }
+    .dw-tile-winner { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; overflow: hidden; }
+    .dw-tile-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dw-tile-pts { font-size: 19px; font-weight: 800; color: var(--amber); margin-top: 8px; letter-spacing: -0.02em; }
+    .dw-tile-pts span { font-size: 10px; font-weight: 600; opacity: 0.65; }
+
     /* ── SECTION TITLE ── */
     .section-title {
       font-size: 16px; font-weight: 700;
@@ -553,8 +573,10 @@
     .played-meta { font-size: 12px; color: var(--text-mid); }
     .pts-tag { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; }
     .pts-pred { background: rgba(255,255,255,0.07); color: var(--text-mid); }
-    .pts-good { background: rgba(0,212,170,0.12); color: var(--teal); }
-    .pts-miss { background: rgba(255,77,109,0.12); color: var(--pink); }
+    .pts-some { background: rgba(180,138,245,0.12); color: var(--purple-l); }
+    .pts-blue { background: rgba(14,165,233,0.12);  color: #38bdf8; }
+    .pts-good { background: rgba(0,212,170,0.12);   color: var(--teal); }
+    .pts-miss { background: rgba(255,77,109,0.12);  color: var(--pink); }
 
     .ptn-tag { font-size: 13px; font-weight: 700; }
     .ptn-2   { color: var(--teal); }
@@ -961,6 +983,8 @@
             <div class="hero-rank-total" id="hero-rank-total">— deeln.</div>
           </div>
         </div>
+
+        <div id="home-daywinner"></div>
 
         <div class="section-title">
           <span>Eerstvolgende wedstrijden</span>

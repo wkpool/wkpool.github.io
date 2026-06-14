@@ -287,7 +287,7 @@ async function openMatchDetail(match) {
     html += `<div style="font-size:26px;font-weight:800;letter-spacing:-0.02em">${myPred.pred_home} – ${myPred.pred_away}</div>`
     if (isPlayed) {
       const pts   = calcPoints(match, myPred)
-      const color = pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
+      const color = pts >= maxExact ? 'var(--teal)' : pts === 4 ? '#38bdf8' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
       html += `<div style="font-size:13px;color:${color};font-weight:600;margin-top:4px">${pts} ptn</div>`
     }
   } else {
@@ -303,7 +303,7 @@ async function openMatchDetail(match) {
     const visible  = globalLocked || isPlayed || isMe
     const pts     = isPlayed && hasPred ? calcPoints(match, pred) : null
     const color   = pts !== null
-      ? pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
+      ? pts >= maxExact ? 'var(--teal)' : pts === 4 ? '#38bdf8' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
       : ''
     const nameLabel = `${p.name}${isMe ? ' ★' : ''}`
     html += `
@@ -403,7 +403,7 @@ function openParticipantDetail(player) {
       const base     = ko ? 6  : 3
 
       const ptsColor = pts === null ? 'var(--text-dim)'
-        : pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--pink)'
+        : pts >= maxExact ? 'var(--teal)' : pts === 4 ? '#38bdf8' : pts > 0 ? 'var(--purple-l)' : 'var(--pink)'
       const ptsLabel = pts === null ? '—'
         : pts >= maxExact ? `⚡ +${pts}` : pts > 0 ? `✓ +${pts}` : '✗ 0'
       const predStr = pred?.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
@@ -550,6 +550,77 @@ async function loadHome() {
   document.getElementById('hero-ptn').textContent       = myScore.points
   document.getElementById('hero-rank').textContent      = `${myRank}e`
   document.getElementById('hero-rank-total').textContent = `${scores.length} deeln.`
+
+  // Day winners
+  const dayWinnerEl = document.getElementById('home-daywinner')
+  dayWinnerEl.innerHTML = ''
+  const parseDt = str => str instanceof Date ? str : new Date(typeof str === 'string' && !str.includes('+') && !str.endsWith('Z') ? str + '+02:00' : str)
+  const pstDate = dt => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(parseDt(dt))
+  const pstToday = pstDate(new Date())
+  const pstYday  = pstDate(new Date(Date.now() - 86400000))
+
+  const playedWithDate = played.filter(m => m.date)
+  if (playedWithDate.length > 0) {
+    const byDate = {}
+    playedWithDate.forEach(m => {
+      const key = pstDate(m.date)
+      if (!byDate[key]) byDate[key] = []
+      byDate[key].push(m)
+    })
+
+    const completeDates = Object.keys(byDate).sort().filter(date => {
+      if (date >= pstToday) return false
+      const allOnDate = (matches || []).filter(m => m.date && pstDate(m.date) === date)
+      return allOnDate.length > 0 && allOnDate.every(m => m.score_home !== null)
+    })
+
+    if (completeDates.length > 0) {
+      const predsByP = {}
+      ;(predictions || []).forEach(p => {
+        if (!predsByP[p.participant_id]) predsByP[p.participant_id] = {}
+        predsByP[p.participant_id][p.match_id] = p
+      })
+      const activeP = (participants || []).filter(p => p.id !== 22)
+
+      const tilesHtml = [...completeDates].reverse().map(date => {
+        const dayMatches = byDate[date]
+        const dayScores = activeP.map(p => {
+          let pts = 0
+          dayMatches.forEach(m => { const pr = predsByP[p.id]?.[m.id]; if (pr) pts += calcPoints(m, pr) })
+          return { ...p, dayPts: pts }
+        }).sort((a, b) => b.dayPts - a.dayPts)
+
+        const maxPts = dayScores[0]?.dayPts
+        if (!maxPts) return ''
+        const winners = dayScores.filter(p => p.dayPts === maxPts)
+
+        const dateLabel = date === pstYday ? 'Gisteren'
+          : new Date(date + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
+
+        const winnersHtml = winners.map(w => `
+          <div class="dw-tile-winner">
+            <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
+              <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(w)}</div>
+            </div>
+            <span class="dw-tile-name">${w.name.split(' ')[0]}${w.id === currentParticipant.id ? ' ★' : ''}</span>
+          </div>`).join('')
+        const extra = ''
+
+        return `
+          <div class="dw-tile">
+            <div class="dw-tile-date">${dateLabel}</div>
+            ${winnersHtml}${extra}
+            <div class="dw-tile-pts">+${maxPts} <span>ptn</span></div>
+          </div>`
+      }).join('')
+
+      if (tilesHtml.trim()) {
+        dayWinnerEl.innerHTML = `
+          <div class="section-title" style="margin-bottom:4px"><span>🏆 Dagwinnaars</span></div>
+          <div class="dw-scroll">${tilesHtml}</div>`
+      }
+    }
+  }
 
   const myPredMap = {}
   ;(predictions || []).filter(p => p.participant_id === currentParticipant.id)
@@ -706,7 +777,7 @@ function renderHistorieChart({ participants, played, predictions }) {
   })
 
   const colorStride = Math.ceil(CHART_COLORS.length / 3) // 5 for 14 colors — coprime, so all are used
-  const playerData = players.map((p, pi) => {
+  const playerData = players.map(p => {
     let cum = 0
     const values = [0]
     sorted.forEach(match => {
@@ -714,12 +785,13 @@ function renderHistorieChart({ participants, played, predictions }) {
       cum += pred ? calcPoints(match, pred) : 0
       values.push(cum)
     })
-    return { ...p, values, color: CHART_COLORS[(pi * colorStride) % CHART_COLORS.length] }
-  })
+    return { ...p, values }
+  }).sort((a, b) => b.values.at(-1) - a.values.at(-1) || a.name.localeCompare(b.name, 'nl'))
+    .map((p, pi) => ({ ...p, color: CHART_COLORS[(pi * colorStride) % CHART_COLORS.length] }))
 
   const N = sorted.length
-  const PAD_L = 30, PAD_R = 20, PAD_T = 16, PAD_B = 28
-  const stepX = Math.max(24, Math.min(44, 360 / N))
+  const PAD_L = 30, PAD_R = 30, PAD_T = 16, PAD_B = 28
+  const stepX = 36
   const W = PAD_L + N * stepX + PAD_R
   const H = 260
   const drawH = H - PAD_T - PAD_B
@@ -739,6 +811,7 @@ function renderHistorieChart({ participants, played, predictions }) {
     const y = (PAD_T + drawH - v * scaleY).toFixed(1)
     svg += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`
     svg += `<text x="${PAD_L - 5}" y="${(+y + 4).toFixed(1)}" text-anchor="end" font-family="Poppins,sans-serif" font-size="9" fill="rgba(255,255,255,0.28)">${v}</text>`
+    svg += `<text x="${W - PAD_R + 5}" y="${(+y + 4).toFixed(1)}" text-anchor="start" font-family="Poppins,sans-serif" font-size="9" fill="rgba(255,255,255,0.28)">${v}</text>`
   })
 
   const xAxisY = (PAD_T + drawH).toFixed(1)
@@ -774,6 +847,7 @@ function renderHistorieChart({ participants, played, predictions }) {
 
   svg += '</svg>'
   wrapEl.innerHTML = svg
+  wrapEl.scrollLeft = wrapEl.scrollWidth
 
   legendEl.innerHTML = playerData.map(p => {
     const isMe = p.id === currentParticipant.id
@@ -985,7 +1059,7 @@ function buildResultItem(match, pred) {
   const pts      = pred?.pred_home != null ? calcPoints(match, pred) : null
   const maxExact = match.phase === 'knockout' ? 10 : 5
   const ptsColor = pts === null ? 'var(--text-dim)'
-    : pts >= maxExact ? 'var(--teal)' : pts > 0 ? 'var(--purple-l)' : 'var(--pink)'
+    : pts >= maxExact ? 'var(--teal)' : pts === 4 ? '#38bdf8' : pts > 0 ? 'var(--purple-l)' : 'var(--pink)'
   const ptsLabel = pts === null ? '—' : `+${pts}`
   const predStr  = pred?.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
 
@@ -1116,7 +1190,7 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
     const predStr  = pred.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
     bottom.innerHTML = `
       <span class="pts-tag pts-pred">Jouw voorspelling: ${predStr}</span>
-      <span class="pts-tag pts-${pts > 0 ? 'good' : 'miss'}">${ptLabel}</span>
+      <span class="pts-tag pts-${pts >= maxExact ? 'good' : pts === 4 ? 'blue' : pts > 0 ? 'some' : 'miss'}">${ptLabel}</span>
     `
   } else if (isLocked) {
     const hasPred = pred.pred_home != null
