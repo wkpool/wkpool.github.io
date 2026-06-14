@@ -705,6 +705,7 @@ function renderHistorieChart({ participants, played, predictions }) {
       .forEach(pr => { predMaps[p.id][pr.match_id] = pr })
   })
 
+  const colorStride = Math.ceil(CHART_COLORS.length / 3) // 5 for 14 colors — coprime, so all are used
   const playerData = players.map((p, pi) => {
     let cum = 0
     const values = [0]
@@ -713,7 +714,7 @@ function renderHistorieChart({ participants, played, predictions }) {
       cum += pred ? calcPoints(match, pred) : 0
       values.push(cum)
     })
-    return { ...p, values, color: CHART_COLORS[pi % CHART_COLORS.length] }
+    return { ...p, values, color: CHART_COLORS[(pi * colorStride) % CHART_COLORS.length] }
   })
 
   const N = sorted.length
@@ -1177,7 +1178,7 @@ function calcScores(participants, playedMatches, predictions) {
       allPts.push(pts)
     })
 
-    return { ...p, points, exact, goed, form: allPts.slice(-5) }
+    return { ...p, points, exact, goed, form: allPts.slice(-5).reverse() }
   }).sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'nl'))
 }
 
