@@ -1040,7 +1040,7 @@ function buildLbItem(p, rank) {
   let formHtml = ''
   if (p.form && p.form.length > 0) {
     const dots = p.form.map(pts => {
-      const cls = pts === 0 ? 'lfd-miss' : pts >= 5 ? 'lfd-great' : 'lfd-some'
+      const cls = pts === 0 ? 'lfd-miss' : pts >= 5 ? 'lfd-great' : pts === 4 ? 'lfd-blue' : 'lfd-some'
       return `<div class="lb-form-dot ${cls}">${pts}</div>`
     }).join('')
     formHtml = `<div class="lb-form">${dots}</div>`
