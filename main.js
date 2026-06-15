@@ -959,7 +959,7 @@ async function loadMatches() {
       if (!appContent) return
       const cardRect = firstUpcomingCard.getBoundingClientRect()
       const containerRect = appContent.getBoundingClientRect()
-      appContent.scrollTop = appContent.scrollTop + cardRect.top - containerRect.top - 16
+      appContent.scrollTo({ top: appContent.scrollTop + cardRect.top - containerRect.top - 16, behavior: 'smooth' })
     })
   }
 }
