@@ -295,6 +295,8 @@ async function openMatchDetail(match) {
   }
   html += `</div>`
 
+  const myToto = myPred?.pred_home != null ? Math.sign(myPred.pred_home - myPred.pred_away) : null
+
   html += `<div class="md-section"><div class="md-section-label">Alle voorspellingen</div>`
   ;(participants || []).filter(p => p.id !== 22).forEach(p => {
     const pred    = predMap[p.id]
@@ -302,16 +304,26 @@ async function openMatchDetail(match) {
     const isMe    = p.id === currentParticipant.id
     const visible  = globalLocked || isPlayed || isMe
     const pts     = isPlayed && hasPred ? calcPoints(match, pred) : null
-    const color   = pts !== null
+    const ptsColor = pts !== null
       ? pts >= maxExact ? 'var(--teal)' : pts === 4 ? '#38bdf8' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
       : ''
+
+    let scoreColor = ''
+    if (isMe) {
+      scoreColor = 'var(--text)'
+    } else if (visible && hasPred && myPred?.pred_home != null) {
+      const exact    = pred.pred_home === myPred.pred_home && pred.pred_away === myPred.pred_away
+      const sameToto = Math.sign(pred.pred_home - pred.pred_away) === myToto
+      scoreColor = exact ? 'var(--teal)' : sameToto ? '#38bdf8' : 'var(--pink)'
+    }
+
     const nameLabel = `${p.name}${isMe ? ' ★' : ''}`
     html += `
       <div class="md-pred-row">
         <div class="md-pred-name${isMe ? ' is-me' : ''}">${nameLabel}</div>
         <div style="text-align:right">
           ${visible && hasPred
-            ? `<div class="md-pred-score">${pred.pred_home} – ${pred.pred_away}</div>${pts !== null ? `<div class="md-pred-pts" style="color:${color}">${pts} ptn</div>` : ''}`
+            ? `<div class="md-pred-score"${scoreColor ? ` style="color:${scoreColor}"` : ''}>${pred.pred_home} – ${pred.pred_away}</div>${pts !== null ? `<div class="md-pred-pts" style="color:${ptsColor}">${pts} ptn</div>` : ''}`
             : `<div style="color:var(--text-dim);font-size:13px">🔒</div>`
           }
         </div>
@@ -687,7 +699,19 @@ async function loadScoreboard() {
 
   ;(participants || []).forEach(p => { if (p.shirt) shirtStore[p.id] = p.shirt })
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
+    .sort((a, b) => (a.date ? parseMatchDate(a.date) : 0) - (b.date ? parseMatchDate(b.date) : 0))
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
+
+  // Previous ranks: standings without the last played match
+  const prevRankMap = {}
+  if (played.length > 1) {
+    const prevScores = calcScores((participants || []).filter(p => p.id !== 22), played.slice(0, -1), predictions)
+    let pr = 1
+    prevScores.forEach((p, i) => {
+      if (i > 0 && p.points < prevScores[i - 1].points) pr = i + 1
+      prevRankMap[p.id] = pr
+    })
+  }
 
   sbCache = { participants: participants || [], matches: matches || [], played, predictions: predictions || [], scores }
   switchSbTab('stand')
@@ -741,7 +765,9 @@ async function loadScoreboard() {
   let rank = 1
   scores.forEach((p, i) => {
     if (i > 0 && p.points < scores[i - 1].points) rank = i + 1
-    lbEl.appendChild(buildLbItem(p, rank))
+    const prevRank = prevRankMap[p.id]
+    const rankDelta = prevRank != null ? prevRank - rank : 0
+    lbEl.appendChild(buildLbItem(p, rank, rankDelta))
   })
 }
 
@@ -915,6 +941,7 @@ async function loadMatches() {
   buildGroupFilters(groups)
 
   container.innerHTML = ''
+  let firstUpcomingCard = null
   matches.forEach(match => {
     const pred     = predMap[match.id] || {}
     const isPlayed = match.score_home !== null && match.score_away !== null
@@ -922,8 +949,19 @@ async function loadMatches() {
     const card = buildMatchCard(match, pred, isPlayed, isLocked)
     card.dataset.group = match.poule || ''
     if (activeGroupFilter && match.poule !== activeGroupFilter) card.classList.add('hidden')
+    if (!isPlayed && !firstUpcomingCard) firstUpcomingCard = card
     container.appendChild(card)
   })
+
+  if (firstUpcomingCard) {
+    requestAnimationFrame(() => {
+      const appContent = document.getElementById('app-content')
+      if (!appContent) return
+      const cardRect = firstUpcomingCard.getBoundingClientRect()
+      const containerRect = appContent.getBoundingClientRect()
+      appContent.scrollTop = appContent.scrollTop + cardRect.top - containerRect.top - 16
+    })
+  }
 }
 
 function buildGroupFilters(groups) {
@@ -1107,7 +1145,7 @@ function buildUpcomingItem(match, hasPred) {
   return item
 }
 
-function buildLbItem(p, rank) {
+function buildLbItem(p, rank, rankDelta = 0) {
   const isMe = p.id === currentParticipant.id
   const item = document.createElement('div')
   item.className = `lb-item${isMe ? ' me' : ''}`
@@ -1122,8 +1160,14 @@ function buildLbItem(p, rank) {
     formHtml = `<div class="lb-form">${dots}</div>`
   }
 
+  const arrowHtml = rankDelta > 0
+    ? `<span style="font-size:10px;color:var(--teal);line-height:1">▲</span>`
+    : rankDelta < 0
+    ? `<span style="font-size:10px;color:var(--pink);line-height:1">▼</span>`
+    : ''
+
   item.innerHTML = `
-    <div class="lb-num${isMe ? ' is-me' : ''}">${rank}</div>
+    <div class="lb-num${isMe ? ' is-me' : ''}" style="display:flex;flex-direction:column;align-items:center;gap:1px">${rank}${arrowHtml}</div>
     <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
       <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(p)}</div>
     </div>
