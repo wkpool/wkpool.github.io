@@ -1402,7 +1402,7 @@ async function saveShirt() {
 
   const shirt = { type: editorShirt.type, c1: editorShirt.c1, c2: editorShirt.c2 }
 
-  const { error } = await supabase.from('participants').update({ shirt }).eq('id', currentParticipant.id)
+  const { error } = await supabase.rpc('update_participant_shirt', { participant_id: currentParticipant.id, shirt_data: shirt })
 
   if (error) {
     btn.textContent = 'Fout! Probeer opnieuw'
