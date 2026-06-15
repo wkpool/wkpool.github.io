@@ -555,9 +555,11 @@ async function loadHome() {
   const dayWinnerEl = document.getElementById('home-daywinner')
   dayWinnerEl.innerHTML = ''
   const parseDt = str => str instanceof Date ? str : new Date(typeof str === 'string' && !str.includes('+') && !str.endsWith('Z') ? str + '+02:00' : str)
-  const pstDate = dt => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(parseDt(dt))
+  const pstDate  = dt => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(parseDt(dt))
   const pstToday = pstDate(new Date())
   const pstYday  = pstDate(new Date(Date.now() - 86400000))
+  const localToday = new Intl.DateTimeFormat('en-CA').format(new Date())
+  const localYday  = new Intl.DateTimeFormat('en-CA').format(new Date(Date.now() - 86400000))
 
   const playedWithDate = played.filter(m => m.date)
   if (playedWithDate.length > 0) {
@@ -569,7 +571,6 @@ async function loadHome() {
     })
 
     const completeDates = Object.keys(byDate).sort().filter(date => {
-      if (date >= pstToday) return false
       const allOnDate = (matches || []).filter(m => m.date && pstDate(m.date) === date)
       return allOnDate.length > 0 && allOnDate.every(m => m.score_home !== null)
     })
@@ -594,7 +595,8 @@ async function loadHome() {
         if (!maxPts) return ''
         const winners = dayScores.filter(p => p.dayPts === maxPts)
 
-        const dateLabel = date === pstYday ? 'Gisteren'
+        const dateLabel = date === localToday ? 'Vandaag'
+          : date === localYday ? 'Gisteren'
           : new Date(date + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
 
         const winnersHtml = winners.map(w => `
