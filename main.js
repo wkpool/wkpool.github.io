@@ -345,6 +345,55 @@ function closeMatchDetail() {
   document.body.style.overflow = ''
 }
 
+function openPechDetail(player) {
+  const overlay = document.getElementById('participant-detail-overlay')
+  const body    = document.getElementById('participant-detail-body')
+  overlay.classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+
+  const isMe = player.id === currentParticipant.id
+
+  let html = `
+    <div class="md-close-row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
+          <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(player)}</div>
+        </div>
+        <div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em">${player.name}${isMe ? ' <span style="font-size:11px;color:var(--pink);font-weight:700">(jij)</span>' : ''}</div>
+          <div style="font-size:12px;color:var(--text-mid);margin-top:1px">${player.pech}× pech · 1 doelpunt naast exact</div>
+        </div>
+      </div>
+      <button class="md-close-btn" id="pd-close-btn">✕ Sluit</button>
+    </div>
+    <div class="md-section"><div class="md-section-label">Pechwedstrijden</div>`
+
+  if (player.pechMatches.length === 0) {
+    html += `<p style="color:var(--text-dim);font-size:13px;padding:8px 0">Geen pechwedstrijden gevonden.</p>`
+  } else {
+    player.pechMatches.forEach(({ match, pred }) => {
+      const matchLabel = `${tla(match.home)} – ${tla(match.away)}`
+      const groupLabel = match.poule ? `Groep ${match.poule}` : match.phase === 'knockout' ? 'Knock-out' : ''
+      html += `
+        <div class="pd-match-row">
+          <div class="pd-match-info">
+            <div class="pd-match-name">${matchLabel}</div>
+            <div class="pd-match-sub">Voorspelling: ${pred.pred_home}–${pred.pred_away}${groupLabel ? ' · ' + groupLabel : ''}</div>
+          </div>
+          <div class="pd-match-right">
+            <div class="pd-match-result">${match.score_home}–${match.score_away}</div>
+            <div class="pd-match-pts" style="color:var(--pink)">😬 pech</div>
+          </div>
+        </div>`
+    })
+  }
+
+  html += `</div>`
+  body.innerHTML = html
+  document.getElementById('pd-close-btn').addEventListener('click', closeParticipantDetail)
+  document.getElementById('pd-backdrop').addEventListener('click', closeParticipantDetail, { once: true })
+}
+
 function openParticipantDetail(player) {
   const overlay = document.getElementById('participant-detail-overlay')
   const body    = document.getElementById('participant-detail-body')
@@ -759,6 +808,30 @@ async function loadScoreboard() {
     podiumEl.appendChild(pod)
   })
 
+  // Pech klassement
+  const activeP = (participants || []).filter(p => p.id !== 22)
+  const predMaps = {}
+  activeP.forEach(p => {
+    predMaps[p.id] = {}
+    ;(predictions || []).filter(pr => pr.participant_id === p.id)
+      .forEach(pr => { predMaps[p.id][pr.match_id] = pr })
+  })
+
+  const pechScores = activeP.map(p => {
+    const pechMatches = []
+    played.forEach(match => {
+      const pred = predMaps[p.id]?.[match.id]
+      if (!pred || pred.pred_home == null) return
+      const diff = Math.abs(pred.pred_home - match.score_home) + Math.abs(pred.pred_away - match.score_away)
+      const pts  = calcPoints(match, pred)
+      if (diff === 1 && pts === 0) pechMatches.push({ match, pred })
+    })
+    return { ...p, pech: pechMatches.length, pechMatches }
+  }).sort((a, b) => b.pech - a.pech || a.name.localeCompare(b.name, 'nl'))
+
+  const topPech = pechScores[0]?.pech ?? 0
+  const pechLeaderIds = new Set(topPech > 0 ? pechScores.filter(p => p.pech === topPech).map(p => p.id) : [])
+
   // Leaderboard list (all, with tied ranks)
   const lbEl = document.getElementById('lb-list')
   lbEl.innerHTML = ''
@@ -767,15 +840,69 @@ async function loadScoreboard() {
     if (i > 0 && p.points < scores[i - 1].points) rank = i + 1
     const prevRank = prevRankMap[p.id]
     const rankDelta = prevRank != null ? prevRank - rank : 0
-    lbEl.appendChild(buildLbItem(p, rank, rankDelta))
+    lbEl.appendChild(buildLbItem(p, rank, rankDelta, pechLeaderIds))
   })
+
+  document.getElementById('pech-egg')?.addEventListener('click', e => {
+    e.stopPropagation()
+    switchSbTab('pech')
+  })
+
+  const pechEl = document.getElementById('pech-list')
+  if (pechEl) {
+    pechEl.innerHTML = ''
+    let pechRank = 1
+    pechScores.forEach((p, i) => {
+      if (i > 0 && p.pech < pechScores[i - 1].pech) pechRank = i + 1
+      const isMe = p.id === currentParticipant.id
+      const item = document.createElement('div')
+      item.className = `lb-item${isMe ? ' me' : ''}`
+      item.style.cursor = 'pointer'
+      const isDodoLeader = pechRank === 1 && p.pech > 0
+
+      const pechMatchNames = p.pechMatches.map(({ match }) => `${tla(match.home)}–${tla(match.away)}`)
+      const pechSub = pechMatchNames.length === 0 ? '—'
+        : pechMatchNames.length <= 2 ? pechMatchNames.join(', ')
+        : `${pechMatchNames.slice(0, 2).join(', ')} +${pechMatchNames.length - 2}`
+
+      item.innerHTML = `
+        <div class="lb-num${isMe ? ' is-me' : ''}">${pechRank}</div>
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
+          <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(p)}</div>
+        </div>
+        <div class="lb-info">
+          <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:1px">${pechSub}</div>
+        </div>
+        ${isDodoLeader ? '<span style="font-size:20px;margin-right:6px">🦤</span>' : ''}
+        <div class="lb-right">
+          <div class="lb-pts-val${isMe ? ' is-me' : ''}">${p.pech}×</div>
+          <div class="lb-pts-lbl">keer</div>
+        </div>
+      `
+      item.addEventListener('click', () => openPechDetail(p))
+      pechEl.appendChild(item)
+    })
+  }
 }
 
 function switchSbTab(tab) {
   document.querySelectorAll('.sb-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.sbtab === tab))
   document.getElementById('sbtab-stand')?.classList.toggle('hidden', tab !== 'stand')
   document.getElementById('sbtab-historie')?.classList.toggle('hidden', tab !== 'historie')
+  document.getElementById('sbtab-pech')?.classList.toggle('hidden', tab !== 'pech')
   if (tab === 'historie' && sbCache) renderHistorieChart(sbCache)
+
+  const titleEl = document.querySelector('.sb-title')
+  const subEl   = document.getElementById('sb-sub')
+  if (tab === 'pech') {
+    if (titleEl) titleEl.textContent = 'Pechvogelklassement'
+    if (subEl)   subEl.textContent   = 'Zat er maar 1 doelpunt naast, maar haalde 0 punten.'
+  } else {
+    if (titleEl) titleEl.textContent = 'Scorebord'
+    if (subEl && subEl.textContent.startsWith('Zat er maar'))
+      subEl.textContent = `WK Pool 2026 · ${document.querySelectorAll('#lb-list .lb-item').length} deelnemers`
+  }
 }
 
 function renderHistorieChart({ participants, played, predictions }) {
@@ -1145,7 +1272,7 @@ function buildUpcomingItem(match, hasPred) {
   return item
 }
 
-function buildLbItem(p, rank, rankDelta = 0) {
+function buildLbItem(p, rank, rankDelta = 0, pechLeaderIds = new Set()) {
   const isMe = p.id === currentParticipant.id
   const item = document.createElement('div')
   item.className = `lb-item${isMe ? ' me' : ''}`
@@ -1175,6 +1302,7 @@ function buildLbItem(p, rank, rankDelta = 0) {
       <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}</div>
       ${formHtml}
     </div>
+    ${pechLeaderIds.has(p.id) ? '<span style="font-size:20px;margin-right:6px;cursor:pointer" title="Pechvogel" id="pech-egg">🦤</span>' : ''}
     <div class="lb-right">
       <div class="lb-pts-val${isMe ? ' is-me' : ''}">${p.points}</div>
       <div class="lb-pts-lbl">punten</div>
