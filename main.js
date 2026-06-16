@@ -297,8 +297,19 @@ async function openMatchDetail(match) {
 
   const myToto = myPred?.pred_home != null ? Math.sign(myPred.pred_home - myPred.pred_away) : null
 
+  const rankOrder = sbCache?.scores?.map(s => s.id) ?? []
+  const sortedParticipants = (participants || []).filter(p => p.id !== 22)
+    .sort((a, b) => {
+      const ra = rankOrder.indexOf(a.id)
+      const rb = rankOrder.indexOf(b.id)
+      if (ra === -1 && rb === -1) return a.name.localeCompare(b.name, 'nl')
+      if (ra === -1) return 1
+      if (rb === -1) return -1
+      return ra - rb
+    })
+
   html += `<div class="md-section"><div class="md-section-label">Alle voorspellingen</div>`
-  ;(participants || []).filter(p => p.id !== 22).forEach(p => {
+  sortedParticipants.forEach(p => {
     const pred    = predMap[p.id]
     const hasPred = pred?.pred_home != null
     const isMe    = p.id === currentParticipant.id
@@ -564,6 +575,7 @@ function showApp() {
   document.getElementById('nav-avatar').innerHTML = shirtSvgForP(currentParticipant)
 
   switchTab('home')
+  loadScoreboard(true)
 }
 
 // ── Tabs ──────────────────────────────────────────────────
@@ -739,7 +751,7 @@ async function loadHome() {
 
 // ── Scoreboard ────────────────────────────────────────────
 
-async function loadScoreboard() {
+async function loadScoreboard(silent = false) {
   const [{ data: participants }, { data: matches }, predictions] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*'),
@@ -763,8 +775,9 @@ async function loadScoreboard() {
   }
 
   sbCache = { participants: participants || [], matches: matches || [], played, predictions: predictions || [], scores }
-  switchSbTab('stand')
+  if (silent) return
 
+  switchSbTab('stand')
   document.getElementById('sb-sub').textContent = `WK Pool 2026 · ${scores.length} deelnemers`
 
   // Podium: order [2nd, 1st, 3rd]
