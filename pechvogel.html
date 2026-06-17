@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pechvogelklassement · WK Pool 2026</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #111118; --bg2: #1a1a24; --bg3: #22222e;
+      --card: #1e1e2a; --card2: #252534;
+      --pink: #ff4d6d; --teal: #00d4aa;
+      --purple-l: #b48af5;
+      --text: rgba(255,255,255,0.92);
+      --text-mid: rgba(255,255,255,0.55);
+      --text-dim: rgba(255,255,255,0.28);
+      --border: rgba(255,255,255,0.07);
+      --font: 'Poppins', -apple-system, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 10%, rgba(124,92,191,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,77,109,0.08) 0%, transparent 55%);
+    }
+    .hidden { display: none !important; }
+
+    /* Password gate */
+    #gate {
+      position: fixed; inset: 0; z-index: 300;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+    }
+    .gate-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 36px 32px; width: 320px; text-align: center;
+    }
+    .gate-icon { font-size: 52px; margin-bottom: 16px; }
+    .gate-title { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .gate-sub { font-size: 13px; color: var(--text-mid); margin-bottom: 24px; }
+    .gate-input {
+      width: 100%; padding: 12px 16px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--bg2);
+      color: var(--text); font-family: var(--font); font-size: 15px;
+      outline: none; text-align: center; margin-bottom: 12px;
+      transition: border-color .15s;
+    }
+    .gate-input:focus { border-color: rgba(180,138,245,0.5); }
+    .gate-btn {
+      width: 100%; padding: 12px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #9b6de8, #ff4d6d);
+      color: white; font-family: var(--font); font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: opacity .15s;
+    }
+    .gate-btn:hover { opacity: .88; }
+    .gate-err { font-size: 12px; color: var(--pink); margin-top: 8px; min-height: 16px; }
+
+    /* Main content */
+    #main { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding-bottom: 40px; }
+
+    .page-header {
+      padding: 28px 20px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .page-header-left {}
+    .page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .page-sub { font-size: 12px; color: var(--text-mid); margin-top: 3px; }
+    .back-link {
+      font-size: 12px; font-weight: 600; color: var(--text-mid);
+      text-decoration: none; background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 5px 12px; transition: color .15s;
+      white-space: nowrap;
+    }
+    .back-link:hover { color: var(--text); }
+
+    #list { padding: 0 16px; }
+
+    .lb-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 14px; margin-bottom: 8px;
+      background: var(--card); border: 1px solid var(--border);
+      transition: border-color .15s; cursor: pointer;
+    }
+    .lb-item:hover { border-color: rgba(255,255,255,0.15); }
+    .lb-num { font-size: 13px; font-weight: 700; color: var(--text-dim); width: 18px; text-align: center; flex-shrink: 0; }
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-nm { font-size: 14px; font-weight: 600; }
+    .lb-sub { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+    .lb-right { text-align: right; flex-shrink: 0; }
+    .lb-val { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+    .lb-lbl { font-size: 10px; color: var(--text-dim); }
+    .dodo-icon { font-size: 20px; margin-right: 4px; flex-shrink: 0; }
+
+    /* Detail overlay */
+    #detail-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .md-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .md-sheet {
+      position: relative; z-index: 1; background: #1a1a26;
+      border-radius: 24px 24px 0 0; border-top: 1px solid rgba(255,255,255,0.09);
+      max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    .md-handle {
+      width: 36px; height: 4px; background: rgba(255,255,255,0.14);
+      border-radius: 2px; margin: 12px auto 0;
+    }
+    .md-body { padding: 10px 20px 48px; }
+    .md-close-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px; padding: 6px 0;
+    }
+    .md-close-btn {
+      background: rgba(255,255,255,0.07); border: none; color: var(--text);
+      border-radius: 8px; padding: 5px 12px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: var(--font); transition: background .15s;
+    }
+    .md-close-btn:hover { background: rgba(255,255,255,0.12); }
+    .md-section { margin-top: 16px; }
+    .md-section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
+    }
+    .pd-match-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 8px;
+    }
+    .pd-match-row:last-child { border-bottom: none; }
+    .pd-match-info { flex: 1; min-width: 0; }
+    .pd-match-name { font-size: 13px; font-weight: 600; }
+    .pd-match-sub  { font-size: 11px; color: var(--text-mid); margin-top: 2px; }
+    .pd-match-right { text-align: right; flex-shrink: 0; }
+    .pd-match-result { font-size: 14px; font-weight: 700; }
+    .pd-match-pts { font-size: 11px; font-weight: 700; margin-top: 2px; }
+
+    #loading { padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- Password gate -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-icon">🦤</div>
+    <div class="gate-title">Pechvogelklassement</div>
+    <div class="gate-sub">Voer het wachtwoord in om verder te gaan.</div>
+    <input id="pw-input" class="gate-input" type="password" placeholder="Wachtwoord" autocomplete="off">
+    <button class="gate-btn" id="pw-btn">Doorgaan</button>
+    <div class="gate-err" id="pw-err"></div>
+  </div>
+</div>
+
+<!-- Main page -->
+<div id="main" class="hidden">
+  <div id="loading">Laden…</div>
+
+  <div id="content" class="hidden">
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-title">🦤 Pechvogelklassement</div>
+        <div class="page-sub" id="page-sub">Zat er maar 1 doelpunt naast, maar haalde 0 punten.</div>
+      </div>
+      <a href="/" class="back-link">← Terug</a>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<!-- Detail overlay -->
+<div id="detail-overlay" class="hidden">
+  <div class="md-backdrop" id="detail-backdrop"></div>
+  <div class="md-sheet">
+    <div class="md-handle"></div>
+    <div class="md-body" id="detail-body"></div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const SUPABASE_URL      = 'https://jqomnywegtyvgnxtbnjl.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxb21ueXdlZ3R5dmdueHRibmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTc2OTUsImV4cCI6MjA5NDQ3MzY5NX0.VjOXsDHRcDrXO2EaZPTLzw5iBSlHFan9FrNW2HJO2cY'
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// ── Password gate ──────────────────────────────────────────
+const PASSWORD = 'dodo'
+const SESSION_KEY = 'pechvogel_unlocked'
+
+async function checkPassword(input) {
+  return input === PASSWORD
+}
+
+function unlock() {
+  sessionStorage.setItem(SESSION_KEY, '1')
+  document.getElementById('gate').classList.add('hidden')
+  document.getElementById('main').classList.remove('hidden')
+  loadData()
+}
+
+if (sessionStorage.getItem(SESSION_KEY)) {
+  unlock()
+} else {
+  const btn   = document.getElementById('pw-btn')
+  const input = document.getElementById('pw-input')
+  const err   = document.getElementById('pw-err')
+
+  async function attempt() {
+    const ok = await checkPassword(input.value.trim().toLowerCase())
+    if (ok) { unlock() } else { err.textContent = 'Verkeerd wachtwoord.'; input.value = ''; input.focus() }
+  }
+
+  btn.addEventListener('click', attempt)
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') attempt() })
+  input.focus()
+}
+
+// ── Utilities ─────────────────────────────────────────────
+let _clipId = 0
+
+const CODES = {
+  'nederland': 'nl', 'duitsland': 'de', 'frankrijk': 'fr', 'engeland': 'gb-eng',
+  'spanje': 'es', 'portugal': 'pt', 'belgie': 'be', 'belgië': 'be',
+  'argentinie': 'ar', 'argentinië': 'ar', 'brazilie': 'br', 'brazilië': 'br',
+  'verenigde staten': 'us', 'denemarken': 'dk', 'zwitserland': 'ch', 'polen': 'pl',
+  'turkije': 'tr', 'kroatie': 'hr', 'kroatië': 'hr', 'servie': 'rs', 'servië': 'rs',
+  'oekraine': 'ua', 'oekraïne': 'ua', 'schotland': 'gb-sct', 'albanie': 'al', 'albanië': 'al',
+  'slovenie': 'si', 'slovenië': 'si', 'roemenie': 'ro', 'roemenië': 'ro',
+  'georgie': 'ge', 'georgië': 'ge', 'oostenrijk': 'at', 'hongarije': 'hu',
+  'slowakije': 'sk', 'tsjechie': 'cz', 'tsjechië': 'cz',
+  'saoedi-arabie': 'sa', 'saoedi-arabië': 'sa', 'iran': 'ir', 'irak': 'iq',
+  'jordanie': 'jo', 'jordanië': 'jo', 'oezbekistan': 'uz',
+  'australie': 'au', 'australië': 'au', 'nieuw-zeeland': 'nz',
+  'marokko': 'ma', 'egypte': 'eg', 'kameroen': 'cm', 'ivoorkust': 'ci',
+  'algerije': 'dz', 'tunesie': 'tn', 'tunesië': 'tn',
+  'zuid-afrika': 'za', 'ghana': 'gh', 'nigeria': 'ng', 'senegal': 'sn',
+  'haïti': 'ht', 'haiti': 'ht', 'curacao': 'cw', 'curaçao': 'cw',
+  'kaapverdie': 'cv', 'kaapverdië': 'cv',
+  'congo': 'cd', 'bosnie': 'ba', 'bosnië': 'ba', 'bosnië-herzegovina': 'ba',
+  'qatar': 'qa', 'mexico': 'mx', 'canada': 'ca', 'japan': 'jp',
+  'uruguay': 'uy', 'colombia': 'co', 'ecuador': 'ec', 'paraguay': 'py',
+  'panama': 'pa', 'costa rica': 'cr', 'wales': 'gb-wls',
+  'ierland': 'ie', 'finland': 'fi', 'noorwegen': 'no', 'zweden': 'se',
+  'ijsland': 'is', 'griekenland': 'gr', 'israël': 'il', 'rusland': 'ru',
+  'china pr': 'cn', 'india': 'in', 'zuid-korea': 'kr',
+  'germany': 'de', 'france': 'fr', 'spain': 'es', 'argentina': 'ar',
+  'brazil': 'br', 'usa': 'us', 'morocco': 'ma', 'australia': 'au',
+}
+
+const TLA = {
+  'mexico': 'MEX', 'canada': 'CAN', 'verenigde staten': 'USA', 'qatar': 'QAT',
+  'zwitserland': 'SUI', 'brazilië': 'BRA', 'marokko': 'MAR', 'schotland': 'SCO',
+  'australië': 'AUS', 'turkije': 'TUR', 'duitsland': 'GER', 'curaçao': 'CUW',
+  'nederland': 'NED', 'japan': 'JPN', 'ivoorkust': 'CIV', 'ecuador': 'ECU',
+  'zweden': 'SWE', 'tunesië': 'TUN', 'spanje': 'ESP', 'kaapverdië': 'CPV',
+  'belgië': 'BEL', 'egypte': 'EGY', 'saoedi-arabië': 'KSA', 'uruguay': 'URU',
+  'iran': 'IRN', 'nieuw-zeeland': 'NZL', 'frankrijk': 'FRA', 'senegal': 'SEN',
+  'irak': 'IRQ', 'noorwegen': 'NOR', 'argentinië': 'ARG', 'algerije': 'ALG',
+  'oostenrijk': 'AUT', 'jordanië': 'JOR', 'portugal': 'POR', 'congo': 'COD',
+  'engeland': 'ENG', 'kroatië': 'CRO', 'ghana': 'GHA', 'panama': 'PAN',
+  'oezbekistan': 'UZB', 'colombia': 'COL', 'paraguay': 'PAR', 'haiti': 'HAI',
+  'haïti': 'HAI', 'zuid-afrika': 'RSA', 'zuidkorea': 'KOR', 'tsjechië': 'CZE',
+  'bosnië-herzegovina': 'BIH',
+}
+function tla(name) { return TLA[(name||'').toLowerCase()] || (name||'').slice(0,3).toUpperCase() }
+
+function strHash(s) {
+  let h = 0
+  for (const c of String(s||'')) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff
+  return Math.abs(h)
+}
+function initials(name) {
+  const parts = (name||'??').trim().split(' ')
+  return parts.length >= 2 ? (parts[0][0]+parts[1][0]).toUpperCase() : (name||'??').slice(0,2).toUpperCase()
+}
+
+const SHIRT_DESIGNS = [
+  { type:'solid',    c1:'#e63950', c2:'#ffffff', collar:'#a8001e' },
+  { type:'hstripes', c1:'#0369a1', c2:'#ffffff', collar:'#075985' },
+  { type:'vstripes', c1:'#1c1c24', c2:'#ffffff', collar:'#333'    },
+  { type:'sash',     c1:'#22c55e', c2:'#ffffff', collar:'#15803d' },
+  { type:'half',     c1:'#9b6de8', c2:'#f97316', collar:'#6a3bc4' },
+  { type:'solid',    c1:'#f59e0b', c2:'#b45309', collar:'#92400e' },
+  { type:'hstripes', c1:'#e84393', c2:'#ffffff', collar:'#9d1c5e' },
+  { type:'panel',    c1:'#38bdf8', c2:'#0369a1', collar:'#075985' },
+  { type:'vstripes', c1:'#e63950', c2:'#1c1c24', collar:'#a8001e' },
+  { type:'sash',     c1:'#1c1c24', c2:'#f59e0b', collar:'#92400e' },
+  { type:'hoops',    c1:'#e63950', c2:'#ffffff', collar:'#a8001e' },
+  { type:'panel',    c1:'#a78bfa', c2:'#4338ca', collar:'#3730a3' },
+  { type:'chevron',  c1:'#0ea5e9', c2:'#ffffff', collar:'#0369a1' },
+  { type:'hoops',    c1:'#f97316', c2:'#1c1c24', collar:'#c2410c' },
+  { type:'chevron',  c1:'#22c55e', c2:'#f59e0b', collar:'#15803d' },
+  { type:'half',     c1:'#14b8a6', c2:'#6366f1', collar:'#0f766e' },
+]
+
+function shirtPattern(type, c1, c2) {
+  switch (type) {
+    case 'solid':    return `<rect width="100" height="100" fill="${c1}"/>`
+    case 'hstripes': return `<rect width="100" height="100" fill="${c1}"/><rect width="100" y="20" height="15" fill="${c2}"/><rect width="100" y="50" height="15" fill="${c2}"/><rect width="100" y="80" height="15" fill="${c2}"/>`
+    case 'vstripes': return `<rect width="100" height="100" fill="${c1}"/><rect x="18" width="11" height="100" fill="${c2}"/><rect x="40" width="11" height="100" fill="${c2}"/><rect x="62" width="11" height="100" fill="${c2}"/><rect x="84" width="11" height="100" fill="${c2}"/>`
+    case 'sash':     return `<rect width="100" height="100" fill="${c1}"/><polygon points="22,0 62,0 78,100 38,100" fill="${c2}"/>`
+    case 'half':     return `<rect width="50" height="100" fill="${c1}"/><rect x="50" width="50" height="100" fill="${c2}"/>`
+    case 'panel':    return `<rect width="100" height="100" fill="${c2}"/><rect x="27" width="46" height="100" fill="${c1}"/>`
+    case 'hoops':    return `<rect width="100" height="100" fill="${c1}"/><rect width="100" y="28" height="16" fill="${c2}"/><rect width="100" y="60" height="16" fill="${c2}"/>`
+    case 'chevron':  return `<rect width="100" height="100" fill="${c1}"/><polygon points="0,48 50,68 100,48 100,62 50,82 0,62" fill="${c2}"/>`
+    default:         return `<rect width="100" height="100" fill="${c1}"/>`
+  }
+}
+
+function shirtSvg(name, custom = null) {
+  const ini = initials(name)
+  let design
+  if (custom && custom.type && custom.c1) {
+    design = { type: custom.type, c1: custom.c1, c2: custom.c2||'#ffffff', collar: custom.c2||'#ffffff' }
+  } else {
+    design = SHIRT_DESIGNS[strHash(name) % SHIRT_DESIGNS.length]
+  }
+  const clipId = 'sc' + (++_clipId)
+  const shirtPath = 'M35,12 L10,24 L16,42 L28,36 L28,88 L72,88 L72,36 L84,42 L90,24 L65,12 Q50,22 35,12 Z'
+  return `<svg viewBox="-10 -10 120 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
+    <rect x="-10" y="-10" width="120" height="120" rx="60" fill="#1a1a28"/>
+    <defs><clipPath id="${clipId}"><path d="${shirtPath}"/></clipPath></defs>
+    <g clip-path="url(#${clipId})">${shirtPattern(design.type, design.c1, design.c2)}</g>
+    <path d="M35,12 Q50,22 65,12 L57,27 Q50,33 43,27 Z" fill="${design.collar}"/>
+    <text x="50" y="67" text-anchor="middle" dominant-baseline="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="20" fill="white" stroke="rgba(0,0,0,0.5)" stroke-width="3" paint-order="stroke">${ini}</text>
+  </svg>`
+}
+
+function calcPoints(match, pred) {
+  if (pred.pred_home == null || pred.pred_away == null) return 0
+  const ko = match.phase === 'knockout'
+  const base = ko ? 6 : 3
+  if (match.score_home === pred.pred_home && match.score_away === pred.pred_away) return base + (ko ? 4 : 2)
+  const mw = Math.sign(match.score_home - match.score_away)
+  const pw = Math.sign(pred.pred_home  - pred.pred_away)
+  if (mw !== pw) return 0
+  const mDiff = match.score_home - match.score_away
+  const pDiff = pred.pred_home  - pred.pred_away
+  return base + (mDiff === pDiff ? (ko ? 2 : 1) : 0)
+}
+
+// ── Data loading ───────────────────────────────────────────
+async function loadData() {
+  const [{ data: participants }, { data: matches }, { data: predictions }] = await Promise.all([
+    supabase.from('participants').select('*'),
+    supabase.from('matches').select('*'),
+    supabase.from('predictions').select('*'),
+  ])
+
+  const played = (matches || []).filter(m => m.score_home !== null)
+  const activeP = (participants || []).filter(p => p.id !== 22)
+
+  const predMaps = {}
+  activeP.forEach(p => {
+    predMaps[p.id] = {}
+    ;(predictions || []).filter(pr => pr.participant_id === p.id)
+      .forEach(pr => { predMaps[p.id][pr.match_id] = pr })
+  })
+
+  const pechScores = activeP.map(p => {
+    const pechMatches = []
+    played.forEach(match => {
+      const pred = predMaps[p.id]?.[match.id]
+      if (!pred || pred.pred_home == null) return
+      const diff = Math.abs(pred.pred_home - match.score_home) + Math.abs(pred.pred_away - match.score_away)
+      const pts  = calcPoints(match, pred)
+      if (diff === 1 && pts === 0) pechMatches.push({ match, pred })
+    })
+    return { ...p, pech: pechMatches.length, pechMatches }
+  }).sort((a, b) => b.pech - a.pech || a.name.localeCompare(b.name, 'nl'))
+
+  const topPech = pechScores[0]?.pech ?? 0
+  const topIds  = new Set(topPech > 0 ? pechScores.filter(p => p.pech === topPech).map(p => p.id) : [])
+
+  document.getElementById('loading').classList.add('hidden')
+  document.getElementById('content').classList.remove('hidden')
+
+  const listEl = document.getElementById('list')
+  listEl.innerHTML = ''
+  let rank = 1
+  pechScores.forEach((p, i) => {
+    if (i > 0 && p.pech < pechScores[i - 1].pech) rank = i + 1
+    const isDodo = rank === 1 && p.pech > 0
+
+    const pechMatchNames = p.pechMatches.map(({ match }) => `${tla(match.home)}–${tla(match.away)}`)
+    const sub = pechMatchNames.length === 0 ? '—'
+      : pechMatchNames.length <= 2 ? pechMatchNames.join(', ')
+      : `${pechMatchNames.slice(0, 2).join(', ')} +${pechMatchNames.length - 2}`
+
+    const item = document.createElement('div')
+    item.className = 'lb-item'
+    item.innerHTML = `
+      <div class="lb-num">${rank}</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
+        <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvg(p.name, p.shirt)}</div>
+      </div>
+      <div class="lb-info">
+        <div class="lb-nm">${p.name}</div>
+        <div class="lb-sub">${sub}</div>
+      </div>
+      ${isDodo ? '<span class="dodo-icon">🦤</span>' : ''}
+      <div class="lb-right">
+        <div class="lb-val" style="${isDodo ? 'color:var(--pink)' : ''}">${p.pech}×</div>
+        <div class="lb-lbl">keer</div>
+      </div>
+    `
+    item.addEventListener('click', () => openDetail(p))
+    listEl.appendChild(item)
+  })
+}
+
+// ── Detail overlay ─────────────────────────────────────────
+function openDetail(player) {
+  const overlay = document.getElementById('detail-overlay')
+  const body    = document.getElementById('detail-body')
+  overlay.classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+
+  let html = `
+    <div class="md-close-row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#9b6de8,#ff4d6d);padding:2px;flex-shrink:0">
+          <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvg(player.name, player.shirt)}</div>
+        </div>
+        <div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em">${player.name}</div>
+          <div style="font-size:12px;color:var(--text-mid);margin-top:1px">${player.pech}× pech · 1 doelpunt naast, 0 punten</div>
+        </div>
+      </div>
+      <button class="md-close-btn" id="det-close">✕ Sluit</button>
+    </div>
+    <div class="md-section"><div class="md-section-label">Pechwedstrijden</div>`
+
+  if (player.pechMatches.length === 0) {
+    html += `<p style="color:var(--text-dim);font-size:13px;padding:8px 0">Geen pechwedstrijden gevonden.</p>`
+  } else {
+    player.pechMatches.forEach(({ match, pred }) => {
+      const matchLabel = `${tla(match.home)} – ${tla(match.away)}`
+      const groupLabel = match.poule ? `Groep ${match.poule}` : match.phase === 'knockout' ? 'Knock-out' : ''
+      html += `
+        <div class="pd-match-row">
+          <div class="pd-match-info">
+            <div class="pd-match-name">${matchLabel}</div>
+            <div class="pd-match-sub">Voorspelling: ${pred.pred_home}–${pred.pred_away}${groupLabel ? ' · ' + groupLabel : ''}</div>
+          </div>
+          <div class="pd-match-right">
+            <div class="pd-match-result">${match.score_home}–${match.score_away}</div>
+            <div class="pd-match-pts" style="color:var(--pink)">😬 pech</div>
+          </div>
+        </div>`
+    })
+  }
+
+  html += `</div>`
+  body.innerHTML = html
+
+  document.getElementById('det-close').addEventListener('click', closeDetail)
+  document.getElementById('detail-backdrop').addEventListener('click', closeDetail, { once: true })
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.add('hidden')
+  document.body.style.overflow = ''
+}
+</script>
+</body>
+</html>
