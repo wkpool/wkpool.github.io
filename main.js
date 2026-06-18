@@ -300,6 +300,11 @@ async function openMatchDetail(match) {
   const rankOrder = sbCache?.scores?.map(s => s.id) ?? []
   const sortedParticipants = (participants || []).filter(p => p.id !== 22)
     .sort((a, b) => {
+      if (isPlayed) {
+        const pa = predMap[a.id]?.pred_home != null ? calcPoints(match, predMap[a.id]) : -1
+        const pb = predMap[b.id]?.pred_home != null ? calcPoints(match, predMap[b.id]) : -1
+        if (pa !== pb) return pb - pa
+      }
       const ra = rankOrder.indexOf(a.id)
       const rb = rankOrder.indexOf(b.id)
       if (ra === -1 && rb === -1) return a.name.localeCompare(b.name, 'nl')
@@ -320,12 +325,14 @@ async function openMatchDetail(match) {
       : ''
 
     let scoreColor = ''
-    if (isMe) {
-      scoreColor = 'var(--text)'
-    } else if (visible && hasPred && myPred?.pred_home != null) {
-      const exact    = pred.pred_home === myPred.pred_home && pred.pred_away === myPred.pred_away
-      const sameToto = Math.sign(pred.pred_home - pred.pred_away) === myToto
-      scoreColor = exact ? 'var(--teal)' : sameToto ? '#38bdf8' : 'var(--pink)'
+    if (!isPlayed) {
+      if (isMe) {
+        scoreColor = 'var(--text)'
+      } else if (visible && hasPred && myPred?.pred_home != null) {
+        const exact    = pred.pred_home === myPred.pred_home && pred.pred_away === myPred.pred_away
+        const sameToto = Math.sign(pred.pred_home - pred.pred_away) === myToto
+        scoreColor = exact ? 'var(--teal)' : sameToto ? '#38bdf8' : 'var(--pink)'
+      }
     }
 
     const nameLabel = `${p.name}${isMe ? ' ★' : ''}`
