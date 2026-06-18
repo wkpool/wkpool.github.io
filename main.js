@@ -582,9 +582,8 @@ async function loadHome() {
     if (p.id === myScore.id) myRank = _r
   })
 
-  document.getElementById('hero-ptn').textContent       = myScore.points
-  document.getElementById('hero-rank').textContent      = `${myRank}e`
-  document.getElementById('hero-rank-total').textContent = `${scores.length} deeln.`
+  document.getElementById('hero-ptn').textContent  = myScore.points
+  document.getElementById('hero-rank').textContent = `${myRank}e`
 
   // Day winners
   const dayWinnerEl = document.getElementById('home-daywinner')
@@ -1382,6 +1381,8 @@ document.addEventListener('click', e => {
   if (sbTabBtn) { switchSbTab(sbTabBtn.dataset.sbtab); return }
 
   if (e.target.closest('.avatar-ring')) { openShirtEditor(); return }
+
+  if (e.target.closest('#hero-card')) { switchTab('scoreboard'); return }
 })
 
 // ── Shirt Editor ──────────────────────────────────────────
