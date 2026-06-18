@@ -569,7 +569,11 @@ async function loadHome() {
 
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
   const myScore = scores.find(p => p.id === currentParticipant.id) || { points: 0, exact: 0 }
-  const myRank  = scores.indexOf(myScore) + 1
+  let myRank = 1, _r = 1
+  scores.forEach((p, i) => {
+    if (i > 0 && p.points < scores[i - 1].points) _r = i + 1
+    if (p.id === myScore.id) myRank = _r
+  })
 
   document.getElementById('hero-ptn').textContent       = myScore.points
   document.getElementById('hero-rank').textContent      = `${myRank}e`
