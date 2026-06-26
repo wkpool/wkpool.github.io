@@ -19,6 +19,44 @@ async function fetchAllPredictions(query = {}) {
   return all
 }
 
+const EN_TO_NL = {
+  'Netherlands': 'Nederland', 'Germany': 'Duitsland', 'France': 'Frankrijk',
+  'England': 'Engeland', 'Spain': 'Spanje', 'Belgium': 'België',
+  'Argentina': 'Argentinië', 'Brazil': 'Brazilië',
+  'United States': 'Verenigde Staten', 'USA': 'Verenigde Staten',
+  'Denmark': 'Denemarken', 'Switzerland': 'Zwitserland', 'Poland': 'Polen',
+  'Turkey': 'Turkije', 'Croatia': 'Kroatië', 'Serbia': 'Servië',
+  'Ukraine': 'Oekraïne', 'Scotland': 'Schotland', 'Albania': 'Albanië',
+  'Slovenia': 'Slovenië', 'Romania': 'Roemenië', 'Georgia': 'Georgië',
+  'Austria': 'Oostenrijk', 'Hungary': 'Hongarije', 'Slovakia': 'Slowakije',
+  'Czech Republic': 'Tsjechië', 'Czechia': 'Tsjechië',
+  'Saudi Arabia': 'Saoedi-Arabië', 'Iran': 'Iran', 'Iraq': 'Irak',
+  'Jordan': 'Jordanië', 'Uzbekistan': 'Oezbekistan',
+  'Australia': 'Australië', 'New Zealand': 'Nieuw-Zeeland',
+  'Morocco': 'Marokko', 'Egypt': 'Egypte', 'Cameroon': 'Kameroen',
+  "Côte d'Ivoire": 'Ivoorkust', "Cote d'Ivoire": 'Ivoorkust', 'Ivory Coast': 'Ivoorkust',
+  'Algeria': 'Algerije', 'Tunisia': 'Tunesië', 'South Africa': 'Zuid-Afrika',
+  'Ghana': 'Ghana', 'Nigeria': 'Nigeria', 'Senegal': 'Senegal', 'Mali': 'Mali',
+  'DR Congo': 'Congo', 'Costa Rica': 'Costa Rica', 'Haiti': 'Haïti',
+  'Curaçao': 'Curaçao', 'Cape Verde': 'Kaapverdië',
+  'Mexico': 'Mexico', 'Canada': 'Canada', 'Japan': 'Japan',
+  'Uruguay': 'Uruguay', 'Colombia': 'Colombia', 'Ecuador': 'Ecuador',
+  'Venezuela': 'Venezuela', 'Paraguay': 'Paraguay', 'Bolivia': 'Bolivia',
+  'Peru': 'Peru', 'Chile': 'Chili', 'Panama': 'Panama', 'Honduras': 'Honduras',
+  'Wales': 'Wales', 'Northern Ireland': 'Noord-Ierland', 'Ireland': 'Ierland',
+  'Finland': 'Finland', 'Norway': 'Noorwegen', 'Sweden': 'Zweden',
+  'Iceland': 'IJsland', 'Greece': 'Griekenland', 'Israel': 'Israël',
+  'Russia': 'Rusland', 'China PR': 'China', 'China': 'China',
+  'South Korea': 'Zuid-Korea', 'Korea Republic': 'Zuid-Korea',
+  'Bosnia and Herzegovina': 'Bosnië-Herzegovina',
+  'Portugal': 'Portugal', 'Qatar': 'Qatar',
+}
+function nlName(name) { return (name && EN_TO_NL[name]) || name }
+function normMatches(arr) {
+  return (arr || []).map(m => (EN_TO_NL[m.home] || EN_TO_NL[m.away])
+    ? { ...m, home: nlName(m.home), away: nlName(m.away) } : m)
+}
+
 const CODES = {
   'nederland': 'nl', 'duitsland': 'de', 'frankrijk': 'fr', 'engeland': 'gb-eng',
   'spanje': 'es', 'portugal': 'pt', 'belgie': 'be', 'belgië': 'be',
@@ -557,11 +595,12 @@ function switchTab(tab) {
 // ── Home ──────────────────────────────────────────────────
 
 async function loadHome() {
-  const [{ data: participants }, { data: matches }, predictions] = await Promise.all([
+  const [{ data: participants }, { data: _hMatches }, predictions] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*').order('date'),
     fetchAllPredictions(),
   ])
+  const matches = normMatches(_hMatches)
 
   const now = new Date()
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
@@ -713,11 +752,12 @@ async function loadHome() {
 // ── Scoreboard ────────────────────────────────────────────
 
 async function loadScoreboard(silent = false) {
-  const [{ data: participants }, { data: matches }, predictions] = await Promise.all([
+  const [{ data: participants }, { data: _sbMatches }, predictions] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*'),
     fetchAllPredictions(),
   ])
+  const matches = normMatches(_sbMatches)
 
   ;(participants || []).forEach(p => { if (p.shirt) shirtStore[p.id] = p.shirt })
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
@@ -935,10 +975,11 @@ async function loadMatches() {
   const container = document.getElementById('all-matches-list')
   container.innerHTML = '<p class="empty-state">Laden…</p>'
 
-  const [{ data: matches }, { data: predictions }] = await Promise.all([
+  const [{ data: _mMatches }, { data: predictions }] = await Promise.all([
     supabase.from('matches').select('*').order('date'),
     supabase.from('predictions').select('*').eq('participant_id', currentParticipant.id),
   ])
+  const matches = normMatches(_mMatches)
 
   if (!matches || matches.length === 0) {
     container.innerHTML = '<p class="empty-state">Nog geen wedstrijden toegevoegd</p>'

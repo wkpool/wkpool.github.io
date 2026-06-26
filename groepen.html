@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poule standen · WK Pool 2026</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #111118; --bg2: #1a1a24; --bg3: #22222e;
+      --card: #1e1e2a; --card2: #252534;
+      --pink: #ff4d6d; --teal: #00d4aa; --amber: #ffb800;
+      --purple-l: #b48af5;
+      --text: rgba(255,255,255,0.92);
+      --text-mid: rgba(255,255,255,0.55);
+      --text-dim: rgba(255,255,255,0.28);
+      --border: rgba(255,255,255,0.07);
+      --font: 'Poppins', -apple-system, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 10%, rgba(124,92,191,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,77,109,0.08) 0%, transparent 55%);
+    }
+
+    #root { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 0 0 48px; }
+
+    .page-header {
+      padding: 28px 20px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .page-sub { font-size: 12px; color: var(--text-mid); margin-top: 3px; }
+    .back-link {
+      font-size: 12px; font-weight: 600; color: var(--text-mid);
+      text-decoration: none; background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 5px 12px; transition: color .15s; white-space: nowrap;
+    }
+    .back-link:hover { color: var(--text); }
+
+    .groups-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 0 12px;
+    }
+    @media (max-width: 400px) {
+      .groups-grid { grid-template-columns: 1fr; }
+    }
+
+    .group-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .group-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--purple-l); padding: 10px 12px 6px;
+    }
+
+    .st-table { width: 100%; border-collapse: collapse; }
+    .st-table thead tr { border-bottom: 1px solid var(--border); }
+    .st-table th {
+      font-size: 9px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .06em;
+      padding: 0 4px 6px; text-align: right;
+    }
+    .st-table th.team-col { text-align: left; padding-left: 10px; }
+    .st-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .st-table tbody tr:last-child { border-bottom: none; }
+    .st-table td {
+      font-size: 11px; font-weight: 600; color: var(--text-mid);
+      padding: 7px 4px; text-align: right;
+    }
+    .st-table td.team-col {
+      text-align: left; padding-left: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .st-table td.pts { font-weight: 800; color: var(--text); font-size: 12px; padding-right: 10px; }
+    .st-table td.gd { color: var(--text); }
+    .st-table .qualified { background: rgba(0,212,170,0.06); }
+    .st-table .qualified td.team-col::before {
+      content: ''; width: 3px; height: 3px; border-radius: 50%;
+      background: var(--teal); flex-shrink: 0;
+    }
+
+    .flag-img { height: 14px; border-radius: 2px; vertical-align: middle; flex-shrink: 0; }
+    .team-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 72px; }
+
+    .pos-num {
+      font-size: 9px; font-weight: 700; color: var(--text-dim);
+      width: 12px; text-align: center; flex-shrink: 0;
+    }
+
+    /* ── Spotlight ── */
+    #spotlight { padding: 0 12px 14px; }
+    .spotlight-card {
+      background: linear-gradient(135deg, rgba(180,138,245,0.12), rgba(255,77,109,0.07));
+      border: 1px solid rgba(180,138,245,0.3);
+      border-radius: 18px; overflow: hidden;
+    }
+    .spotlight-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px 8px;
+    }
+    .spotlight-group { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
+    .spotlight-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 99px;
+    }
+    .badge-live { background: rgba(255,77,109,0.2); color: var(--pink); border: 1px solid rgba(255,77,109,0.35); }
+    .badge-next { background: rgba(180,138,245,0.15); color: var(--purple-l); border: 1px solid rgba(180,138,245,0.3); }
+    .sl-match {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 14px; border-top: 1px solid rgba(255,255,255,0.05); gap: 8px;
+    }
+    .sl-team { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .sl-team.away { flex-direction: row-reverse; }
+    .sl-team-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+    .sl-score {
+      font-size: 16px; font-weight: 800; letter-spacing: -0.02em;
+      min-width: 52px; text-align: center; flex-shrink: 0;
+    }
+    .sl-score.upcoming { font-size: 11px; font-weight: 600; color: var(--text-mid); }
+    .sl-score.live { color: var(--pink); }
+    .sl-flag { height: 16px; border-radius: 2px; flex-shrink: 0; }
+
+    .sl-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 0; }
+    .sl-stand { width: 100%; border-collapse: collapse; }
+    .sl-stand th {
+      font-size: 9px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .06em;
+      padding: 8px 6px 5px; text-align: right;
+    }
+    .sl-stand th.team-col { text-align: left; padding-left: 14px; }
+    .sl-stand tbody tr { border-top: 1px solid rgba(255,255,255,0.04); }
+    .sl-stand td {
+      font-size: 11px; font-weight: 600; color: var(--text-mid);
+      padding: 7px 6px; text-align: right;
+    }
+    .sl-stand td.team-col {
+      text-align: left; padding-left: 14px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .sl-stand td.pts { font-weight: 800; color: var(--text); font-size: 12px; padding-right: 14px; }
+    .sl-stand td.gd  { color: var(--text); }
+    .sl-stand .qualified { background: rgba(0,212,170,0.06); }
+    .sl-stand .qualified td.team-col::before {
+      content: ''; width: 3px; height: 3px; border-radius: 50%;
+      background: var(--teal); flex-shrink: 0;
+    }
+    .sl-pos { font-size: 9px; font-weight: 700; color: var(--text-dim); width: 12px; text-align: center; flex-shrink: 0; }
+    .sl-team-flag { height: 13px; border-radius: 2px; flex-shrink: 0; }
+
+    #loading { padding: 60px 20px; text-align: center; color: var(--text-dim); font-size: 14px; }
+    #last-updated {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      font-size: 10px; color: var(--text-dim); padding: 12px 0 0;
+    }
+    #refresh-btn {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text-mid); font-family: var(--font); font-size: 11px; font-weight: 600;
+      border-radius: 8px; padding: 4px 11px; cursor: pointer; transition: all .15s;
+    }
+    #refresh-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+    #refresh-btn:disabled { opacity: .45; cursor: default; }
+  </style>
+</head>
+<body>
+<div id="root">
+  <div class="page-header">
+    <div>
+      <div class="page-title">⚽ Poule standen</div>
+      <div class="page-sub"><span id="last-updated-text">WK 2026 · live</span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="refresh-btn" class="back-link" style="border:none;cursor:pointer;background:var(--card)">↻ Vernieuwen</button>
+      <a href="/" class="back-link">← Terug</a>
+    </div>
+  </div>
+  <div id="loading">Laden…</div>
+  <div id="spotlight"></div>
+  <div id="groups-grid" class="groups-grid" style="display:none"></div>
+  <div id="last-updated"></div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const supabase = createClient(
+  'https://jqomnywegtyvgnxtbnjl.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxb21ueXdlZ3R5dmdueHRibmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTc2OTUsImV4cCI6MjA5NDQ3MzY5NX0.VjOXsDHRcDrXO2EaZPTLzw5iBSlHFan9FrNW2HJO2cY'
+)
+
+const CODES = {
+  'nederland': 'nl', 'duitsland': 'de', 'frankrijk': 'fr', 'engeland': 'gb-eng',
+  'spanje': 'es', 'portugal': 'pt', 'belgie': 'be', 'belgië': 'be',
+  'argentinie': 'ar', 'argentinië': 'ar', 'brazilie': 'br', 'brazilië': 'br',
+  'verenigde staten': 'us', 'denemarken': 'dk', 'zwitserland': 'ch', 'polen': 'pl',
+  'turkije': 'tr', 'kroatie': 'hr', 'kroatië': 'hr', 'servie': 'rs', 'servië': 'rs',
+  'oekraine': 'ua', 'oekraïne': 'ua', 'schotland': 'gb-sct', 'albanie': 'al', 'albanië': 'al',
+  'slovenie': 'si', 'slovenië': 'si', 'roemenie': 'ro', 'roemenië': 'ro',
+  'georgie': 'ge', 'georgië': 'ge', 'oostenrijk': 'at', 'hongarije': 'hu',
+  'slowakije': 'sk', 'tsjechie': 'cz', 'tsjechië': 'cz',
+  'saoedi-arabie': 'sa', 'saoedi-arabië': 'sa', 'iran': 'ir', 'irak': 'iq',
+  'jordanie': 'jo', 'jordanië': 'jo', 'oezbekistan': 'uz',
+  'australie': 'au', 'australië': 'au', 'nieuw-zeeland': 'nz',
+  'marokko': 'ma', 'egypte': 'eg', 'kameroen': 'cm', 'ivoorkust': 'ci',
+  'algerije': 'dz', 'tunesie': 'tn', 'tunesië': 'tn',
+  'zuid-afrika': 'za', 'ghana': 'gh', 'nigeria': 'ng', 'senegal': 'sn',
+  'haïti': 'ht', 'haiti': 'ht', 'curacao': 'cw', 'curaçao': 'cw',
+  'kaapverdie': 'cv', 'kaapverdië': 'cv',
+  'congo': 'cd', 'bosnie': 'ba', 'bosnië': 'ba', 'bosnië-herzegovina': 'ba',
+  'qatar': 'qa', 'mexico': 'mx', 'canada': 'ca', 'japan': 'jp',
+  'uruguay': 'uy', 'colombia': 'co', 'ecuador': 'ec', 'paraguay': 'py',
+  'panama': 'pa', 'costa rica': 'cr', 'wales': 'gb-wls',
+  'ierland': 'ie', 'finland': 'fi', 'noorwegen': 'no', 'zweden': 'se',
+  'ijsland': 'is', 'griekenland': 'gr', 'israël': 'il', 'rusland': 'ru',
+  'china pr': 'cn', 'india': 'in', 'zuid-korea': 'kr',
+  'germany': 'de', 'france': 'fr', 'spain': 'es', 'argentina': 'ar',
+  'brazil': 'br', 'usa': 'us', 'morocco': 'ma', 'australia': 'au',
+  'south korea': 'kr', 'ivory coast': 'ci', 'algeria': 'dz',
+  'saudi arabia': 'sa', 'new zealand': 'nz',
+}
+
+function flagCode(name) {
+  const key = (name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+  return CODES[(name || '').toLowerCase().trim()] || CODES[key] || null
+}
+
+function flagImg(name, stored) {
+  if (!name) return ''
+  const key = name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+  const code = CODES[name.toLowerCase().trim()] || CODES[key]
+  if (!code) return stored ? `<img src="${stored}" class="flag-img">` : ''
+  return `<img src="https://flagcdn.com/${code}.svg" class="flag-img" loading="lazy">`
+}
+
+function calcStandings(teams, matches) {
+  const rows = {}
+  teams.forEach(t => {
+    rows[t.name] = { name: t.name, flag: t.flag, g: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }
+  })
+
+  matches.forEach(m => {
+    if (m.score_home === null || m.score_away === null) return
+    const h = rows[m.home], a = rows[m.away]
+    if (!h || !a) return
+    h.g++; a.g++
+    h.gf += m.score_home; h.ga += m.score_away
+    a.gf += m.score_away; a.ga += m.score_home
+    if (m.score_home > m.score_away)      { h.w++; h.pts += 3; a.l++ }
+    else if (m.score_home < m.score_away) { a.w++; a.pts += 3; h.l++ }
+    else                                  { h.d++; h.pts++; a.d++; a.pts++ }
+  })
+
+  return Object.values(rows).sort((a, b) =>
+    b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf || a.name.localeCompare(b.name)
+  )
+}
+
+function getStandingForGroup(matches) {
+  const teamMap = {}
+  matches.forEach(m => {
+    if (!teamMap[m.home]) teamMap[m.home] = { name: m.home, flag: m.home_flag }
+    if (!teamMap[m.away]) teamMap[m.away] = { name: m.away, flag: m.away_flag }
+  })
+  return calcStandings(Object.values(teamMap), matches)
+}
+
+function renderGroup(poule, standing, qualifiedThirds) {
+  const rows = standing.map((t, i) => {
+    const gd = t.gf - t.ga
+    const top2 = i < 2 && t.g > 0
+    const isThird = i === 2 && qualifiedThirds.has(t.name)
+    const qualified = top2 || isThird
+    return `<tr class="${qualified ? 'qualified' : ''}">
+      <td class="team-col">
+        <span class="pos-num">${i + 1}</span>
+        ${flagImg(t.name, t.flag)}
+        <span class="team-name">${t.name}</span>
+      </td>
+      <td>${t.g}</td>
+      <td>${t.w}</td>
+      <td>${t.d}</td>
+      <td>${t.l}</td>
+      <td class="gd">${gd > 0 ? '+' : ''}${gd}</td>
+      <td class="pts">${t.pts}</td>
+    </tr>`
+  }).join('')
+
+  return `
+    <div class="group-card">
+      <div class="group-label">Groep ${poule}</div>
+      <table class="st-table">
+        <thead>
+          <tr>
+            <th class="team-col">Team</th>
+            <th>G</th><th>W</th><th>G</th><th>V</th><th>DS</th><th>Ptn</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`
+}
+
+async function load() {
+  const { data: rawAllMatches, error } = await supabase
+    .from('matches')
+    .select('*')
+    .order('date')
+
+  if (error || !rawAllMatches) {
+    document.getElementById('loading').textContent = 'Fout bij laden.'
+    return
+  }
+
+  const EN_TO_NL = {
+    'Netherlands': 'Nederland', 'Germany': 'Duitsland', 'France': 'Frankrijk',
+    'England': 'Engeland', 'Spain': 'Spanje', 'Belgium': 'België',
+    'Argentina': 'Argentinië', 'Brazil': 'Brazilië',
+    'United States': 'Verenigde Staten', 'USA': 'Verenigde Staten',
+    'Denmark': 'Denemarken', 'Switzerland': 'Zwitserland', 'Poland': 'Polen',
+    'Turkey': 'Turkije', 'Croatia': 'Kroatië', 'Serbia': 'Servië',
+    'Ukraine': 'Oekraïne', 'Scotland': 'Schotland', 'Albania': 'Albanië',
+    'Slovenia': 'Slovenië', 'Romania': 'Roemenië', 'Georgia': 'Georgië',
+    'Austria': 'Oostenrijk', 'Hungary': 'Hongarije', 'Slovakia': 'Slowakije',
+    'Czech Republic': 'Tsjechië', 'Czechia': 'Tsjechië',
+    'Saudi Arabia': 'Saoedi-Arabië', 'Morocco': 'Marokko', 'Egypt': 'Egypte',
+    'Cameroon': 'Kameroen', "Côte d'Ivoire": 'Ivoorkust', 'Ivory Coast': 'Ivoorkust',
+    'Algeria': 'Algerije', 'Tunisia': 'Tunesië', 'South Africa': 'Zuid-Afrika',
+    'Ghana': 'Ghana', 'Nigeria': 'Nigeria', 'Senegal': 'Senegal',
+    'Costa Rica': 'Costa Rica', 'Haiti': 'Haïti', 'Cape Verde': 'Kaapverdië',
+    'Mexico': 'Mexico', 'Canada': 'Canada', 'Japan': 'Japan',
+    'Uruguay': 'Uruguay', 'Colombia': 'Colombia', 'Ecuador': 'Ecuador',
+    'Venezuela': 'Venezuela', 'Paraguay': 'Paraguay', 'Bolivia': 'Bolivia',
+    'Peru': 'Peru', 'Chile': 'Chili', 'Panama': 'Panama', 'Honduras': 'Honduras',
+    'Wales': 'Wales', 'Ireland': 'Ierland', 'Norway': 'Noorwegen', 'Sweden': 'Zweden',
+    'Iceland': 'IJsland', 'Greece': 'Griekenland', 'Israel': 'Israël',
+    'South Korea': 'Zuid-Korea', 'Korea Republic': 'Zuid-Korea',
+    'Bosnia and Herzegovina': 'Bosnië-Herzegovina', 'Portugal': 'Portugal', 'Qatar': 'Qatar',
+  }
+  const allMatches = rawAllMatches.map(m => ({
+    ...m,
+    home: EN_TO_NL[m.home] || m.home,
+    away: EN_TO_NL[m.away] || m.away,
+  }))
+
+  const matches = allMatches.filter(m => m.poule)
+
+  if (!matches.length) {
+    document.getElementById('loading').textContent = 'Geen groepswedstrijden gevonden.'
+    return
+  }
+
+  const byPoule = {}
+  matches.forEach(m => {
+    if (!byPoule[m.poule]) byPoule[m.poule] = []
+    byPoule[m.poule].push(m)
+  })
+
+  // Calculate standings per group, then pick best 8 third-place teams
+  const standingsByPoule = {}
+  Object.keys(byPoule).forEach(p => { standingsByPoule[p] = getStandingForGroup(byPoule[p]) })
+
+  const thirds = Object.values(standingsByPoule)
+    .map(s => s[2]).filter(Boolean)
+    .sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf)
+  const qualifiedThirds = new Set(thirds.slice(0, 8).map(t => t.name))
+
+  // ── Spotlight: find active or next group ─────────────────
+  const now = new Date()
+  const parseDt = s => new Date(!s.includes('+') && !s.endsWith('Z') ? s + '+02:00' : s)
+
+  // A match is "live" if it started within the last 2h30 and has no score yet
+  const liveMatches = matches.filter(m => {
+    if (!m.date || m.score_home !== null) return false
+    const t = parseDt(m.date)
+    return t <= now && now - t < 150 * 60 * 1000
+  })
+
+  const upcomingMatches = matches
+    .filter(m => m.date && m.score_home === null && parseDt(m.date) > now)
+    .sort((a, b) => parseDt(a.date) - parseDt(b.date))
+
+  let spotlightPoule = null
+  let isLive = false
+
+  if (liveMatches.length > 0) {
+    // Most matches currently live → that group
+    const liveCounts = {}
+    liveMatches.forEach(m => { liveCounts[m.poule] = (liveCounts[m.poule] || 0) + 1 })
+    spotlightPoule = Object.keys(liveCounts).sort((a, b) => liveCounts[b] - liveCounts[a])[0]
+    isLive = true
+  } else if (upcomingMatches.length > 0) {
+    spotlightPoule = upcomingMatches[0].poule
+  }
+
+  const spotlightEl = document.getElementById('spotlight')
+  if (spotlightPoule) {
+    // Show today's (or next day's) matches for that group
+    const refDate = liveMatches[0]?.date ?? upcomingMatches[0]?.date
+    const refDay  = parseDt(refDate).toDateString()
+    const spotMatches = byPoule[spotlightPoule]
+      .filter(m => m.date && parseDt(m.date).toDateString() === refDay)
+      .sort((a, b) => parseDt(a.date) - parseDt(b.date))
+
+    const matchRows = spotMatches.map(m => {
+      const played   = m.score_home !== null
+      const matchLive = !played && m.date && parseDt(m.date) <= now
+      const time     = m.date ? parseDt(m.date).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }) : ''
+      const scoreHtml = played
+        ? `<div class="sl-score">${m.score_home} – ${m.score_away}</div>`
+        : matchLive
+        ? `<div class="sl-score live">Live</div>`
+        : `<div class="sl-score upcoming">${time}</div>`
+      const hCode = flagCode(m.home)
+      const aCode = flagCode(m.away)
+      return `
+        <div class="sl-match">
+          <div class="sl-team">
+            ${hCode ? `<img src="https://flagcdn.com/${hCode}.svg" class="sl-flag">` : ''}
+            <span class="sl-team-name">${m.home}</span>
+          </div>
+          ${scoreHtml}
+          <div class="sl-team away">
+            ${aCode ? `<img src="https://flagcdn.com/${aCode}.svg" class="sl-flag">` : ''}
+            <span class="sl-team-name">${m.away}</span>
+          </div>
+        </div>`
+    }).join('')
+
+    const badge = isLive
+      ? `<span class="spotlight-badge badge-live">● Live</span>`
+      : `<span class="spotlight-badge badge-next">Volgende</span>`
+
+    const slStanding = standingsByPoule[spotlightPoule] || []
+    const slStandRows = slStanding.map((t, i) => {
+      const gd = t.gf - t.ga
+      const top2 = i < 2 && t.g > 0
+      const isThird = i === 2 && qualifiedThirds.has(t.name)
+      const qualified = top2 || isThird
+      const code = flagCode(t.name)
+      return `<tr class="${qualified ? 'qualified' : ''}">
+        <td class="team-col">
+          <span class="sl-pos">${i + 1}</span>
+          ${code ? `<img src="https://flagcdn.com/${code}.svg" class="sl-team-flag">` : ''}
+          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px">${t.name}</span>
+        </td>
+        <td>${t.g}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+        <td class="gd">${gd > 0 ? '+' : ''}${gd}</td>
+        <td class="pts">${t.pts}</td>
+      </tr>`
+    }).join('')
+
+    spotlightEl.innerHTML = `
+      <div class="spotlight-card">
+        <div class="spotlight-header">
+          <div class="spotlight-group">Groep ${spotlightPoule}</div>
+          ${badge}
+        </div>
+        ${matchRows}
+        <hr class="sl-divider">
+        <table class="sl-stand">
+          <thead><tr>
+            <th class="team-col">Team</th>
+            <th>G</th><th>W</th><th>G</th><th>V</th><th>DS</th><th>Ptn</th>
+          </tr></thead>
+          <tbody>${slStandRows}</tbody>
+        </table>
+      </div>`
+  } else {
+    spotlightEl.innerHTML = ''
+  }
+
+  const grid = document.getElementById('groups-grid')
+  grid.innerHTML = Object.keys(byPoule).sort().map(p => renderGroup(p, standingsByPoule[p], qualifiedThirds)).join('')
+  grid.style.display = 'grid'
+  document.getElementById('loading').style.display = 'none'
+
+  document.getElementById('last-updated-text').textContent =
+    `Bijgewerkt om ${now.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`
+  const btn = document.getElementById('refresh-btn')
+  if (btn) btn.disabled = false
+}
+
+async function refresh() {
+  const btn = document.getElementById('refresh-btn')
+  if (btn) { btn.disabled = true; btn.textContent = '↻ Laden…' }
+  await load()
+  if (btn) btn.textContent = '↻ Vernieuwen'
+}
+
+document.getElementById('refresh-btn').addEventListener('click', refresh)
+
+load()
+setInterval(load, 15 * 60 * 1000)
+</script>
+</body>
+</html>
