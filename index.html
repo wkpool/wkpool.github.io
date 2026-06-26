@@ -941,6 +941,64 @@
 
     .btn-save-shirt:hover { opacity: 0.88; }
     .btn-save-shirt:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── BONUS TAB ── */
+    .bonus-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 16px 18px; margin-bottom: 12px;
+    }
+    .bonus-card-title {
+      font-size: 13px; font-weight: 700; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .bonus-slot { margin-bottom: 6px; }
+    .bonus-pick-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    .bonus-pick-chip {
+      display: flex; align-items: center; gap: 7px;
+      padding: 7px 11px; border-radius: 10px;
+      background: var(--bg3); border: 1.5px solid transparent;
+      cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text);
+      transition: border-color .12s, background .12s;
+      user-select: none;
+    }
+    .bonus-pick-chip .flag-img { width: 20px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+    .bonus-pick-chip:hover { border-color: rgba(255,255,255,0.2); }
+    .bonus-pick-chip.selected {
+      border-color: var(--teal); background: rgba(0,212,170,0.12); color: var(--teal);
+    }
+    .bonus-pick-empty { font-size: 12px; color: var(--text-dim); padding: 6px 0; }
+    .bonus-sub-label { font-size: 11px; color: var(--text-dim); margin: 10px 0 5px; }
+    .bonus-save-btn {
+      width: 100%; padding: 13px; margin-top: 4px;
+      background: linear-gradient(135deg, #ff4d6d, #e84393);
+      color: white; border: none; border-radius: 14px;
+      font-family: var(--font); font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: opacity .15s;
+      box-shadow: 0 8px 20px rgba(255,77,109,0.3);
+    }
+    .bonus-save-btn:hover { opacity: 0.88; }
+    .bonus-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .bonus-locked-val {
+      font-size: 15px; font-weight: 700; padding: 9px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .bonus-pts-tag {
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 99px; margin-left: auto; flex-shrink: 0;
+    }
+    .bonus-pts-earned { background: rgba(0,212,170,0.15); color: var(--teal); }
+    .bonus-pts-pending { background: rgba(255,255,255,0.07); color: var(--text-dim); }
+    .bonus-pts-miss { background: rgba(255,77,109,0.12); color: var(--pink); }
+    .bonus-all-section { margin-top: 20px; }
+    .bonus-all-title { font-size: 13px; font-weight: 700; color: var(--text-mid); padding: 0 2px 10px; }
+    .bonus-all-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .bonus-all-row:last-child { border-bottom: none; }
+    .bonus-all-name { font-size: 13px; font-weight: 600; min-width: 80px; flex-shrink: 0; padding-top: 2px; }
+    .bonus-all-preds { flex: 1; font-size: 12px; color: var(--text-mid); line-height: 1.8; }
+    .bonus-all-pts { font-size: 14px; font-weight: 800; color: var(--purple-l); flex-shrink: 0; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -1112,15 +1170,41 @@
 
       </div>
 
+      <!-- BONUS TAB -->
+      <div id="tab-bonus" class="tab-content hidden">
+        <div class="matches-page-header">
+          <div class="matches-page-title">⭐ Extraatjes</div>
+          <div class="matches-page-sub" id="bonus-sub">Voorspel de winnaar, finalisten en halvefinalisten</div>
+        </div>
+        <div style="padding:0 22px 12px">
+          <div id="bonus-countdown" class="matches-countdown"></div>
+        </div>
+        <div id="bonus-content" style="padding:0 16px 24px"></div>
+      </div>
+
       <!-- MATCHES TAB -->
       <div id="tab-matches" class="tab-content hidden">
         <div class="matches-page-header">
           <div class="matches-page-title">Voorspellingen</div>
           <div class="matches-page-sub">Vul je scores in vóór de eerste wedstrijd begint</div>
-          <div id="matches-countdown" class="matches-countdown"></div>
         </div>
-        <div id="group-filters" class="group-filters"></div>
-        <div id="all-matches-list"></div>
+        <div class="sb-tabs" style="padding:0 16px 12px">
+          <button class="sb-tab-btn" data-mtab="poule">Poulefase</button>
+          <button class="sb-tab-btn active" data-mtab="knockout">Knock-outfase</button>
+        </div>
+        <div id="mtab-poule" class="hidden">
+          <div style="padding:0 22px 12px">
+            <div id="matches-countdown" class="matches-countdown"></div>
+          </div>
+          <div id="group-filters" class="group-filters"></div>
+          <div id="all-matches-list"></div>
+        </div>
+        <div id="mtab-knockout">
+          <div style="padding:0 22px 12px">
+            <div id="ko-countdown" class="matches-countdown"></div>
+          </div>
+          <div id="knockout-matches-list"></div>
+        </div>
       </div>
 
     </div><!-- /app-inner -->
@@ -1138,6 +1222,10 @@
     <div class="nav-item" data-tab="matches">
       <div class="nav-icon">⚽</div>
       <div class="nav-label">Wedstrijden</div>
+    </div>
+    <div class="nav-item" data-tab="bonus">
+      <div class="nav-icon">⭐</div>
+      <div class="nav-label">Extraatjes</div>
     </div>
     <div class="nav-item" data-tab="rules">
       <div class="nav-icon">📋</div>

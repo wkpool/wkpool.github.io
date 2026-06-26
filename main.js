@@ -37,8 +37,8 @@ const EN_TO_NL = {
   "Côte d'Ivoire": 'Ivoorkust', "Cote d'Ivoire": 'Ivoorkust', 'Ivory Coast': 'Ivoorkust',
   'Algeria': 'Algerije', 'Tunisia': 'Tunesië', 'South Africa': 'Zuid-Afrika',
   'Ghana': 'Ghana', 'Nigeria': 'Nigeria', 'Senegal': 'Senegal', 'Mali': 'Mali',
-  'DR Congo': 'Congo', 'Costa Rica': 'Costa Rica', 'Haiti': 'Haïti',
-  'Curaçao': 'Curaçao', 'Cape Verde': 'Kaapverdië',
+  'DR Congo': 'Congo', 'Congo DR': 'Congo', 'Democratic Republic of Congo': 'Congo', 'Republic of Congo': 'Congo', 'Costa Rica': 'Costa Rica', 'Haiti': 'Haïti',
+  'Curaçao': 'Curaçao', 'Cape Verde': 'Kaapverdië', 'Cabo Verde': 'Kaapverdië', 'Cabo Verde Islands': 'Kaapverdië', 'Cape Verde Islands': 'Kaapverdië',
   'Mexico': 'Mexico', 'Canada': 'Canada', 'Japan': 'Japan',
   'Uruguay': 'Uruguay', 'Colombia': 'Colombia', 'Ecuador': 'Ecuador',
   'Venezuela': 'Venezuela', 'Paraguay': 'Paraguay', 'Bolivia': 'Bolivia',
@@ -48,9 +48,10 @@ const EN_TO_NL = {
   'Iceland': 'IJsland', 'Greece': 'Griekenland', 'Israel': 'Israël',
   'Russia': 'Rusland', 'China PR': 'China', 'China': 'China',
   'South Korea': 'Zuid-Korea', 'Korea Republic': 'Zuid-Korea',
-  'Bosnia and Herzegovina': 'Bosnië-Herzegovina',
+  'Bosnia and Herzegovina': 'Bosnië-Herzegovina', 'Bosnia & Herzegovina': 'Bosnië-Herzegovina', 'Bosnia-Herzegovina': 'Bosnië-Herzegovina',
   'Portugal': 'Portugal', 'Qatar': 'Qatar',
 }
+
 function nlName(name) { return (name && EN_TO_NL[name]) || name }
 function normMatches(arr) {
   return (arr || []).map(m => (EN_TO_NL[m.home] || EN_TO_NL[m.away])
@@ -74,9 +75,9 @@ const CODES = {
   'algerije': 'dz', 'tunesie': 'tn', 'tunesië': 'tn', 'mali': 'ml',
   'zuid-afrika': 'za', 'zuidafrika': 'za', 'ghana': 'gh', 'costa rica': 'cr',
   'haiti': 'ht', 'haïti': 'ht', 'curacao': 'cw', 'curaçao': 'cw',
-  'kaapverdie': 'cv', 'kaapverdië': 'cv', 'cape verde': 'cv',
-  'congo': 'cd', 'dr congo': 'cd', 'congo-kinshasa': 'cd', 'democratische republiek congo': 'cd',
-  'bosnie': 'ba', 'bosnië': 'ba', 'bosnie-herzegovina': 'ba', 'bosnië-herzegovina': 'ba',
+  'kaapverdie': 'cv', 'kaapverdië': 'cv', 'cape verde': 'cv', 'cabo verde': 'cv', 'cabo verde islands': 'cv', 'cape verde islands': 'cv',
+  'congo': 'cd', 'dr congo': 'cd', 'congo dr': 'cd', 'congo-kinshasa': 'cd', 'democratische republiek congo': 'cd', 'democratic republic of congo': 'cd', 'republic of congo': 'cd',
+  'bosnie': 'ba', 'bosnië': 'ba', 'bosnie-herzegovina': 'ba', 'bosnië-herzegovina': 'ba', 'bosnia-herzegovina': 'ba',
   'qatar': 'qa', 'mexico': 'mx', 'canada': 'ca', 'japan': 'jp',
   'nigeria': 'ng', 'senegal': 'sn', 'uruguay': 'uy', 'colombia': 'co',
   'ecuador': 'ec', 'venezuela': 've', 'paraguay': 'py', 'bolivia': 'bo',
@@ -278,7 +279,7 @@ async function openMatchDetail(match) {
   const firstMatchDate = firstRows?.[0]?.date ? parseMatchDate(firstRows[0].date) : null
   const globalLocked   = firstMatchDate ? now >= firstMatchDate : false
   const isPlayed       = match.score_home !== null && match.score_away !== null
-  const maxExact       = match.phase === 'knockout' ? 10 : 5
+  const maxExact       = isKnockout(match) ? 10 : 5
 
   const myPred = (predictions || []).find(p => p.participant_id === currentParticipant.id)
   const predMap = {}
@@ -306,7 +307,7 @@ async function openMatchDetail(match) {
 
     <div class="md-meta">
       ${match.poule ? `<span class="md-pill" style="background:rgba(180,138,245,0.15);color:#b48af5;border:1px solid rgba(180,138,245,0.3)">Groep ${match.poule}</span>` : ''}
-      ${match.phase === 'knockout' ? `<span class="md-pill" style="background:rgba(255,107,138,0.12);color:#ff6b8a;border:1px solid rgba(255,107,138,0.25)">Knock-out</span>` : ''}
+      ${isKnockout(match) ? `<span class="md-pill" style="background:rgba(255,107,138,0.12);color:#ff6b8a;border:1px solid rgba(255,107,138,0.25)">${match.phase}</span>` : ''}
       ${match.date ? `<span style="font-size:12px;color:var(--text-dim)">${formatDate(match.date)}</span>` : ''}
     </div>
   `
@@ -419,7 +420,7 @@ function openParticipantDetail(player) {
     .sort((a, b) => {
       const da = a.date ? parseMatchDate(a.date) : 0
       const db = b.date ? parseMatchDate(b.date) : 0
-      return da - db
+      return db - da
     })
 
   const miss = played.filter(m => {
@@ -466,7 +467,7 @@ function openParticipantDetail(player) {
     played.forEach(match => {
       const pred = predMap[match.id]
       const pts  = pred ? calcPoints(match, pred) : null
-      const ko   = match.phase === 'knockout'
+      const ko   = isKnockout(match)
       const maxExact = ko ? 10 : 5
       const base     = ko ? 6  : 3
 
@@ -476,13 +477,13 @@ function openParticipantDetail(player) {
         : pts >= maxExact ? `⚡ +${pts}` : pts > 0 ? `✓ +${pts}` : '✗ 0'
       const predStr = pred?.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
       const matchLabel = `${tla(match.home)} – ${tla(match.away)}`
-      const groupLabel = match.poule ? `Groep ${match.poule}` : match.phase === 'knockout' ? 'Knock-out' : ''
+      const groupLabel = match.poule ? `Groep ${match.poule}` : match.phase || ''
 
       html += `
         <div class="pd-match-row">
           <div class="pd-match-info">
             <div class="pd-match-name">${matchLabel}</div>
-            <div class="pd-match-sub">Jij: ${predStr}${groupLabel ? ' · ' + groupLabel : ''}</div>
+            <div class="pd-match-sub">Voorspelling: ${predStr}${groupLabel ? ' · ' + groupLabel : ''}</div>
           </div>
           <div class="pd-match-right">
             <div class="pd-match-result">${match.score_home}–${match.score_away}</div>
@@ -504,9 +505,30 @@ function closeParticipantDetail() {
   document.body.style.overflow = ''
 }
 
+const KNOCKOUT_PHASES = new Set(['laatste 32', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale', 'knockout'])
+function isKnockout(match) { return KNOCKOUT_PHASES.has(match.phase) }
+
+function koTeamShort(name) {
+  if (!name) return '?'
+  return name
+    .replace(/Winnaar Groep/gi, 'Win.')
+    .replace(/Tweede Groep/gi, '2e')
+    .replace(/Derde Groep/gi, '3e')
+    .replace(/Beste derde/gi, 'Beste 3e')
+}
+
+const PHASE_COLORS = {
+  'laatste 32':    { bg: 'rgba(14,165,233,0.15)',  border: 'rgba(14,165,233,0.4)',  text: '#38bdf8' },
+  'achtste finale':{ bg: 'rgba(29,182,138,0.15)',  border: 'rgba(29,182,138,0.4)',  text: '#34d399' },
+  'kwartfinale':   { bg: 'rgba(249,115,22,0.15)',  border: 'rgba(249,115,22,0.4)',  text: '#fb923c' },
+  'halve finale':  { bg: 'rgba(255,77,109,0.15)',  border: 'rgba(255,77,109,0.4)',  text: '#ff6b8a' },
+  'kleine finale': { bg: 'rgba(180,138,245,0.15)', border: 'rgba(180,138,245,0.4)', text: '#b48af5' },
+  'finale':        { bg: 'rgba(255,184,0,0.2)',    border: 'rgba(255,184,0,0.5)',   text: '#ffb800' },
+}
+
 function calcPoints(match, pred) {
   if (pred.pred_home == null || pred.pred_away == null) return 0
-  const ko = match.phase === 'knockout'
+  const ko = isKnockout(match)
   const base = ko ? 6 : 3
   if (match.score_home === pred.pred_home && match.score_away === pred.pred_away) return base + (ko ? 4 : 2)
   const mw = Math.sign(match.score_home - match.score_away)
@@ -590,17 +612,20 @@ function switchTab(tab) {
   if (tab === 'home')       loadHome()
   if (tab === 'scoreboard') loadScoreboard()
   if (tab === 'matches')    loadMatches()
+  if (tab === 'bonus')      loadBonus()
 }
 
 // ── Home ──────────────────────────────────────────────────
 
 async function loadHome() {
-  const [{ data: participants }, { data: _hMatches }, predictions] = await Promise.all([
+  const [{ data: rawParticipants }, { data: rawMatches }, predictions, { data: bonusPreds }] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*').order('date'),
     fetchAllPredictions(),
+    supabase.from('bonus_predictions').select('*'),
   ])
-  const matches = normMatches(_hMatches)
+  const participants = rawParticipants
+  const matches = normMatches(rawMatches)
 
   const now = new Date()
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
@@ -613,7 +638,14 @@ async function loadHome() {
   if (freshMe?.shirt) { currentParticipant.shirt = freshMe.shirt; localStorage.setItem('wkpool_participant', JSON.stringify(currentParticipant)) }
   document.getElementById('nav-avatar').innerHTML = shirtSvgForP(currentParticipant)
 
+  const actualBonus = calcActualBonus(matches)
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
+  scores.forEach(s => {
+    const bp = (bonusPreds || []).find(b => b.participant_id === s.id)
+    s.bonusPoints = calcBonusPoints(bp, actualBonus)
+    s.points += s.bonusPoints
+  })
+  scores.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'nl'))
   const myScore = scores.find(p => p.id === currentParticipant.id) || { points: 0, exact: 0 }
   let myRank = 1, _r = 1
   scores.forEach((p, i) => {
@@ -752,17 +784,25 @@ async function loadHome() {
 // ── Scoreboard ────────────────────────────────────────────
 
 async function loadScoreboard(silent = false) {
-  const [{ data: participants }, { data: _sbMatches }, predictions] = await Promise.all([
+  const [{ data: participants }, { data: rawSbMatches }, predictions, { data: bonusPreds }] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*'),
     fetchAllPredictions(),
+    supabase.from('bonus_predictions').select('*'),
   ])
-  const matches = normMatches(_sbMatches)
+  const matches = normMatches(rawSbMatches)
+  const actualBonus = calcActualBonus(matches)
 
   ;(participants || []).forEach(p => { if (p.shirt) shirtStore[p.id] = p.shirt })
   const played = (matches || []).filter(m => m.score_home !== null && m.score_away !== null)
     .sort((a, b) => (a.date ? parseMatchDate(a.date) : 0) - (b.date ? parseMatchDate(b.date) : 0))
   const scores = calcScores((participants || []).filter(p => p.id !== 22), played, predictions)
+  scores.forEach(s => {
+    const bp = (bonusPreds || []).find(b => b.participant_id === s.id)
+    s.bonusPoints = calcBonusPoints(bp, actualBonus)
+    s.points += s.bonusPoints
+  })
+  scores.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'nl'))
 
   // Previous ranks: standings without the last played match
   const prevRankMap = {}
@@ -832,6 +872,12 @@ async function loadScoreboard(silent = false) {
     const rankDelta = prevRank != null ? prevRank - rank : 0
     lbEl.appendChild(buildLbItem(p, rank, rankDelta))
   })
+}
+
+function switchMatchTab(tab) {
+  document.querySelectorAll('.sb-tab-btn[data-mtab]').forEach(b => b.classList.toggle('active', b.dataset.mtab === tab))
+  document.getElementById('mtab-poule')?.classList.toggle('hidden', tab !== 'poule')
+  document.getElementById('mtab-knockout')?.classList.toggle('hidden', tab !== 'knockout')
 }
 
 function switchSbTab(tab) {
@@ -975,11 +1021,11 @@ async function loadMatches() {
   const container = document.getElementById('all-matches-list')
   container.innerHTML = '<p class="empty-state">Laden…</p>'
 
-  const [{ data: _mMatches }, { data: predictions }] = await Promise.all([
+  const [{ data: rawMatchData }, { data: predictions }] = await Promise.all([
     supabase.from('matches').select('*').order('date'),
     supabase.from('predictions').select('*').eq('participant_id', currentParticipant.id),
   ])
-  const matches = normMatches(_mMatches)
+  const matches = normMatches(rawMatchData)
 
   if (!matches || matches.length === 0) {
     container.innerHTML = '<p class="empty-state">Nog geen wedstrijden toegevoegd</p>'
@@ -994,8 +1040,6 @@ async function loadMatches() {
   const now = new Date()
   const globalLocked = firstMatchDate ? now >= firstMatchDate : false
 
-  startCountdown(firstMatchDate, globalLocked)
-
   const predMap = {}
   predictions?.forEach(p => { predMap[p.match_id] = p })
 
@@ -1004,9 +1048,32 @@ async function loadMatches() {
   groups.forEach((g, i) => { groupColorMap[g] = GROUP_COLORS[i % GROUP_COLORS.length] })
   buildGroupFilters(groups)
 
+  const groupMatches    = matches.filter(m => m.poule)
+  const knockoutMatches = matches.filter(m => isKnockout(m))
+
+  const KO_PHASE_ORDER = ['laatste 32', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
+  const phaseLockDate = {}
+  const phaseFirstMatch = {}
+  KO_PHASE_ORDER.forEach(phase => {
+    const sorted = knockoutMatches.filter(m => m.phase === phase && m.date).sort((a, b) => parseMatchDate(a.date) - parseMatchDate(b.date))
+    if (sorted.length) { phaseFirstMatch[phase] = sorted[0]; phaseLockDate[phase] = parseMatchDate(sorted[0].date) }
+  })
+  const isPhaseLockedFor = m => m.phase && phaseLockDate[m.phase] ? now >= phaseLockDate[m.phase] : false
+
+  const nextOpenPhase = KO_PHASE_ORDER.find(phase => phaseLockDate[phase] && now < phaseLockDate[phase])
+  const nextOpenKo    = nextOpenPhase ? phaseFirstMatch[nextOpenPhase] : null
+  const knockoutLockDate = nextOpenKo ? phaseLockDate[nextOpenPhase] : null
+  const knockoutLocked   = !nextOpenKo && knockoutMatches.length > 0
+  const _flagSm = (name, stored) => flag(name, stored).replace('class="flag-img"', 'style="height:15px;vertical-align:middle;border-radius:2px;margin-right:3px"')
+  const PHASE_NL = { 'laatste 32': 'de Laatste 32', 'achtste finale': 'de Achtste Finales', 'kwartfinale': 'de Kwartfinales', 'halve finale': 'de Halve Finales', 'kleine finale': 'de Kleine Finale', 'finale': 'de Finale' }
+  const nextKoLabel = nextOpenPhase ? `Voorspellingen voor ${PHASE_NL[nextOpenPhase] || nextOpenPhase}` : null
+
+  startCountdown(firstMatchDate, globalLocked, 'matches-countdown')
+  startCountdown(knockoutLockDate, knockoutLocked, 'ko-countdown', nextKoLabel)
+
   container.innerHTML = ''
   let firstUpcomingCard = null
-  matches.forEach(match => {
+  groupMatches.forEach(match => {
     const pred     = predMap[match.id] || {}
     const isPlayed = match.score_home !== null && match.score_away !== null
     const isLocked = !isPlayed && globalLocked
@@ -1016,6 +1083,23 @@ async function loadMatches() {
     if (!isPlayed && !firstUpcomingCard) firstUpcomingCard = card
     container.appendChild(card)
   })
+
+  const koContainer = document.getElementById('knockout-matches-list')
+  if (koContainer) {
+    koContainer.innerHTML = ''
+    if (knockoutMatches.length === 0) {
+      koContainer.innerHTML = '<p class="empty-state" style="padding:24px 16px">Knock-outwedstrijden worden hier getoond zodra de poulefase klaar is.</p>'
+    } else {
+      knockoutMatches.forEach(match => {
+        const pred     = predMap[match.id] || {}
+        const isPlayed = match.score_home !== null && match.score_away !== null
+        const matchStarted = isPhaseLockedFor(match)
+        const isLocked = !isPlayed && matchStarted
+        const card = buildMatchCard(match, pred, isPlayed, isLocked)
+        koContainer.appendChild(card)
+      })
+    }
+  }
 
   if (firstUpcomingCard) {
     requestAnimationFrame(() => {
@@ -1073,18 +1157,21 @@ function setGroupFilter(group, groupColorMap) {
   })
 }
 
-function startCountdown(firstMatchDate, globalLocked) {
+function startCountdown(firstMatchDate, globalLocked, elementId = 'matches-countdown', matchLabel = null) {
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null }
 
-  const el = document.getElementById('matches-countdown')
+  const el = document.getElementById(elementId)
   if (!el) return
-
-  if (!firstMatchDate) { el.innerHTML = ''; return }
 
   if (globalLocked) {
     el.innerHTML = '<span class="countdown-locked">⛔ Voorspellingen zijn gesloten</span>'
     return
   }
+
+  if (!firstMatchDate) { el.innerHTML = ''; return }
+
+  const labelPrefix = matchLabel ? `<span style="font-weight:700;color:var(--text)">${matchLabel}</span> ` : ''
+  const sluitVerb   = matchLabel ? 'sluiten over' : '⏱ Sluit over'
 
   function tick() {
     const diff = firstMatchDate - new Date()
@@ -1101,7 +1188,7 @@ function startCountdown(firstMatchDate, globalLocked) {
     const s = Math.floor((diff % 60000)    / 1000)
     const pad = n => String(n).padStart(2, '0')
     const timeStr = d > 0 ? `${d}d ${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(h)}:${pad(m)}:${pad(s)}`
-    el.innerHTML = `⏱ Sluit over <span class="countdown-time">${timeStr}</span>`
+    el.innerHTML = `${labelPrefix}${sluitVerb} <span class="countdown-time">${timeStr}</span>`
   }
 
   tick()
@@ -1117,7 +1204,7 @@ function buildMatchTile(match, pred, isLocked, isPlayed) {
   if (isPlayed) {
     statusCls = 't-played'
     const pts = calcPoints(match, pred)
-    const maxExact = match.phase === 'knockout' ? 10 : 5
+    const maxExact = isKnockout(match) ? 10 : 5
     badgeHtml = `<div class="tile-badge">${pts === maxExact ? '⚡ Exact' : pts > 0 ? '✓ Goed' : '✗ Mis'}</div>`
   } else if (isLocked) {
     statusCls = 't-locked'
@@ -1161,7 +1248,7 @@ function buildResultItem(match, pred) {
   const item = document.createElement('div')
   item.className = 'upcoming-item'
   const pts      = pred?.pred_home != null ? calcPoints(match, pred) : null
-  const maxExact = match.phase === 'knockout' ? 10 : 5
+  const maxExact = isKnockout(match) ? 10 : 5
   const ptsColor = pts === null ? 'var(--text-dim)'
     : pts >= maxExact ? 'var(--teal)' : pts === 4 ? '#38bdf8' : pts > 0 ? 'var(--purple-l)' : 'var(--pink)'
   const ptsLabel = pts === null ? '—' : `+${pts}`
@@ -1263,9 +1350,14 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
     ? `<div class="match-vs-score">${match.score_home} – ${match.score_away}</div>`
     : `<div class="match-vs-time">${match.date ? formatDate(match.date) : ''}</div>`
 
+  const _phaseLabel = match.poule ? `Groep ${match.poule}` : match.phase || ''
+  const _gc = match.poule && groupColorMap[match.poule] ? groupColorMap[match.poule] : null
+  const _pc = !match.poule && match.phase ? PHASE_COLORS[match.phase] : null
+  const _phaseCss = (_gc || _pc) ? `style="background:${(_gc||_pc).bg};border-color:${(_gc||_pc).border};color:${(_gc||_pc).text}"` : ''
+
   card.innerHTML = `
     <div class="match-card-top">
-      <span class="match-group" ${match.poule && groupColorMap[match.poule] ? `style="background:${groupColorMap[match.poule].bg};border-color:${groupColorMap[match.poule].border};color:${groupColorMap[match.poule].text}"` : ''}>${match.poule ? `Groep ${match.poule}` : ''}</span>
+      <span class="match-group" ${_phaseCss}>${_phaseLabel}</span>
       <span class="match-status ${statusClass}">${statusText}</span>
     </div>
     <div class="match-teams-row">
@@ -1294,8 +1386,8 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
 
   if (isPlayed) {
     const pts = calcPoints(match, pred)
-    const maxExact = match.phase === 'knockout' ? 10 : 5
-    const base     = match.phase === 'knockout' ? 6 : 3
+    const maxExact = isKnockout(match) ? 10 : 5
+    const base     = isKnockout(match) ? 6 : 3
     const ptLabel  = pts === maxExact ? `⚡ Exact · ${pts} ptn` : pts >= base ? `✓ Goed · ${pts} ptn` : '✗ 0 punten'
     const predStr  = pred.pred_home != null ? `${pred.pred_home}–${pred.pred_away}` : '—'
     bottom.innerHTML = `
@@ -1331,6 +1423,254 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
   return card
 }
 
+// ── Bonus ─────────────────────────────────────────────────
+
+let _bracketGroups = null
+
+function buildBracketGroups(matches) {
+  const isReal = name => name && !/^\?|Win\.|2e |3e |Beste/.test(name)
+  const r32 = (matches || [])
+    .filter(m => m.phase === 'laatste 32')
+    .sort((a, b) => (a.external_id || 0) - (b.external_id || 0))
+  if (r32.length < 8) return null
+  const perQ = Math.ceil(r32.length / 4)
+  const result = {}
+  ;['semi_1', 'semi_2', 'semi_3', 'semi_4'].forEach((key, i) => {
+    const s = new Set()
+    r32.slice(i * perQ, (i + 1) * perQ).forEach(m => {
+      if (isReal(m.home)) s.add(m.home)
+      if (isReal(m.away)) s.add(m.away)
+    })
+    result[key] = s
+  })
+  return result
+}
+
+function buildTeamList(matches) {
+  const koMatches = (matches || []).filter(m => isKnockout(m))
+  const source = koMatches.length > 0 ? koMatches : matches
+  const s = new Set()
+  ;(source || []).forEach(m => {
+    if (m.home && !/^\?|Win\.|2e |3e |Beste/.test(m.home)) s.add(m.home)
+    if (m.away && !/^\?|Win\.|2e |3e |Beste/.test(m.away)) s.add(m.away)
+  })
+  return [...s].sort((a, b) => a.localeCompare(b, 'nl'))
+}
+
+function calcActualBonus(matches) {
+  const finale = (matches || []).filter(m => m.phase === 'finale')
+  const halve  = (matches || []).filter(m => m.phase === 'halve finale')
+  let winner = null
+  const finalists = new Set()
+  const semis = new Set()
+  halve.forEach(m => {
+    if (m.home && m.home !== '?') semis.add(m.home)
+    if (m.away && m.away !== '?') semis.add(m.away)
+  })
+  finale.forEach(m => {
+    if (m.home && m.home !== '?') { finalists.add(m.home); semis.add(m.home) }
+    if (m.away && m.away !== '?') { finalists.add(m.away); semis.add(m.away) }
+    if (m.score_home !== null && m.score_away !== null && m.score_home !== m.score_away) {
+      winner = m.score_home > m.score_away ? m.home : m.away
+    }
+  })
+  return { winner, finalists, semis }
+}
+
+function calcBonusPoints(pred, actual) {
+  if (!pred) return 0
+  let pts = 0
+  if (actual.winner && pred.winner === actual.winner) pts += 8
+  ;['finalist_1', 'finalist_2'].forEach(f => { if (pred[f] && actual.finalists.has(pred[f])) pts += 8 })
+  ;['semi_1', 'semi_2', 'semi_3', 'semi_4'].forEach(f => { if (pred[f] && actual.semis.has(pred[f])) pts += 5 })
+  return pts
+}
+
+const BONUS_SLOTS = [
+  { key: 'semi_1',      label: '1',  section: '⚽ Halvefinalisten · 5 ptn per team', emoji: '⚽', pts: 5 },
+  { key: 'semi_2',      label: '2',  section: null, emoji: '4️⃣', pts: 5 },
+  { key: 'semi_3',      label: '3',  section: null, emoji: '4️⃣', pts: 5 },
+  { key: 'semi_4',      label: '4',  section: null, emoji: '4️⃣', pts: 5 },
+  { key: 'finalist_1',  label: '1',  section: '🎖️ Finalisten · 8 ptn per team', emoji: '🥈', pts: 8 },
+  { key: 'finalist_2',  label: '2',  section: null, emoji: '🥈', pts: 8 },
+  { key: 'winner',      label: 'Toernooi winnaar', section: '🏆 Winnaar · 8 ptn', emoji: '🏆', pts: 8 },
+]
+
+async function loadBonus() {
+  const container = document.getElementById('bonus-content')
+  container.innerHTML = '<div class="loading-text">Laden…</div>'
+
+  const [{ data: rawMatches }, { data: allBonus }, { data: rawParticipants }] = await Promise.all([
+    supabase.from('matches').select('*').order('date'),
+    supabase.from('bonus_predictions').select('*'),
+    supabase.from('participants').select('*'),
+  ])
+
+  const matches = normMatches(rawMatches || [])
+  const koMatches = matches.filter(m => isKnockout(m))
+  const now = new Date()
+  const firstKo = koMatches.filter(m => m.date).sort((a, b) => parseMatchDate(a.date) - parseMatchDate(b.date))[0]
+  const lockDate = firstKo ? parseMatchDate(firstKo.date) : null
+  const isLocked = lockDate ? now >= lockDate : false
+
+  startCountdown(lockDate, isLocked, 'bonus-countdown')
+
+  const myBonus = (allBonus || []).find(b => b.participant_id === currentParticipant.id) || null
+  const actual  = calcActualBonus(matches)
+  const teams   = buildTeamList(matches)
+  _bonusAllTeams = teams
+  _bracketGroups = buildBracketGroups(matches)
+
+  const participantMap = {}
+  ;(rawParticipants || []).forEach(p => { participantMap[p.id] = p })
+
+  let html = ''
+
+  const sectionHdr = title => {
+    const m = title.match(/^([\p{Emoji}‍]+\s*)/u)
+    const emoji = m ? `<span style="color:initial">${m[1]}</span>` : ''
+    const text = m ? title.slice(m[0].length) : title
+    return `<div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px">${emoji}${text}</div>`
+  }
+
+  if (isLocked) {
+    let slotsHtml = ''
+    BONUS_SLOTS.forEach(({ key, label, emoji, pts, section }) => {
+      if (section) slotsHtml += sectionHdr(section)
+      const val = myBonus ? myBonus[key] : null
+      let tagClass = 'bonus-pts-pending', tagLabel = `${pts} ptn`
+      const known = key === 'winner' ? actual.winner
+        : key.startsWith('finalist') ? (actual.finalists.size > 0 ? true : false)
+        : actual.semis.size > 0
+      if (val && known) {
+        const hit = key === 'winner' ? actual.winner === val
+          : key.startsWith('finalist') ? actual.finalists.has(val)
+          : actual.semis.has(val)
+        tagClass = hit ? 'bonus-pts-earned' : 'bonus-pts-miss'
+        tagLabel = hit ? `+${pts}` : '0'
+      }
+      const flagHtml = val ? flag(val) + ' ' : ''
+      slotsHtml += `
+        <div class="bonus-slot">
+          <div class="bonus-locked-val">${flagHtml}${val || '—'}<span class="bonus-pts-tag ${tagClass}">${tagLabel}</span></div>
+        </div>`
+    })
+    html += `<div class="bonus-card">
+      <div class="bonus-card-title">⭐ Mijn voorspelling <span style="font-size:11px;color:var(--text-dim);font-weight:400;margin-left:4px">gesloten</span></div>
+      ${slotsHtml}
+    </div>`
+  } else {
+    const SEMI_LABELS = { semi_1: 'Halve finale 1 · kant A', semi_2: 'Halve finale 1 · kant B', semi_3: 'Halve finale 2 · kant A', semi_4: 'Halve finale 2 · kant B' }
+    const FINALIST_LABELS = { finalist_1: 'Winnaar halve finale 1', finalist_2: 'Winnaar halve finale 2' }
+    let slotsHtml = ''
+    BONUS_SLOTS.forEach(({ key, section }) => {
+      if (section) slotsHtml += sectionHdr(section)
+      const subLabel = SEMI_LABELS[key] || FINALIST_LABELS[key]
+      if (subLabel) slotsHtml += `<div class="bonus-sub-label">${subLabel}</div>`
+      slotsHtml += `<div id="bonus-picks-${key}" class="bonus-pick-grid"></div>`
+    })
+    html += `<div class="bonus-card">
+      ${slotsHtml}
+      <button class="bonus-save-btn" id="bonus-save-btn">Opslaan</button>
+    </div>`
+    setTimeout(() => {
+      currentBonusPicks = {
+        semi_1: myBonus?.semi_1 || null, semi_2: myBonus?.semi_2 || null,
+        semi_3: myBonus?.semi_3 || null, semi_4: myBonus?.semi_4 || null,
+        finalist_1: myBonus?.finalist_1 || null, finalist_2: myBonus?.finalist_2 || null,
+        winner: myBonus?.winner || null,
+      }
+      renderAllBonusPickSlots()
+    }, 0)
+  }
+
+  const bonusRows = (allBonus || [])
+    .map(b => { const p = participantMap[b.participant_id]; return p ? { p, b, pts: calcBonusPoints(b, actual) } : null })
+    .filter(Boolean)
+    .sort((a, c) => c.pts - a.pts || a.p.name.localeCompare(c.p.name, 'nl'))
+
+  if (bonusRows.length > 0) {
+    const rows = bonusRows.map(({ p, b, pts }) => {
+      const preds = [
+        b.winner      && `🏆 ${b.winner}`,
+        b.finalist_1  && `🥈 ${b.finalist_1}`,
+        b.finalist_2  && `🥈 ${b.finalist_2}`,
+        b.semi_1      && `4️⃣ ${b.semi_1}`,
+        b.semi_2      && `4️⃣ ${b.semi_2}`,
+        b.semi_3      && `4️⃣ ${b.semi_3}`,
+        b.semi_4      && `4️⃣ ${b.semi_4}`,
+      ].filter(Boolean).join('<br>')
+      return `<div class="bonus-all-row">
+        <div class="bonus-all-name">${p.name}</div>
+        <div class="bonus-all-preds">${preds || '—'}</div>
+        <div class="bonus-all-pts">${pts > 0 ? `+${pts}` : '—'}</div>
+      </div>`
+    }).join('')
+    html += `<div class="bonus-all-section">
+      <div class="bonus-all-title">Alle voorspellingen</div>
+      ${rows}
+    </div>`
+  }
+
+  container.innerHTML = html
+}
+
+let currentBonusPicks = {}
+
+function availableForSlot(key) {
+  const p = currentBonusPicks
+  if (key === 'finalist_1') return [p.semi_1, p.semi_2].filter(Boolean)
+  if (key === 'finalist_2') return [p.semi_3, p.semi_4].filter(Boolean)
+  if (key === 'winner')     return [p.finalist_1, p.finalist_2].filter(Boolean)
+  if (_bracketGroups?.[key]) return _bonusAllTeams.filter(t => _bracketGroups[key].has(t))
+  return _bonusAllTeams
+}
+
+function renderBonusPickSlot(key) {
+  const el = document.getElementById(`bonus-picks-${key}`)
+  if (!el) return
+  const available = availableForSlot(key)
+  const current = currentBonusPicks[key]
+  if (available.length === 0) {
+    el.innerHTML = `<span class="bonus-pick-empty">— kies eerst de ronde hierboven —</span>`
+    return
+  }
+  el.innerHTML = available.map(t =>
+    `<div class="bonus-pick-chip${t === current ? ' selected' : ''}" data-slot="${key}" data-value="${t}">${flag(t)}${t}</div>`
+  ).join('')
+}
+
+function renderAllBonusPickSlots() {
+  BONUS_SLOTS.forEach(({ key }) => renderBonusPickSlot(key))
+}
+
+let _bonusAllTeams = []
+
+async function saveBonusPred() {
+  const btn = document.getElementById('bonus-save-btn')
+  btn.disabled = true
+  btn.textContent = 'Opslaan…'
+
+  const pred = { participant_id: currentParticipant.id, ...currentBonusPicks }
+
+  const { data: existing } = await supabase
+    .from('bonus_predictions').select('id')
+    .eq('participant_id', currentParticipant.id)
+    .maybeSingle()
+
+  const { error } = existing
+    ? await supabase.from('bonus_predictions').update(pred).eq('id', existing.id)
+    : await supabase.from('bonus_predictions').insert(pred)
+
+  if (error) {
+    btn.textContent = 'Fout! Probeer opnieuw'
+    setTimeout(() => { btn.textContent = 'Opslaan'; btn.disabled = false }, 2000)
+  } else {
+    btn.textContent = '✓ Opgeslagen!'
+    setTimeout(() => { btn.textContent = 'Aanpassen'; btn.disabled = false }, 1500)
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────
 
 function calcScores(participants, playedMatches, predictions) {
@@ -1352,7 +1692,7 @@ function calcScores(participants, playedMatches, predictions) {
       const pred = predMap[match.id]
       const pts = pred ? calcPoints(match, pred) : 0
       points += pts
-      const ko = match.phase === 'knockout'
+      const ko = isKnockout(match)
       const maxExact = ko ? 10 : 5
       const base     = ko ? 6  : 3
       if (pred) {
@@ -1412,6 +1752,27 @@ async function savePrediction(matchId) {
 // ── Events ────────────────────────────────────────────────
 
 document.addEventListener('click', e => {
+  const bonusBtn = e.target.closest('#bonus-save-btn')
+  if (bonusBtn && !bonusBtn.disabled) { saveBonusPred(); return }
+
+  const chip = e.target.closest('.bonus-pick-chip')
+  if (chip) {
+    const { slot, value } = chip.dataset
+    currentBonusPicks[slot] = currentBonusPicks[slot] === value ? null : value
+    // Cascade resets
+    if (slot === 'semi_1' || slot === 'semi_2') {
+      if (!availableForSlot('finalist_1').includes(currentBonusPicks.finalist_1)) { currentBonusPicks.finalist_1 = null; currentBonusPicks.winner = null }
+    }
+    if (slot === 'semi_3' || slot === 'semi_4') {
+      if (!availableForSlot('finalist_2').includes(currentBonusPicks.finalist_2)) { currentBonusPicks.finalist_2 = null; currentBonusPicks.winner = null }
+    }
+    if (slot === 'finalist_1' || slot === 'finalist_2') {
+      if (!availableForSlot('winner').includes(currentBonusPicks.winner)) currentBonusPicks.winner = null
+    }
+    renderAllBonusPickSlots()
+    return
+  }
+
   const btn = e.target.closest('.save-btn')
   if (btn && !btn.disabled) { savePrediction(parseInt(btn.dataset.match)); return }
 
@@ -1420,6 +1781,9 @@ document.addEventListener('click', e => {
 
   const sbTabBtn = e.target.closest('.sb-tab-btn[data-sbtab]')
   if (sbTabBtn) { switchSbTab(sbTabBtn.dataset.sbtab); return }
+
+  const mTabBtn = e.target.closest('.sb-tab-btn[data-mtab]')
+  if (mTabBtn) { switchMatchTab(mTabBtn.dataset.mtab); return }
 
   if (e.target.closest('.avatar-ring')) { openShirtEditor(); return }
 

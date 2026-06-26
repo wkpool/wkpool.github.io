@@ -698,12 +698,15 @@
     if (fetchError) {
       status.textContent = 'Fout: ' + fetchError.message
       status.style.color = 'var(--red)'
-    } else if (data.updated > 0) {
-      status.textContent = `✓ ${data.updated} uitslag${data.updated !== 1 ? 'en' : ''} bijgewerkt`
+    } else if (data.updated > 0 || data.inserted > 0) {
+      const parts = []
+      if (data.updated > 0) parts.push(`${data.updated} uitslag${data.updated !== 1 ? 'en' : ''} bijgewerkt`)
+      if (data.inserted > 0) parts.push(`${data.inserted} wedstrijd${data.inserted !== 1 ? 'en' : ''} toegevoegd`)
+      status.textContent = `✓ ${parts.join(', ')}`
       status.style.color = 'var(--teal)'
       laadUitslagen()
     } else {
-      status.textContent = `Geen nieuwe uitslagen (${data.checked ?? 0} gecontroleerd)`
+      status.textContent = `Geen wijzigingen (${data.total_api ?? data.checked ?? 0} wedstrijden van API)`
       status.style.color = 'var(--text-mid)'
     }
 
