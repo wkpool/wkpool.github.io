@@ -131,12 +131,17 @@ Deno.serve(async (req) => {
   let inserted = 0
   const errors: string[] = []
   const skipped: string[] = []
+  const last32debug: unknown[] = []
 
   for (const m of apiMatches) {
     const existing = existingByExtId[m.id]
     const isFinished = m.status === 'FINISHED' && m.score?.fullTime?.home != null
     const homeName = m.homeTeam?.name || null
     const awayName = m.awayTeam?.name || null
+
+    if (STAGE_TO_PHASE[m.stage] === 'laatste 32') {
+      last32debug.push({ ext: m.id, api_home: homeName, api_away: awayName, db_home: existing?.home, db_away: existing?.away })
+    }
 
     if (existing) {
       const changes: Record<string, unknown> = {}
@@ -179,7 +184,7 @@ Deno.serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({ updated, inserted, total_api: apiMatches.length, errors, skipped: [...new Set(skipped)] }),
+    JSON.stringify({ updated, inserted, total_api: apiMatches.length, errors, skipped: [...new Set(skipped)], last32debug }),
     { headers: { ...CORS, 'Content-Type': 'application/json' } }
   )
 })
