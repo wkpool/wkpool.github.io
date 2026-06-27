@@ -659,6 +659,32 @@ async function loadHome() {
   document.getElementById('hero-ptn').textContent  = myScore.points
   document.getElementById('hero-rank').textContent = `${myRank}e`
 
+  // Aankondiging knockout & bonus
+  const announceEl = document.getElementById('home-announce')
+  announceEl.innerHTML = ''
+  const koMatches  = (matches || []).filter(m => isKnockout(m) && m.date)
+  const firstKo    = koMatches.sort((a, b) => parseMatchDate(a.date) - parseMatchDate(b.date))[0]
+  const koLocked   = firstKo ? now >= parseMatchDate(firstKo.date) : false
+  const myBonus    = (bonusPreds || []).find(b => b.participant_id === currentParticipant.id)
+  if (!koLocked) {
+    announceEl.innerHTML = `
+      <div class="announce-chips">
+        <button class="announce-chip announce-chip-ko" data-tab="matches">
+          <div class="announce-chip-icon">⚽</div>
+          <div class="announce-chip-label">Knock-outfase</div>
+          <div class="announce-chip-sub">Voorspel de zestiende finales</div>
+        </button>
+        <button class="announce-chip announce-chip-bonus" data-tab="bonus">
+          <div class="announce-chip-icon">⭐</div>
+          <div class="announce-chip-label">Extraatjes</div>
+          <div class="announce-chip-sub">Wie worden de (halve)finalisten en winnaar?</div>
+        </button>
+      </div>`
+    announceEl.querySelectorAll('.announce-chip[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab))
+    })
+  }
+
   // Day winners
   const dayWinnerEl = document.getElementById('home-daywinner')
   dayWinnerEl.innerHTML = ''
