@@ -1060,9 +1060,10 @@
           <div class="sb-title">Scorebord</div>
           <div class="sb-sub" id="sb-sub">WK Pool 2026</div>
         </div>
-        <div class="sb-tabs">
+        <div class="sb-tabs" style="display:flex;align-items:center">
           <button class="sb-tab-btn active" data-sbtab="stand">Stand</button>
           <button class="sb-tab-btn" data-sbtab="historie">Historie</button>
+          <button class="sb-tab-btn" data-sbtab="regels" style="margin-left:auto">Regels</button>
         </div>
         <div id="sbtab-stand">
           <div class="podium-row" id="podium-row"></div>
@@ -1072,102 +1073,96 @@
           <div class="chart-legend" id="chart-legend"></div>
           <div class="chart-wrap" id="chart-wrap"></div>
         </div>
-      </div>
-
-      <!-- RULES TAB -->
-      <div id="tab-rules" class="tab-content hidden">
-        <div class="rules-header">
-          <div class="rules-title">Regels</div>
-          <div class="rules-sub">WK Pool 2026 · Puntensysteem</div>
-        </div>
-
-        <div class="rules-section">
-          <div class="rules-section-label" style="color:#b48af5">⚽ Groepsfase</div>
-          <div class="rules-card" style="--accent:#b48af5;--accent-bg:rgba(180,138,245,0.08);--accent-border:rgba(180,138,245,0.2)">
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Toto goed</div>
-                <div class="rule-note">Winnaar of gelijkspel correct</div>
+        <div id="sbtab-regels" class="hidden">
+          <div class="rules-header">
+            <div class="rules-title">Regels</div>
+            <div class="rules-sub">WK Pool 2026 · Puntensysteem</div>
+          </div>
+          <div class="rules-section">
+            <div class="rules-section-label" style="color:#b48af5">⚽ Groepsfase</div>
+            <div class="rules-card" style="--accent:#b48af5;--accent-bg:rgba(180,138,245,0.08);--accent-border:rgba(180,138,245,0.2)">
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Toto goed</div>
+                  <div class="rule-note">Winnaar of gelijkspel correct</div>
+                </div>
+                <div class="rule-ptn">3 <span>ptn</span></div>
               </div>
-              <div class="rule-ptn">3 <span>ptn</span></div>
+              <div class="rule-divider"></div>
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Score exact goed</div>
+                  <div class="rule-note">Alleen voor de exacte score</div>
+                </div>
+                <div class="rule-ptn rule-bonus">+2 <span>ptn</span></div>
+              </div>
+              <div class="rule-divider"></div>
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Doelpuntenverschil goed</div>
+                  <div class="rule-note">Score niet exact, verschil wel correct</div>
+                </div>
+                <div class="rule-ptn rule-bonus">+1 <span>pt</span></div>
+              </div>
             </div>
-            <div class="rule-divider"></div>
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Score exact goed</div>
-                <div class="rule-note">Alleen voor de exacte score</div>
+          </div>
+          <div class="rules-section">
+            <div class="rules-section-label" style="color:#ff6b8a">🏆 Knock-out fase <span class="rules-double-badge">2×</span></div>
+            <div class="rules-card" style="--accent:#ff6b8a;--accent-bg:rgba(255,107,138,0.08);--accent-border:rgba(255,107,138,0.2)">
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Toto goed</div>
+                  <div class="rule-note">Punten verdubbelen</div>
+                </div>
+                <div class="rule-ptn" style="color:#ff6b8a">6 <span>ptn</span></div>
               </div>
-              <div class="rule-ptn rule-bonus">+2 <span>ptn</span></div>
+              <div class="rule-divider"></div>
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Score exact goed</div>
+                  <div class="rule-note">Alleen voor de exacte score</div>
+                </div>
+                <div class="rule-ptn rule-bonus" style="color:#ff6b8a">+4 <span>ptn</span></div>
+              </div>
+              <div class="rule-divider"></div>
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Doelpuntenverschil goed</div>
+                  <div class="rule-note">Score niet exact, verschil wel correct</div>
+                </div>
+                <div class="rule-ptn rule-bonus" style="color:#ff6b8a">+2 <span>ptn</span></div>
+              </div>
             </div>
-            <div class="rule-divider"></div>
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Doelpuntenverschil goed</div>
-                <div class="rule-note">Score niet exact, verschil wel correct</div>
+          </div>
+          <div class="rules-section">
+            <div class="rules-section-label" style="color:#ffb800">⭐ Extraatjes</div>
+            <div class="rules-card" style="--accent:#ffb800;--accent-bg:rgba(255,184,0,0.08);--accent-border:rgba(255,184,0,0.2)">
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Toernooi winnaar goed</div>
+                  <div class="rule-note">Bovenop de punten voor correct voorspelde finalist</div>
+                </div>
+                <div class="rule-ptn" style="color:#ffb800">8 <span>ptn</span></div>
               </div>
-              <div class="rule-ptn rule-bonus">+1 <span>pt</span></div>
+              <div class="rule-divider"></div>
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Finalisten goed voorspeld</div>
+                  <div class="rule-note">Per correct voorspelde finalist</div>
+                </div>
+                <div class="rule-ptn" style="color:#ffb800">8 <span>ptn</span></div>
+              </div>
+              <div class="rule-divider"></div>
+              <div class="rule-row">
+                <div class="rule-desc">
+                  <div class="rule-name">Halve finalisten goed</div>
+                  <div class="rule-note">Per correct voorspelde halvefinalist</div>
+                </div>
+                <div class="rule-ptn" style="color:#ffb800">5 <span>ptn</span></div>
+              </div>
             </div>
           </div>
         </div>
-
-        <div class="rules-section">
-          <div class="rules-section-label" style="color:#ff6b8a">🏆 Knock-out fase <span class="rules-double-badge">2×</span></div>
-          <div class="rules-card" style="--accent:#ff6b8a;--accent-bg:rgba(255,107,138,0.08);--accent-border:rgba(255,107,138,0.2)">
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Toto goed</div>
-                <div class="rule-note">Punten verdubbelen</div>
-              </div>
-              <div class="rule-ptn" style="color:#ff6b8a">6 <span>ptn</span></div>
-            </div>
-            <div class="rule-divider"></div>
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Score exact goed</div>
-                <div class="rule-note">Alleen voor de exacte score</div>
-              </div>
-              <div class="rule-ptn rule-bonus" style="color:#ff6b8a">+4 <span>ptn</span></div>
-            </div>
-            <div class="rule-divider"></div>
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Doelpuntenverschil goed</div>
-                <div class="rule-note">Score niet exact, verschil wel correct</div>
-              </div>
-              <div class="rule-ptn rule-bonus" style="color:#ff6b8a">+2 <span>ptn</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="rules-section">
-          <div class="rules-section-label" style="color:#ffb800">⭐ Extraatjes</div>
-          <div class="rules-card" style="--accent:#ffb800;--accent-bg:rgba(255,184,0,0.08);--accent-border:rgba(255,184,0,0.2)">
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Toernooi winnaar goed</div>
-                <div class="rule-note">Bovenop de punten voor correct voorspelde finalist</div>
-              </div>
-              <div class="rule-ptn" style="color:#ffb800">8 <span>ptn</span></div>
-            </div>
-            <div class="rule-divider"></div>
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Finalisten goed voorspeld</div>
-                <div class="rule-note">Per correct voorspelde finalist</div>
-              </div>
-              <div class="rule-ptn" style="color:#ffb800">8 <span>ptn</span></div>
-            </div>
-            <div class="rule-divider"></div>
-            <div class="rule-row">
-              <div class="rule-desc">
-                <div class="rule-name">Halve finalisten goed</div>
-                <div class="rule-note">Per correct voorspelde halvefinalist</div>
-              </div>
-              <div class="rule-ptn" style="color:#ffb800">5 <span>ptn</span></div>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <!-- BONUS TAB -->
@@ -1226,10 +1221,6 @@
     <div class="nav-item" data-tab="bonus">
       <div class="nav-icon">⭐</div>
       <div class="nav-label">Extraatjes</div>
-    </div>
-    <div class="nav-item" data-tab="rules">
-      <div class="nav-icon">📋</div>
-      <div class="nav-label">Regels</div>
     </div>
   </nav>
 </div>

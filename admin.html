@@ -563,7 +563,7 @@
       })
     })
 
-    const FASE_VOLGORDE = ['laatste 32', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
+    const FASE_VOLGORDE = ['zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
     const knockout = matches.filter(m => !m.poule && m.phase)
     FASE_VOLGORDE.forEach(fase => {
       const faseMatches = knockout.filter(m => m.phase === fase)

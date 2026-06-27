@@ -10,8 +10,8 @@ const CORS = {
 }
 
 const STAGE_TO_PHASE: Record<string, string> = {
-  'LAST_32':      'laatste 32',
-  'ROUND_OF_32':  'laatste 32',
+  'LAST_32':      'zestiende finale',
+  'ROUND_OF_32':  'zestiende finale',
   'LAST_16':      'achtste finale',
   'ROUND_OF_16':  'achtste finale',
   'QUARTER_FINALS': 'kwartfinale',
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     const homeName = m.homeTeam?.name || null
     const awayName = m.awayTeam?.name || null
 
-    if (STAGE_TO_PHASE[m.stage] === 'laatste 32') {
+    if (STAGE_TO_PHASE[m.stage] === 'zestiende finale') {
       last32debug.push({ ext: m.id, stage: m.stage, status: m.status, api_home: homeName, api_away: awayName, raw_home: m.homeTeam, raw_away: m.awayTeam, db_home: existing?.home, db_away: existing?.away })
     }
 

@@ -508,7 +508,7 @@ function closeParticipantDetail() {
   document.body.style.overflow = ''
 }
 
-const KNOCKOUT_PHASES = new Set(['laatste 32', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale', 'knockout'])
+const KNOCKOUT_PHASES = new Set(['zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale', 'knockout'])
 function isKnockout(match) { return KNOCKOUT_PHASES.has(match.phase) }
 
 function koTeamShort(name) {
@@ -521,7 +521,7 @@ function koTeamShort(name) {
 }
 
 const PHASE_COLORS = {
-  'laatste 32':    { bg: 'rgba(14,165,233,0.15)',  border: 'rgba(14,165,233,0.4)',  text: '#38bdf8' },
+  'zestiende finale':    { bg: 'rgba(14,165,233,0.15)',  border: 'rgba(14,165,233,0.4)',  text: '#38bdf8' },
   'achtste finale':{ bg: 'rgba(29,182,138,0.15)',  border: 'rgba(29,182,138,0.4)',  text: '#34d399' },
   'kwartfinale':   { bg: 'rgba(249,115,22,0.15)',  border: 'rgba(249,115,22,0.4)',  text: '#fb923c' },
   'halve finale':  { bg: 'rgba(255,77,109,0.15)',  border: 'rgba(255,77,109,0.4)',  text: '#ff6b8a' },
@@ -884,9 +884,10 @@ function switchMatchTab(tab) {
 }
 
 function switchSbTab(tab) {
-  document.querySelectorAll('.sb-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.sbtab === tab))
+  document.querySelectorAll('.sb-tab-btn[data-sbtab]').forEach(b => b.classList.toggle('active', b.dataset.sbtab === tab))
   document.getElementById('sbtab-stand')?.classList.toggle('hidden', tab !== 'stand')
   document.getElementById('sbtab-historie')?.classList.toggle('hidden', tab !== 'historie')
+  document.getElementById('sbtab-regels')?.classList.toggle('hidden', tab !== 'regels')
   if (tab === 'historie' && sbCache) renderHistorieChart(sbCache)
 }
 
@@ -1055,7 +1056,7 @@ async function loadMatches() {
   const groupMatches    = matches.filter(m => m.poule)
   const knockoutMatches = matches.filter(m => isKnockout(m))
 
-  const KO_PHASE_ORDER = ['laatste 32', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
+  const KO_PHASE_ORDER = ['zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
   const phaseLockDate = {}
   const phaseFirstMatch = {}
   KO_PHASE_ORDER.forEach(phase => {
@@ -1069,8 +1070,9 @@ async function loadMatches() {
   const knockoutLockDate = nextOpenKo ? phaseLockDate[nextOpenPhase] : null
   const knockoutLocked   = !nextOpenKo && knockoutMatches.length > 0
   const _flagSm = (name, stored) => flag(name, stored).replace('class="flag-img"', 'style="height:15px;vertical-align:middle;border-radius:2px;margin-right:3px"')
-  const PHASE_NL = { 'laatste 32': 'de Laatste 32', 'achtste finale': 'de Achtste Finales', 'kwartfinale': 'de Kwartfinales', 'halve finale': 'de Halve Finales', 'kleine finale': 'de Kleine Finale', 'finale': 'de Finale' }
-  const nextKoLabel = nextOpenPhase ? `Voorspellingen voor ${PHASE_NL[nextOpenPhase] || nextOpenPhase}` : null
+  const PHASE_NL = { 'zestiende finale': 'de Zestiende finale', 'achtste finale': 'de Achtste Finales', 'kwartfinale': 'de Kwartfinales', 'halve finale': 'de Halve Finales', 'kleine finale': 'de Kleine Finale', 'finale': 'de Finale' }
+  const KO_PHASE_LABEL = { 'zestiende finale': 'de 16e finales','achtste finale': 'de achtste finales', 'kwartfinale': 'de kwartfinales', 'halve finale': 'de halve finales', 'kleine finale': 'de kleine finale', 'finale': 'de finale' }
+  const nextKoLabel = nextOpenPhase ? (KO_PHASE_LABEL[nextOpenPhase] || nextOpenPhase) : null
 
   startCountdown(firstMatchDate, globalLocked, 'matches-countdown')
   startCountdown(knockoutLockDate, knockoutLocked, 'ko-countdown', nextKoLabel)
@@ -1174,8 +1176,8 @@ function startCountdown(firstMatchDate, globalLocked, elementId = 'matches-count
 
   if (!firstMatchDate) { el.innerHTML = ''; return }
 
-  const labelPrefix = matchLabel ? `<span style="font-weight:700;color:var(--text)">${matchLabel}</span> ` : ''
-  const sluitVerb   = matchLabel ? 'sluiten over' : '⏱ Sluit over'
+  const labelPrefix = matchLabel ? `Zo lang kun je ${matchLabel} nog voorspellen` : ''
+  const sluitVerb   = matchLabel ? ':' : '⏱ Sluit over'
 
   function tick() {
     const diff = firstMatchDate - new Date()
@@ -1434,7 +1436,7 @@ let _bracketGroups = null
 function buildBracketGroups(matches) {
   const isReal = name => name && !/^\?|Win\.|2e |3e |Beste/.test(name)
   const r32 = (matches || [])
-    .filter(m => m.phase === 'laatste 32')
+    .filter(m => m.phase === 'zestiende finale')
     .sort((a, b) => (a.external_id || 0) - (b.external_id || 0))
   if (r32.length < 8) return null
   const perQ = Math.ceil(r32.length / 4)
