@@ -563,23 +563,36 @@
       })
     })
 
-    const zonderPoule = matches.filter(m => !m.poule)
-    if (zonderPoule.length > 0) {
+    const FASE_VOLGORDE = ['laatste 32', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
+    const knockout = matches.filter(m => !m.poule && m.phase)
+    FASE_VOLGORDE.forEach(fase => {
+      const faseMatches = knockout.filter(m => m.phase === fase)
+      if (!faseMatches.length) return
       const header = document.createElement('div')
       header.className = 'section-label'
-      header.textContent = 'Overig'
+      header.textContent = fase.charAt(0).toUpperCase() + fase.slice(1)
       container.appendChild(header)
-      zonderPoule.forEach(match => container.appendChild(maakUitslagKaart(match)))
-    }
+      faseMatches.forEach(match => container.appendChild(maakUitslagKaart(match)))
+    })
   }
 
   function maakUitslagKaart(match) {
     const card = document.createElement('div')
     const heeftUitslag = match.score_home !== null && match.score_away !== null
+    const isKnockout = !match.poule && match.phase
     card.className = `match-card${heeftUitslag ? ' has-score' : ''}`
 
+    const teamNamenHtml = isKnockout ? `
+      <div class="team-naam-form" style="display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:center">
+        <input type="text" class="score-input team-home-input" id="team-home-${match.id}" value="${match.home ?? ''}" placeholder="Thuis" style="flex:1;width:auto">
+        <span style="color:var(--text-dim);font-size:13px">×</span>
+        <input type="text" class="score-input team-away-input" id="team-away-${match.id}" value="${match.away ?? ''}" placeholder="Uit" style="flex:1;width:auto">
+        <button class="btn-secondary team-save-btn" style="padding:0.4rem 0.7rem;font-size:13px">💾</button>
+      </div>
+    ` : `<div class="match-teams">${match.home} × ${match.away}</div>`
+
     card.innerHTML = `
-      <div class="match-teams">${match.home} × ${match.away}</div>
+      ${teamNamenHtml}
       ${match.date ? `<div class="match-date">${formatDate(match.date)}</div>` : ''}
       <div class="score-form">
         <input type="number" min="0" max="20" class="score-input" id="home-${match.id}" value="${match.score_home ?? ''}">
@@ -592,7 +605,24 @@
 
     card.querySelector('.opslaan-btn').addEventListener('click', () => slaUitslagOp(match.id, card))
     card.querySelector('.wis-btn')?.addEventListener('click', () => wisUitslag(match.id, card))
+    if (isKnockout) {
+      card.querySelector('.team-save-btn').addEventListener('click', () => slaTeamnamenOp(match.id, card))
+    }
     return card
+  }
+
+  async function slaTeamnamenOp(matchId, card) {
+    const homeInput = document.getElementById(`team-home-${matchId}`)
+    const awayInput = document.getElementById(`team-away-${matchId}`)
+    const btn = card.querySelector('.team-save-btn')
+    const homeVal = homeInput.value.trim()
+    const awayVal = awayInput.value.trim()
+    if (!homeVal || !awayVal) { homeInput.style.borderColor = 'var(--red)'; awayInput.style.borderColor = 'var(--red)'; setTimeout(() => { homeInput.style.borderColor = ''; awayInput.style.borderColor = '' }, 1500); return }
+    btn.textContent = '…'
+    btn.disabled = true
+    const { error } = await supabase.from('matches').update({ home: homeVal, away: awayVal }).eq('id', matchId)
+    if (error) { alert('Fout: ' + error.message); btn.textContent = '💾'; btn.disabled = false }
+    else { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '💾'; btn.disabled = false }, 1500) }
   }
 
   async function wisUitslag(matchId, card) {
@@ -691,6 +721,7 @@
         throw new Error(`HTTP ${res.status}: ${txt}`)
       }
       data = await res.json()
+      console.log('Sync response:', JSON.stringify(data, null, 2))
     } catch (e) {
       fetchError = e
     }

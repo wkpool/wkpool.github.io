@@ -70,9 +70,10 @@ const EN_TO_NL: Record<string, string> = {
   "Côte d'Ivoire": 'Ivoorkust', "Cote d'Ivoire": 'Ivoorkust',
   'Algeria': 'Algerije', 'Tunisia': 'Tunesië', 'South Africa': 'Zuid-Afrika',
   'Ghana': 'Ghana', 'Nigeria': 'Nigeria', 'Senegal': 'Senegal',
-  'Mali': 'Mali', 'DR Congo': 'Congo', 'Congo': 'Congo',
+  'Mali': 'Mali', 'DR Congo': 'Congo', 'Congo DR': 'Congo', 'Congo': 'Congo',
   'Costa Rica': 'Costa Rica', 'Haiti': 'Haïti', 'Curaçao': 'Curaçao',
-  'Cape Verde': 'Kaapverdië', 'Cabo Verde': 'Kaapverdië', 'Cabo Verde Islands': 'Kaapverdië', 'Mexico': 'Mexico', 'Canada': 'Canada',
+  'Cape Verde': 'Kaapverdië', 'Cabo Verde': 'Kaapverdië', 'Cabo Verde Islands': 'Kaapverdië', 'Cape Verde Islands': 'Kaapverdië',
+  'Mexico': 'Mexico', 'Canada': 'Canada',
   'Japan': 'Japan', 'Uruguay': 'Uruguay', 'Colombia': 'Colombia',
   'Ecuador': 'Ecuador', 'Venezuela': 'Venezuela', 'Paraguay': 'Paraguay',
   'Bolivia': 'Bolivia', 'Peru': 'Peru', 'Chile': 'Chili',
@@ -82,7 +83,8 @@ const EN_TO_NL: Record<string, string> = {
   'Iceland': 'IJsland', 'Greece': 'Griekenland', 'Israel': 'Israël',
   'Russia': 'Rusland', 'China PR': 'China', 'China': 'China',
   'South Korea': 'Zuid-Korea', 'Korea Republic': 'Zuid-Korea',
-  'Bosnia and Herzegovina': 'Bosnië-Herzegovina', 'Portugal': 'Portugal',
+  'Bosnia and Herzegovina': 'Bosnië-Herzegovina', 'Bosnia-Herzegovina': 'Bosnië-Herzegovina',
+  'Bosnia & Herzegovina': 'Bosnië-Herzegovina', 'Portugal': 'Portugal',
   'Qatar': 'Qatar',
 }
 
@@ -140,7 +142,7 @@ Deno.serve(async (req) => {
     const awayName = m.awayTeam?.name || null
 
     if (STAGE_TO_PHASE[m.stage] === 'laatste 32') {
-      last32debug.push({ ext: m.id, api_home: homeName, api_away: awayName, db_home: existing?.home, db_away: existing?.away })
+      last32debug.push({ ext: m.id, stage: m.stage, status: m.status, api_home: homeName, api_away: awayName, raw_home: m.homeTeam, raw_away: m.awayTeam, db_home: existing?.home, db_away: existing?.away })
     }
 
     if (existing) {

@@ -278,6 +278,9 @@ async function openMatchDetail(match) {
   const now = new Date()
   const firstMatchDate = firstRows?.[0]?.date ? parseMatchDate(firstRows[0].date) : null
   const globalLocked   = firstMatchDate ? now >= firstMatchDate : false
+  const matchLocked    = isKnockout(match)
+    ? (match.date ? now >= parseMatchDate(match.date) : false)
+    : globalLocked
   const isPlayed       = match.score_home !== null && match.score_away !== null
   const maxExact       = isKnockout(match) ? 10 : 5
 
@@ -357,7 +360,7 @@ async function openMatchDetail(match) {
     const pred    = predMap[p.id]
     const hasPred = pred?.pred_home != null
     const isMe    = p.id === currentParticipant.id
-    const visible  = globalLocked || isPlayed || isMe
+    const visible  = matchLocked || isPlayed || isMe
     const pts     = isPlayed && hasPred ? calcPoints(match, pred) : null
     const ptsColor = pts !== null
       ? pts >= maxExact ? 'var(--teal)' : pts === 4 ? '#38bdf8' : pts > 0 ? 'var(--purple-l)' : 'var(--text-dim)'
@@ -388,7 +391,7 @@ async function openMatchDetail(match) {
     `
   })
   html += `</div>`
-  if (!globalLocked && !isPlayed) {
+  if (!matchLocked && !isPlayed) {
     html += `<div style="font-size:11px;color:var(--text-dim);text-align:center;padding:4px 0 8px">Andere voorspellingen zijn zichtbaar na de eerste wedstrijd.</div>`
   }
 
@@ -1589,7 +1592,7 @@ async function loadBonus() {
     .filter(Boolean)
     .sort((a, c) => c.pts - a.pts || a.p.name.localeCompare(c.p.name, 'nl'))
 
-  if (bonusRows.length > 0) {
+  if (bonusRows.length > 0 && isLocked) {
     const rows = bonusRows.map(({ p, b, pts }) => {
       const preds = [
         b.winner      && `🏆 ${b.winner}`,
