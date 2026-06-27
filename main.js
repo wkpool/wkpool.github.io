@@ -1126,7 +1126,8 @@ async function loadMatches() {
         const pred     = predMap[match.id] || {}
         const isPlayed = match.score_home !== null && match.score_away !== null
         const matchStarted = isPhaseLockedFor(match)
-        const isLocked = !isPlayed && matchStarted
+        const teamsKnown = match.home && match.home !== '?' && match.away && match.away !== '?'
+        const isLocked = !isPlayed && (matchStarted || !teamsKnown)
         const card = buildMatchCard(match, pred, isPlayed, isLocked)
         koContainer.appendChild(card)
       })
@@ -1371,9 +1372,11 @@ function buildMatchCard(match, pred, isPlayed, isLocked) {
   card.className = 'match-card'
 
   let statusText, statusClass
-  if (isPlayed)      { statusText = 'Gespeeld'; statusClass = 's-played' }
-  else if (isLocked) { statusText = 'Gesloten'; statusClass = 's-closed' }
-  else               { statusText = 'Open';     statusClass = 's-open'   }
+  const teamsUnknown = !match.home || match.home === '?' || !match.away || match.away === '?'
+  if (isPlayed)                    { statusText = 'Gespeeld';     statusClass = 's-played' }
+  else if (isLocked && teamsUnknown) { statusText = 'In afwachting'; statusClass = 's-closed' }
+  else if (isLocked)               { statusText = 'Gesloten';     statusClass = 's-closed' }
+  else                             { statusText = 'Open';         statusClass = 's-open'   }
 
   const homeFlag = `<div class="match-flag">${flag(match.home, match.home_flag)}</div>`
   const awayFlag = `<div class="match-flag">${flag(match.away, match.away_flag)}</div>`
