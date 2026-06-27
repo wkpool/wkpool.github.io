@@ -758,9 +758,10 @@
     const container = document.getElementById('tab-voorspellingen')
     container.innerHTML = '<p class="empty-state">Laden…</p>'
 
-    const [{ data: participants }, { data: matches }] = await Promise.all([
-      supabase.from('participants').select('id, name, prediction_count').order('name'),
+    const [{ data: participants }, { data: matches }, { data: predCounts }] = await Promise.all([
+      supabase.from('participants').select('id, name').order('name'),
       supabase.from('matches').select('id'),
+      supabase.rpc('get_prediction_counts'),
     ])
 
     const totalMatches = (matches || []).length
@@ -771,9 +772,12 @@
       return
     }
 
+    const countMap = {}
+    ;(predCounts || []).forEach(r => { countMap[r.participant_id] = Number(r.cnt) })
+
     const sorted = [...participants]
       .filter(p => p.id !== 22)
-      .sort((a, b) => (b.prediction_count || 0) - (a.prediction_count || 0))
+      .sort((a, b) => (countMap[b.id] || 0) - (countMap[a.id] || 0))
 
     const label = document.createElement('div')
     label.className = 'section-label'
@@ -781,7 +785,7 @@
     container.appendChild(label)
 
     sorted.forEach(p => {
-      const count = p.prediction_count || 0
+      const count = countMap[p.id] || 0
       const pct   = totalMatches > 0 ? Math.round(count / totalMatches * 100) : 0
       const color = pct === 100 ? 'var(--teal)' : pct >= 50 ? 'var(--purple-l)' : 'var(--pink)'
 
