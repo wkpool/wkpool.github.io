@@ -677,7 +677,7 @@ async function loadHome() {
         <button class="announce-chip announce-chip-bonus" data-tab="bonus">
           <div class="announce-chip-icon">⭐</div>
           <div class="announce-chip-label">Extraatjes</div>
-          <div class="announce-chip-sub">Wie worden de (halve)finalisten en wereldkampioen?</div>
+          <div class="announce-chip-sub">Wie haalt de (halve) finales, en wie wint het WK?</div>
         </button>
       </div>`
     announceEl.querySelectorAll('.announce-chip[data-tab]').forEach(btn => {
