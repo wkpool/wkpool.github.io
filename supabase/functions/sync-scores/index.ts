@@ -129,6 +129,8 @@ Deno.serve(async (req) => {
 
   let updated = 0
   let inserted = 0
+  const errors: string[] = []
+  const skipped: string[] = []
 
   for (const m of apiMatches) {
     const existing = existingByExtId[m.id]
@@ -139,19 +141,16 @@ Deno.serve(async (req) => {
     if (existing) {
       const changes: Record<string, unknown> = {}
 
-      // Update score if now finished and not yet set
       if (isFinished && existing.score_home === null) {
         changes.score_home = m.score.fullTime.home
         changes.score_away = m.score.fullTime.away
       }
 
-      // Update team names: translate to Dutch, only if changed
       const newHome = toNl(homeName)
       const newAway = toNl(awayName)
       if (newHome !== '?' && newHome !== existing.home) changes.home = newHome
       if (newAway !== '?' && newAway !== existing.away) changes.away = newAway
 
-      // Fix English names already stored in DB (API may now return null for those slots)
       const fixedHome = EN_TO_NL[existing.home]
       const fixedAway = EN_TO_NL[existing.away]
       if (fixedHome && fixedHome !== existing.home && !changes.home) changes.home = fixedHome
@@ -159,10 +158,10 @@ Deno.serve(async (req) => {
 
       if (Object.keys(changes).length > 0) {
         const { error } = await supabase.from('matches').update(changes).eq('id', existing.id)
-        if (!error) updated++
+        if (error) errors.push(`update ${existing.id}: ${error.message}`)
+        else updated++
       }
     } else if (STAGE_TO_PHASE[m.stage]) {
-      // Insert knockout match — even if teams are not yet known
       const { error } = await supabase.from('matches').insert({
         external_id: m.id,
         home:        toNl(homeName),
@@ -172,12 +171,15 @@ Deno.serve(async (req) => {
         score_home:  isFinished ? m.score.fullTime.home  : null,
         score_away:  isFinished ? m.score.fullTime.away  : null,
       })
-      if (!error) inserted++
+      if (error) errors.push(`insert ext:${m.id} ${homeName}-${awayName}: ${error.message}`)
+      else inserted++
+    } else if (m.stage && !STAGE_TO_PHASE[m.stage]) {
+      skipped.push(`unknown stage: ${m.stage}`)
     }
   }
 
   return new Response(
-    JSON.stringify({ updated, inserted, total_api: apiMatches.length }),
+    JSON.stringify({ updated, inserted, total_api: apiMatches.length, errors, skipped: [...new Set(skipped)] }),
     { headers: { ...CORS, 'Content-Type': 'application/json' } }
   )
 })

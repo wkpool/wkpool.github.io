@@ -709,6 +709,13 @@
       status.textContent = `Geen wijzigingen (${data.total_api ?? data.checked ?? 0} wedstrijden van API)`
       status.style.color = 'var(--text-mid)'
     }
+    if (data?.errors?.length) {
+      status.textContent += ` · ⚠️ ${data.errors[0]}`
+      status.style.color = 'var(--red)'
+    }
+    if (data?.skipped?.length) {
+      status.textContent += ` · overgeslagen: ${data.skipped.join(', ')}`
+    }
 
     btn.textContent = '⟳ Sync nu'
     btn.disabled = false
