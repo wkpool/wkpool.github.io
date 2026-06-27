@@ -1021,6 +1021,7 @@ const GROUP_COLORS = [
 ]
 
 async function loadMatches() {
+  switchMatchTab('knockout')
   const container = document.getElementById('all-matches-list')
   container.innerHTML = '<p class="empty-state">Laden…</p>'
 
