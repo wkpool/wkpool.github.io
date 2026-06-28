@@ -895,6 +895,16 @@ async function loadScoreboard(silent = false) {
     podiumEl.appendChild(pod)
   })
 
+  // Global max/min per round across all players
+  const roundGlobal = {}
+  scores.forEach(p => {
+    if (!p.roundPts) return
+    Object.entries(p.roundPts).forEach(([r, v]) => {
+      if (!roundGlobal[r]) roundGlobal[r] = { max: v, min: v }
+      else { roundGlobal[r].max = Math.max(roundGlobal[r].max, v); roundGlobal[r].min = Math.min(roundGlobal[r].min, v) }
+    })
+  })
+
   // Leaderboard list (all, with tied ranks)
   const lbEl = document.getElementById('lb-list')
   lbEl.innerHTML = ''
@@ -903,7 +913,7 @@ async function loadScoreboard(silent = false) {
     if (i > 0 && p.points < scores[i - 1].points) rank = i + 1
     const prevRank = prevRankMap[p.id]
     const rankDelta = prevRank != null ? prevRank - rank : 0
-    lbEl.appendChild(buildLbItem(p, rank, rankDelta))
+    lbEl.appendChild(buildLbItem(p, rank, rankDelta, roundGlobal))
   })
 }
 
@@ -961,25 +971,35 @@ function renderHistorieChart({ participants, played, predictions }) {
     .map((p, pi) => ({ ...p, color: CHART_COLORS[(pi * colorStride) % CHART_COLORS.length] }))
 
   const N = sorted.length
+  const MAX_VISIBLE = 15
+  const startIdx = Math.max(0, N - MAX_VISIBLE)
+  const visibleN = N - startIdx
+
   const PAD_L = 30, PAD_R = 30, PAD_T = 16, PAD_B = 28
   const stepX = 36
-  const W = PAD_L + N * stepX + PAD_R
+  const W = PAD_L + visibleN * stepX + PAD_R
   const H = 260
   const drawH = H - PAD_T - PAD_B
-  const maxPts = Math.max(...playerData.map(p => p.values[p.values.length - 1]), 10)
 
-  const rawStep = maxPts / 4
+  const visibleMax = Math.max(...playerData.map(p => p.values[N]), 10)
+  const visibleMin = Math.min(...playerData.map(p => p.values[startIdx]))
+  const range = visibleMax - visibleMin || 10
+  const scaleY = drawH / (range * 1.05)
+  const yBottom = visibleMin - range * 0.025
+
+  const rawStep = range / 4
   const mag = Math.pow(10, Math.floor(Math.log10(rawStep || 1)))
   const tickStep = Math.ceil(rawStep / mag) * mag
-  const yMax = Math.ceil(maxPts / tickStep) * tickStep || tickStep
-  const scaleY = drawH / yMax
+  const yMax = Math.ceil(visibleMax / tickStep) * tickStep || tickStep
+  const yMinTick = Math.floor(yBottom / tickStep) * tickStep
   const ticks = []
-  for (let v = 0; v <= yMax; v += tickStep) ticks.push(v)
+  for (let v = yMinTick; v <= yMax; v += tickStep) ticks.push(v)
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">`
 
   ticks.forEach(v => {
-    const y = (PAD_T + drawH - v * scaleY).toFixed(1)
+    const y = (PAD_T + drawH - (v - yBottom) * scaleY).toFixed(1)
+    if (+y < PAD_T || +y > PAD_T + drawH) return
     svg += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`
     svg += `<text x="${PAD_L - 5}" y="${(+y + 4).toFixed(1)}" text-anchor="end" font-family="Poppins,sans-serif" font-size="9" fill="rgba(255,255,255,0.28)">${v}</text>`
     svg += `<text x="${W - PAD_R + 5}" y="${(+y + 4).toFixed(1)}" text-anchor="start" font-family="Poppins,sans-serif" font-size="9" fill="rgba(255,255,255,0.28)">${v}</text>`
@@ -988,11 +1008,13 @@ function renderHistorieChart({ participants, played, predictions }) {
   const xAxisY = (PAD_T + drawH).toFixed(1)
   svg += `<line x1="${PAD_L}" y1="${xAxisY}" x2="${W - PAD_R}" y2="${xAxisY}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>`
 
-  sorted.forEach((_, i) => {
-    if (N > 20 && (i + 1) % 5 !== 0 && i !== N - 1) return
-    const x = (PAD_L + (i + 1) * stepX).toFixed(1)
-    svg += `<text x="${x}" y="${H - 8}" text-anchor="middle" font-family="Poppins,sans-serif" font-size="9" fill="rgba(255,255,255,0.28)">${i + 1}</text>`
-  })
+  for (let j = 0; j <= visibleN; j++) {
+    const i = startIdx + j
+    if (j === 0 || j === visibleN || j % 5 === 0) {
+      const x = (PAD_L + j * stepX).toFixed(1)
+      svg += `<text x="${x}" y="${H - 8}" text-anchor="middle" font-family="Poppins,sans-serif" font-size="9" fill="rgba(255,255,255,0.28)">${i}</text>`
+    }
+  }
 
   // Draw non-me first so current user renders on top
   const ordered = [...playerData].sort((a, b) => {
@@ -1003,14 +1025,15 @@ function renderHistorieChart({ participants, played, predictions }) {
 
   ordered.forEach(p => {
     const isMe = p.id === currentParticipant.id
-    const pts = p.values.map((v, i) => {
-      const x = (PAD_L + i * stepX).toFixed(1)
-      const y = (PAD_T + drawH - v * scaleY).toFixed(1)
+    const pts = p.values.slice(startIdx).map((v, j) => {
+      const x = (PAD_L + j * stepX).toFixed(1)
+      const y = (PAD_T + drawH - (v - yBottom) * scaleY).toFixed(1)
       return `${x},${y}`
     }).join(' ')
 
-    const lastX = (PAD_L + (p.values.length - 1) * stepX).toFixed(1)
-    const lastY = (PAD_T + drawH - p.values[p.values.length - 1] * scaleY).toFixed(1)
+    const lastX = (PAD_L + visibleN * stepX).toFixed(1)
+    const lastV = p.values[N]
+    const lastY = (PAD_T + drawH - (lastV - yBottom) * scaleY).toFixed(1)
 
     svg += `<polyline points="${pts}" fill="none" stroke="${p.color}" stroke-width="${isMe ? 2.5 : 1.5}" stroke-opacity="${isMe ? 1 : 0.6}" stroke-linejoin="round" stroke-linecap="round"/>`
     svg += `<circle cx="${lastX}" cy="${lastY}" r="${isMe ? 4 : 3}" fill="${p.color}" opacity="${isMe ? 1 : 0.75}"/>`
@@ -1333,7 +1356,7 @@ function buildUpcomingItem(match, hasPred) {
   return item
 }
 
-function buildLbItem(p, rank, rankDelta = 0) {
+function buildLbItem(p, rank, rankDelta = 0, roundGlobal = {}) {
   const isMe = p.id === currentParticipant.id
   const item = document.createElement('div')
   item.className = `lb-item${isMe ? ' me' : ''}`
@@ -1347,6 +1370,21 @@ function buildLbItem(p, rank, rankDelta = 0) {
     }).join('')
     formHtml = `<div class="lb-form">${dots}</div>`
   }
+
+  const ROUND_ORDER = ['GF R1', 'GF R2', 'GF R3', 'zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
+  const ROUND_LABEL = { 'GF R1': 'R1', 'GF R2': 'R2', 'GF R3': 'R3', 'zestiende finale': 'ZF', 'achtste finale': 'AF', 'kwartfinale': 'KF', 'halve finale': 'HF', 'kleine finale': 'KL', 'finale': 'F' }
+  const activeRounds = p.roundPts ? ROUND_ORDER.filter(r => p.roundPts[r] != null) : []
+  const roundVals = activeRounds.map(r => p.roundPts[r])
+  const maxVal = activeRounds.length > 1 ? Math.max(...roundVals) : null
+  const minVal = activeRounds.length > 1 ? Math.min(...roundVals) : null
+  const roundRows = activeRounds.map(r => {
+    const v = p.roundPts[r]
+    const color = v === maxVal ? 'var(--teal)' : v === minVal ? 'var(--pink)' : 'rgba(255,255,255,0.7)'
+    const g = roundGlobal[r]
+    const badge = g && g.max !== g.min ? (v === g.max ? '🔥' : v === g.min ? '🧊' : '') : ''
+    return `<div class="lb-rnd-row"><span>${ROUND_LABEL[r]}</span><b style="color:${color}">${v}</b>${badge ? `<span style="font-size:10px;line-height:1;color:initial">${badge}</span>` : ''}</div>`
+  }).join('')
+  const roundHtml = roundRows ? `<div class="lb-rnd-stack">${roundRows}</div>` : ''
 
   const arrowHtml = rankDelta > 0
     ? `<span style="font-size:10px;color:var(--teal);line-height:1">▲</span>`
@@ -1363,6 +1401,7 @@ function buildLbItem(p, rank, rankDelta = 0) {
       <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}${(p.rocket ? `<span style="font-size:13px;margin-left:3px">🚀</span>` : '') + (p.flames ? `<span style="font-size:13px;margin-left:3px">${'🔥'.repeat(p.flames)}</span>` : p.iceCount ? `<span style="font-size:13px;margin-left:3px">${'🧊'.repeat(p.iceCount)}</span>` : '')}</div>
       ${formHtml}
     </div>
+    ${roundHtml}
     <div class="lb-right">
       <div class="lb-pts-val${isMe ? ' is-me' : ''}">${p.points}</div>
       <div class="lb-pts-lbl">punten</div>
@@ -1719,6 +1758,14 @@ function calcScores(participants, playedMatches, predictions) {
     return da - db
   })
 
+  // Build roundMap: match_id → round key
+  const roundMap = {}
+  const groupMatches = sorted.filter(m => m.poule)
+  groupMatches.forEach((m, i) => {
+    roundMap[m.id] = i < 24 ? 'GF R1' : i < 48 ? 'GF R2' : 'GF R3'
+  })
+  sorted.filter(m => !m.poule && m.phase).forEach(m => { roundMap[m.id] = m.phase })
+
   return (participants || []).map(p => {
     const predMap = {}
     ;(predictions || []).filter(pr => pr.participant_id === p.id)
@@ -1726,6 +1773,7 @@ function calcScores(participants, playedMatches, predictions) {
 
     let points = 0, exact = 0, goed = 0
     const allPts = []
+    const roundPts = {}
 
     sorted.forEach(match => {
       const pred = predMap[match.id]
@@ -1739,6 +1787,8 @@ function calcScores(participants, playedMatches, predictions) {
         else if (pts >= base) goed++
       }
       allPts.push(pts)
+      const rnd = roundMap[match.id]
+      if (rnd) roundPts[rnd] = (roundPts[rnd] || 0) + pts
     })
 
     let streak = 0
@@ -1766,7 +1816,7 @@ function calcScores(participants, playedMatches, predictions) {
     }
     const rocket = rocketStreak >= 3
 
-    return { ...p, points, exact, goed, form: allPts.slice(-5).reverse(), flames, iceCount, rocket, streak }
+    return { ...p, points, exact, goed, form: allPts.slice(-5).reverse(), flames, iceCount, rocket, streak, roundPts }
   }).sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'nl'))
 }
 
