@@ -1670,20 +1670,56 @@ async function loadBonus() {
     .sort((a, c) => c.pts - a.pts || a.p.name.localeCompare(c.p.name, 'nl'))
 
   if (bonusRows.length > 0 && isLocked) {
+    const BK_KEYS = ['semi_1', 'semi_2', 'semi_3', 'semi_4', 'finalist_1', 'finalist_2', 'winner']
+    const mostPicked = {}
+    BK_KEYS.forEach(key => {
+      const counts = {}
+      bonusRows.forEach(({ b }) => { if (b[key]) counts[b[key]] = (counts[b[key]] || 0) + 1 })
+      const max = Math.max(0, ...Object.values(counts))
+      if (max > 0) {
+        const tops = Object.entries(counts).filter(([, c]) => c === max)
+        mostPicked[key] = tops.length === 1 ? tops[0][0] : null
+      }
+    })
+    const bkTeamFor = (b, key) => {
+      const val = b[key] || null
+      if (!val) return '<div class="bk-empty">—</div>'
+      const known = key === 'winner' ? !!actual.winner
+        : key.startsWith('finalist') ? actual.finalists.size > 0
+        : actual.semis.size > 0
+      let cls = ''
+      if (known) {
+        const hit = key === 'winner' ? actual.winner === val
+          : key.startsWith('finalist') ? actual.finalists.has(val)
+          : actual.semis.has(val)
+        cls = hit ? ' bk-hit' : ' bk-miss'
+      } else if (mostPicked[key] && val !== mostPicked[key]) {
+        cls = ' bk-alt'
+      }
+      return `<div class="bk-team${cls}">${flag(val)}<span>${val}</span></div>`
+    }
     const rows = bonusRows.map(({ p, b, pts }) => {
-      const preds = [
-        b.winner      && `🏆 ${b.winner}`,
-        b.finalist_1  && `🥈 ${b.finalist_1}`,
-        b.finalist_2  && `🥈 ${b.finalist_2}`,
-        b.semi_1      && `4️⃣ ${b.semi_1}`,
-        b.semi_2      && `4️⃣ ${b.semi_2}`,
-        b.semi_3      && `4️⃣ ${b.semi_3}`,
-        b.semi_4      && `4️⃣ ${b.semi_4}`,
-      ].filter(Boolean).join('<br>')
       return `<div class="bonus-all-row">
-        <div class="bonus-all-name">${p.name}</div>
-        <div class="bonus-all-preds">${preds || '—'}</div>
-        <div class="bonus-all-pts">${pts > 0 ? `+${pts}` : '—'}</div>
+        <div class="bonus-all-row-hdr">
+          <div class="bonus-all-name">${p.name}</div>
+          <div class="bonus-all-pts">${pts > 0 ? `+${pts}` : '—'}</div>
+        </div>
+        <div class="bk-outer bk-sm">
+          <div class="bk-col">
+            <div class="bk-hdr">HF</div>
+            <div class="bk-pair">${bkTeamFor(b, 'semi_1')}${bkTeamFor(b, 'semi_2')}</div>
+            <div class="bk-pair">${bkTeamFor(b, 'semi_3')}${bkTeamFor(b, 'semi_4')}</div>
+          </div>
+          <div class="bk-col">
+            <div class="bk-hdr">Finale</div>
+            <div class="bk-fin">${bkTeamFor(b, 'finalist_1')}</div>
+            <div class="bk-fin">${bkTeamFor(b, 'finalist_2')}</div>
+          </div>
+          <div class="bk-col">
+            <div class="bk-hdr">Winnaar 🏆</div>
+            <div class="bk-win">${bkTeamFor(b, 'winner')}</div>
+          </div>
+        </div>
       </div>`
     }).join('')
     html += `<div class="bonus-all-section">
