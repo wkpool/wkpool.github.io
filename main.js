@@ -1118,7 +1118,8 @@ async function loadMatches() {
   })
   const isPhaseLockedFor = m => m.phase && phaseLockDate[m.phase] ? now >= phaseLockDate[m.phase] : false
 
-  const nextOpenPhase = KO_PHASE_ORDER.find(phase => phaseLockDate[phase] && now < phaseLockDate[phase])
+  const phaseHasKnownTeams = phase => knockoutMatches.some(m => m.phase === phase && m.home && m.home !== '?' && m.away && m.away !== '?')
+  const nextOpenPhase = KO_PHASE_ORDER.find(phase => phaseLockDate[phase] && now < phaseLockDate[phase] && phaseHasKnownTeams(phase))
   const nextOpenKo    = nextOpenPhase ? phaseFirstMatch[nextOpenPhase] : null
   const knockoutLockDate = nextOpenKo ? phaseLockDate[nextOpenPhase] : null
   const knockoutLocked   = !nextOpenKo && knockoutMatches.length > 0
