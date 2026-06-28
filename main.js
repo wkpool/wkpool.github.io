@@ -460,6 +460,10 @@ function openParticipantDetail(player) {
         <div class="pd-stat-val" style="color:var(--pink)">${miss}</div>
         <div class="pd-stat-lbl">mis</div>
       </div>
+      ${player.streak > 0 ? `<div class="pd-stat" style="background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.2)">
+        <div class="pd-stat-val" style="color:#ff8c00">${player.streak}🔥</div>
+        <div class="pd-stat-lbl">op rij</div>
+      </div>` : ''}
     </div>
   `
 
@@ -1356,7 +1360,7 @@ function buildLbItem(p, rank, rankDelta = 0) {
       <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(p)}</div>
     </div>
     <div class="lb-info">
-      <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}</div>
+      <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}${(p.rocket ? `<span style="font-size:13px;margin-left:3px">🚀</span>` : '') + (p.flames ? `<span style="font-size:13px;margin-left:3px">${'🔥'.repeat(p.flames)}</span>` : p.iceCount ? `<span style="font-size:13px;margin-left:3px">${'🧊'.repeat(p.iceCount)}</span>` : '')}</div>
       ${formHtml}
     </div>
     <div class="lb-right">
@@ -1737,7 +1741,32 @@ function calcScores(participants, playedMatches, predictions) {
       allPts.push(pts)
     })
 
-    return { ...p, points, exact, goed, form: allPts.slice(-5).reverse() }
+    let streak = 0
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const pred = predMap[sorted[i].id]
+      if (!pred) break
+      if (calcPoints(sorted[i], pred) >= 3) streak++
+      else break
+    }
+    const flames = Math.max(0, Math.floor((streak - 3) / 2))
+
+    let coldStreak = 0
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const pred = predMap[sorted[i].id]
+      if (pred && calcPoints(sorted[i], pred) === 0) coldStreak++
+      else break
+    }
+    const iceCount = coldStreak >= 2 ? coldStreak - 1 : 0
+
+    let rocketStreak = 0
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const pred = predMap[sorted[i].id]
+      if (pred && calcPoints(sorted[i], pred) === 5) rocketStreak++
+      else break
+    }
+    const rocket = rocketStreak >= 3
+
+    return { ...p, points, exact, goed, form: allPts.slice(-5).reverse(), flames, iceCount, rocket, streak }
   }).sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'nl'))
 }
 
