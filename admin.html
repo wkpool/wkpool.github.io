@@ -760,12 +760,13 @@
 
     const [{ data: participants }, { data: matches }, { data: predCounts }, { data: bonusPreds }] = await Promise.all([
       supabase.from('participants').select('id, name').order('name'),
-      supabase.from('matches').select('id'),
+      supabase.from('matches').select('id, home, away'),
       supabase.rpc('get_prediction_counts'),
       supabase.from('bonus_predictions').select('participant_id'),
     ])
 
     const totalMatches = (matches || []).length
+    const openMatches = (matches || []).filter(m => m.home && m.home !== '?' && m.away && m.away !== '?').length
     container.innerHTML = ''
 
     if (!participants || participants.length === 0) {
@@ -789,7 +790,8 @@
     sorted.forEach(p => {
       const count = countMap[p.id] || 0
       const pct   = totalMatches > 0 ? Math.round(count / totalMatches * 100) : 0
-      const color = pct === 100 ? 'var(--teal)' : pct >= 50 ? 'var(--purple-l)' : 'var(--pink)'
+      const allOpenDone = openMatches > 0 && count >= openMatches
+      const color = allOpenDone ? 'var(--teal)' : pct >= 50 ? 'var(--purple-l)' : 'var(--pink)'
 
       const row = document.createElement('div')
       row.className = 'pred-row'
