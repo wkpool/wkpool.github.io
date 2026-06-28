@@ -1604,53 +1604,54 @@ async function loadBonus() {
 
   let html = ''
 
-  const sectionHdr = title => {
-    const m = title.match(/^([\p{Emoji}‍]+\s*)/u)
-    const emoji = m ? `<span style="color:initial">${m[1]}</span>` : ''
-    const text = m ? title.slice(m[0].length) : title
-    return `<div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px">${emoji}${text}</div>`
-  }
+  // Group BONUS_SLOTS by section
+  const sectionGroups = []
+  BONUS_SLOTS.forEach(slot => {
+    if (slot.section) sectionGroups.push({ title: slot.section, slots: [] })
+    sectionGroups[sectionGroups.length - 1].slots.push(slot)
+  })
 
   if (isLocked) {
-    let slotsHtml = ''
-    BONUS_SLOTS.forEach(({ key, label, emoji, pts, section }) => {
-      if (section) slotsHtml += sectionHdr(section)
-      const val = myBonus ? myBonus[key] : null
-      let tagClass = 'bonus-pts-pending', tagLabel = `${pts} ptn`
-      const known = key === 'winner' ? actual.winner
-        : key.startsWith('finalist') ? (actual.finalists.size > 0 ? true : false)
-        : actual.semis.size > 0
-      if (val && known) {
-        const hit = key === 'winner' ? actual.winner === val
-          : key.startsWith('finalist') ? actual.finalists.has(val)
-          : actual.semis.has(val)
-        tagClass = hit ? 'bonus-pts-earned' : 'bonus-pts-miss'
-        tagLabel = hit ? `+${pts}` : '0'
-      }
-      const flagHtml = val ? flag(val) + ' ' : ''
-      slotsHtml += `
-        <div class="bonus-slot">
-          <div class="bonus-locked-val">${flagHtml}${val || '—'}<span class="bonus-pts-tag ${tagClass}">${tagLabel}</span></div>
-        </div>`
+    sectionGroups.forEach(({ title, slots }) => {
+      let slotsHtml = ''
+      slots.forEach(({ key, pts }) => {
+        const val = myBonus ? myBonus[key] : null
+        let tagClass = 'bonus-pts-pending', tagLabel = `${pts} ptn`
+        const known = key === 'winner' ? actual.winner
+          : key.startsWith('finalist') ? (actual.finalists.size > 0 ? true : false)
+          : actual.semis.size > 0
+        if (val && known) {
+          const hit = key === 'winner' ? actual.winner === val
+            : key.startsWith('finalist') ? actual.finalists.has(val)
+            : actual.semis.has(val)
+          tagClass = hit ? 'bonus-pts-earned' : 'bonus-pts-miss'
+          tagLabel = hit ? `+${pts}` : '0'
+        }
+        const flagHtml = val ? flag(val) + ' ' : ''
+        slotsHtml += `<div class="bonus-slot"><div class="bonus-locked-val">${flagHtml}${val || '—'}<span class="bonus-pts-tag ${tagClass}">${tagLabel}</span></div></div>`
+      })
+      html += `<div class="bonus-card">
+        <div class="bonus-card-title">${title}</div>
+        ${slotsHtml}
+      </div>`
     })
-    html += `<div class="bonus-card">
-      <div class="bonus-card-title">⭐ Mijn voorspelling <span style="font-size:11px;color:var(--text-dim);font-weight:400;margin-left:4px">gesloten</span></div>
-      ${slotsHtml}
-    </div>`
   } else {
     const SEMI_LABELS = { semi_1: 'Halve finale 1 · kant A', semi_2: 'Halve finale 1 · kant B', semi_3: 'Halve finale 2 · kant A', semi_4: 'Halve finale 2 · kant B' }
     const FINALIST_LABELS = { finalist_1: 'Winnaar halve finale 1', finalist_2: 'Winnaar halve finale 2' }
-    let slotsHtml = ''
-    BONUS_SLOTS.forEach(({ key, section }) => {
-      if (section) slotsHtml += sectionHdr(section)
-      const subLabel = SEMI_LABELS[key] || FINALIST_LABELS[key]
-      if (subLabel) slotsHtml += `<div class="bonus-sub-label">${subLabel}</div>`
-      slotsHtml += `<div id="bonus-picks-${key}" class="bonus-pick-grid"></div>`
+    sectionGroups.forEach(({ title, slots }, gi) => {
+      let slotsHtml = ''
+      slots.forEach(({ key }) => {
+        const subLabel = SEMI_LABELS[key] || FINALIST_LABELS[key]
+        if (subLabel) slotsHtml += `<div class="bonus-sub-label">${subLabel}</div>`
+        slotsHtml += `<div id="bonus-picks-${key}" class="bonus-pick-grid"></div>`
+      })
+      const isLast = gi === sectionGroups.length - 1
+      html += `<div class="bonus-card">
+        <div class="bonus-card-title">${title}</div>
+        ${slotsHtml}
+        ${isLast ? '<button class="bonus-save-btn" id="bonus-save-btn">Opslaan</button>' : ''}
+      </div>`
     })
-    html += `<div class="bonus-card">
-      ${slotsHtml}
-      <button class="bonus-save-btn" id="bonus-save-btn">Opslaan</button>
-    </div>`
     setTimeout(() => {
       currentBonusPicks = {
         semi_1: myBonus?.semi_1 || null, semi_2: myBonus?.semi_2 || null,
