@@ -1590,7 +1590,7 @@ async function loadBonus() {
   const now = new Date()
   const firstKo = koMatches.filter(m => m.date).sort((a, b) => parseMatchDate(a.date) - parseMatchDate(b.date))[0]
   const lockDate = firstKo ? parseMatchDate(firstKo.date) : null
-  const isLocked = false // tijdelijk open gezet
+  const isLocked = lockDate ? now >= lockDate : false
 
   startCountdown(lockDate, isLocked, 'bonus-countdown')
 
