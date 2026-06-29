@@ -351,14 +351,29 @@ function calcPoints(match, pred) {
 }
 
 // ── Data loading ───────────────────────────────────────────
+async function fetchAllPredictions() {
+  const all = []
+  let from = 0
+  const pageSize = 1000
+  while (true) {
+    const { data } = await supabase.from('predictions').select('*').range(from, from + pageSize - 1)
+    if (data) all.push(...data)
+    if (!data || data.length < pageSize) break
+    from += pageSize
+  }
+  return all
+}
+
 async function loadData() {
-  const [{ data: participants }, { data: matches }, { data: predictions }] = await Promise.all([
+  const [{ data: participants }, { data: matches }, predictions] = await Promise.all([
     supabase.from('participants').select('*'),
     supabase.from('matches').select('*'),
-    supabase.from('predictions').select('*'),
+    fetchAllPredictions(),
   ])
 
-  const played = (matches || []).filter(m => m.score_home !== null)
+  const played = (matches || [])
+    .filter(m => m.score_home !== null)
+    .sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1)
   const activeP = (participants || []).filter(p => p.id !== 22)
 
   const predMaps = {}
@@ -377,6 +392,7 @@ async function loadData() {
       const pts  = calcPoints(match, pred)
       if (diff === 1 && pts === 0) pechMatches.push({ match, pred })
     })
+    pechMatches.sort((a, b) => (a.match.date || '') > (b.match.date || '') ? -1 : 1)
     return { ...p, pech: pechMatches.length, pechMatches }
   }).sort((a, b) => b.pech - a.pech || a.name.localeCompare(b.name, 'nl'))
 
