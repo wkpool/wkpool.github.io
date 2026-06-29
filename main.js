@@ -895,16 +895,6 @@ async function loadScoreboard(silent = false) {
     podiumEl.appendChild(pod)
   })
 
-  // Global max/min per round across all players
-  const roundGlobal = {}
-  scores.forEach(p => {
-    if (!p.roundPts) return
-    Object.entries(p.roundPts).forEach(([r, v]) => {
-      if (!roundGlobal[r]) roundGlobal[r] = { max: v, min: v }
-      else { roundGlobal[r].max = Math.max(roundGlobal[r].max, v); roundGlobal[r].min = Math.min(roundGlobal[r].min, v) }
-    })
-  })
-
   // Leaderboard list (all, with tied ranks)
   const lbEl = document.getElementById('lb-list')
   lbEl.innerHTML = ''
@@ -913,7 +903,7 @@ async function loadScoreboard(silent = false) {
     if (i > 0 && p.points < scores[i - 1].points) rank = i + 1
     const prevRank = prevRankMap[p.id]
     const rankDelta = prevRank != null ? prevRank - rank : 0
-    lbEl.appendChild(buildLbItem(p, rank, rankDelta, roundGlobal))
+    lbEl.appendChild(buildLbItem(p, rank, rankDelta))
   })
 }
 
@@ -1455,21 +1445,6 @@ function buildLbItem(p, rank, rankDelta = 0, roundGlobal = {}) {
     formHtml = `<div class="lb-form">${dots}</div>`
   }
 
-  const ROUND_ORDER = ['GF R1', 'GF R2', 'GF R3', 'zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
-  const ROUND_LABEL = { 'GF R1': 'R1', 'GF R2': 'R2', 'GF R3': 'R3', 'zestiende finale': 'ZF', 'achtste finale': 'AF', 'kwartfinale': 'KF', 'halve finale': 'HF', 'kleine finale': 'KL', 'finale': 'F' }
-  const activeRounds = p.roundPts ? ROUND_ORDER.filter(r => p.roundPts[r] != null) : []
-  const roundVals = activeRounds.map(r => p.roundPts[r])
-  const maxVal = activeRounds.length > 1 ? Math.max(...roundVals) : null
-  const minVal = activeRounds.length > 1 ? Math.min(...roundVals) : null
-  const roundRows = activeRounds.map(r => {
-    const v = p.roundPts[r]
-    const color = v === maxVal ? 'var(--teal)' : v === minVal ? 'var(--pink)' : 'rgba(255,255,255,0.7)'
-    const g = roundGlobal[r]
-    const badge = g && g.max !== g.min ? (v === g.max ? '🔥' : v === g.min ? '🧊' : '') : ''
-    return `<div class="lb-rnd-row"><span>${ROUND_LABEL[r]}</span><b style="color:${color}">${v}</b>${badge ? `<span style="font-size:10px;line-height:1;color:initial">${badge}</span>` : ''}</div>`
-  }).join('')
-  const roundHtml = roundRows ? `<div class="lb-rnd-stack">${roundRows}</div>` : ''
-
   const arrowHtml = rankDelta > 0
     ? `<span style="font-size:10px;color:var(--teal);line-height:1">▲</span>`
     : rankDelta < 0
@@ -1485,7 +1460,6 @@ function buildLbItem(p, rank, rankDelta = 0, roundGlobal = {}) {
       <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}${(p.rocket ? `<span style="font-size:13px;margin-left:3px">🚀</span>` : '') + (p.flames ? `<span style="font-size:13px;margin-left:3px">${'🔥'.repeat(p.flames)}</span>` : p.iceCount ? `<span style="font-size:13px;margin-left:3px">${'🧊'.repeat(p.iceCount)}</span>` : '')}</div>
       ${formHtml}
     </div>
-    ${roundHtml}
     <div class="lb-right">
       <div class="lb-pts-val${isMe ? ' is-me' : ''}">${p.points}</div>
       <div class="lb-pts-lbl">ptn</div>
