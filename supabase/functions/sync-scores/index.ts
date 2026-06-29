@@ -121,12 +121,56 @@ Deno.serve(async (req) => {
   // Load all DB matches that have an external_id
   const { data: dbMatches } = await supabase
     .from('matches')
-    .select('id, external_id, score_home, home, away')
+    .select('id, external_id, score_home, score_away, home, away')
     .not('external_id', 'is', null)
 
-  const existingByExtId: Record<number, { id: number; score_home: number | null; home: string; away: string }> = {}
+  const existingByExtId: Record<number, { id: number; score_home: number | null; score_away: number | null; home: string; away: string }> = {}
   for (const m of dbMatches ?? []) {
     existingByExtId[m.external_id] = m
+  }
+
+  // Determine the correct final score to store.
+  // For REGULAR matches fullTime is the 90-min result.
+  // For EXTRA_TIME/PENALTY_SHOOTOUT the API may roll ET or penalty goals into
+  // fullTime; we use regularTime (90-min) + extraTime (ET goals) when available
+  // so we capture who actually won. If the ET score is still a draw (penalties),
+  // we add 1 to the winning side to preserve the direction.
+  function getFinalScore(score: any): { home: number; away: number } | null {
+    if (!score) return null
+    const duration: string = score.duration ?? 'REGULAR'
+    const ft = score.fullTime
+    if (!ft || ft.home == null) return null
+
+    if (duration === 'REGULAR') {
+      return { home: ft.home, away: ft.away }
+    }
+
+    // Extra time: prefer regularTime + extraTime if available, else fall back to fullTime
+    const reg = score.regularTime
+    const et  = score.extraTime
+    let h: number, a: number
+    if (reg?.home != null && et?.home != null) {
+      h = reg.home + et.home
+      a = reg.away + et.away
+    } else {
+      // fullTime may already include ET goals in v4
+      h = ft.home
+      a = ft.away
+    }
+
+    if (duration === 'EXTRA_TIME') {
+      return { home: h, away: a }
+    }
+
+    // PENALTY_SHOOTOUT: h/a is still tied — use winner to break the tie
+    if (duration === 'PENALTY_SHOOTOUT') {
+      const winner: string = score.winner ?? ''
+      if (winner === 'HOME_TEAM') return { home: h + 1, away: a }
+      if (winner === 'AWAY_TEAM') return { home: h, away: a + 1 }
+      return { home: h, away: a }
+    }
+
+    return { home: ft.home, away: ft.away }
   }
 
   let updated = 0
@@ -142,15 +186,18 @@ Deno.serve(async (req) => {
     const awayName = m.awayTeam?.name || null
 
     if (STAGE_TO_PHASE[m.stage] === 'zestiende finale') {
-      last32debug.push({ ext: m.id, stage: m.stage, status: m.status, api_home: homeName, api_away: awayName, raw_home: m.homeTeam, raw_away: m.awayTeam, db_home: existing?.home, db_away: existing?.away })
+      last32debug.push({ ext: m.id, stage: m.stage, status: m.status, duration: m.score?.duration, api_home: homeName, api_away: awayName, db_home: existing?.home, db_away: existing?.away })
     }
 
     if (existing) {
       const changes: Record<string, unknown> = {}
 
-      if (isFinished && existing.score_home === null) {
-        changes.score_home = m.score.fullTime.home
-        changes.score_away = m.score.fullTime.away
+      if (isFinished) {
+        const final = getFinalScore(m.score)
+        if (final && (existing.score_home !== final.home || existing.score_away !== final.away)) {
+          changes.score_home = final.home
+          changes.score_away = final.away
+        }
       }
 
       const newHome = toNl(homeName)
@@ -169,14 +216,15 @@ Deno.serve(async (req) => {
         else updated++
       }
     } else if (STAGE_TO_PHASE[m.stage]) {
+      const final = isFinished ? getFinalScore(m.score) : null
       const { error } = await supabase.from('matches').insert({
         external_id: m.id,
         home:        toNl(homeName),
         away:        toNl(awayName),
         date:        m.utcDate ? utcToCest(m.utcDate) : null,
         phase:       STAGE_TO_PHASE[m.stage],
-        score_home:  isFinished ? m.score.fullTime.home  : null,
-        score_away:  isFinished ? m.score.fullTime.away  : null,
+        score_home:  final?.home ?? null,
+        score_away:  final?.away ?? null,
       })
       if (error) errors.push(`insert ext:${m.id} ${homeName}-${awayName}: ${error.message}`)
       else inserted++
