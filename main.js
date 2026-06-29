@@ -931,7 +931,7 @@ function switchSbTab(tab) {
   if (tab === 'historie' && sbCache) renderHistorieChart(sbCache)
 }
 
-function renderHistorieChart({ participants, played, predictions }) {
+function renderHistorieChart({ participants, played, predictions, scores }) {
   const legendEl = document.getElementById('chart-legend')
   const wrapEl   = document.getElementById('chart-wrap')
   if (!legendEl || !wrapEl) return
@@ -1050,6 +1050,89 @@ function renderHistorieChart({ participants, played, predictions }) {
       <span style="${isMe ? 'color:var(--text);font-weight:700' : 'color:var(--text-mid)'}">${p.name.split(' ')[0]}${isMe ? ' (jij)' : ''}</span>
     </div>`
   }).join('')
+
+  renderStats({ participants, played, predictions, scores })
+}
+
+function renderStats({ participants, played, predictions, scores }) {
+  const el = document.getElementById('stats-sections')
+  if (!el) return
+
+  const activeP = (scores || []).filter(p => p.id !== 22)
+  if (!activeP.length) { el.innerHTML = ''; return }
+
+  // Dagzeges per participant
+  const dagWins = {}
+  activeP.forEach(p => { dagWins[p.id] = 0 })
+  const predsByP = {}
+  predictions.forEach(pr => {
+    if (!predsByP[pr.participant_id]) predsByP[pr.participant_id] = {}
+    predsByP[pr.participant_id][pr.match_id] = pr
+  })
+  const byDate = {}
+  played.filter(m => m.date).forEach(m => {
+    const d = m.date.slice(0, 10)
+    if (!byDate[d]) byDate[d] = []
+    byDate[d].push(m)
+  })
+  Object.values(byDate).forEach(dayMatches => {
+    if (dayMatches.some(m => m.score_home === null)) return
+    const dayScores = activeP.map(p => {
+      let pts = 0
+      dayMatches.forEach(m => { const pr = predsByP[p.id]?.[m.id]; if (pr) pts += calcPoints(m, pr) })
+      return { id: p.id, pts }
+    })
+    const maxPts = Math.max(...dayScores.map(d => d.pts))
+    if (!maxPts) return
+    dayScores.filter(d => d.pts === maxPts).forEach(d => { dagWins[d.id]++ })
+  })
+
+  const barCard = (title, items, key, suffix = '') => {
+    const sorted = [...items].sort((a, b) => (b[key] || 0) - (a[key] || 0) || a.name.localeCompare(b.name, 'nl'))
+    const max = sorted[0]?.[key] || 0
+    if (!max) return ''
+    const rows = sorted.filter(p => (p[key] || 0) > 0).map(p => {
+      const v = p[key] || 0
+      const top = v === max
+      return `<div class="stat-row">
+        <div class="stat-row-name">${p.name.split(' ')[0]}</div>
+        <div class="stat-row-bar-wrap"><div class="stat-row-bar" style="width:${Math.round(v/max*100)}%;background:${top ? 'var(--teal)' : 'rgba(255,255,255,0.15)'}"></div></div>
+        <div class="stat-row-val${top ? ' stat-top' : ''}">${v}${suffix}</div>
+      </div>`
+    }).join('')
+    return `<div class="stat-card"><div class="stat-card-title">${title}</div>${rows}</div>`
+  }
+
+  const exactHtml = barCard('🎯 Meeste exact voorspeld', activeP, 'exact', 'x')
+  const goedHtml  = barCard('✓ Meeste toto\'s goed',    activeP, 'goed',  'x')
+  const dagItems  = activeP.map(p => ({ ...p, dagWins: dagWins[p.id] || 0 }))
+  const dagHtml   = barCard('🏆 Meest dagzeges',         dagItems, 'dagWins', 'x')
+
+  const ROUND_ORDER = ['GF R1', 'GF R2', 'GF R3', 'zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
+  const ROUND_LABEL = { 'GF R1': 'Groepsfase R1', 'GF R2': 'Groepsfase R2', 'GF R3': 'Groepsfase R3', 'zestiende finale': 'Zestiende finales', 'achtste finale': 'Achtste finales', 'kwartfinale': 'Kwartfinales', 'halve finale': 'Halve finales', 'kleine finale': 'Kleine finale', 'finale': 'Finale' }
+  const activeRounds = ROUND_ORDER.filter(r => activeP.some(p => p.roundPts?.[r] != null))
+
+  let rondeHtml = ''
+  if (activeRounds.length) {
+    const subs = activeRounds.map(r => {
+      const items = activeP.map(p => ({ ...p, rPts: p.roundPts?.[r] ?? 0 }))
+        .sort((a, b) => b.rPts - a.rPts || a.name.localeCompare(b.name, 'nl'))
+      const max = items[0]?.rPts || 0
+      if (!max) return ''
+      const rows = items.filter(p => p.rPts > 0).map(p => {
+        const top = p.rPts === max
+        return `<div class="stat-row">
+          <div class="stat-row-name">${p.name.split(' ')[0]}</div>
+          <div class="stat-row-bar-wrap"><div class="stat-row-bar" style="width:${Math.round(p.rPts/max*100)}%;background:${top ? 'var(--teal)' : 'rgba(255,255,255,0.15)'}"></div></div>
+          <div class="stat-row-val${top ? ' stat-top' : ''}">${p.rPts}</div>
+        </div>`
+      }).join('')
+      return `<div class="stat-ronde"><div class="stat-ronde-label">${ROUND_LABEL[r]}</div>${rows}</div>`
+    }).filter(Boolean).join('')
+    if (subs) rondeHtml = `<div class="stat-card"><div class="stat-card-title">⚡ Meeste punten per ronde</div>${subs}</div>`
+  }
+
+  el.innerHTML = exactHtml + goedHtml + dagHtml + rondeHtml
 }
 
 // ── Matches ───────────────────────────────────────────────

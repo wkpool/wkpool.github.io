@@ -344,6 +344,19 @@
     .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 4px 16px 14px; }
     .chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; }
     .chart-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    #stats-sections { padding: 0 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; }
+    .stat-card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+    .stat-ronde { margin-top: 14px; }
+    .stat-ronde:first-child { margin-top: 0; }
+    .stat-ronde-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 7px; }
+    .stat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .stat-row:last-child { margin-bottom: 0; }
+    .stat-row-name { font-size: 12px; font-weight: 600; color: var(--text-mid); width: 60px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stat-row-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+    .stat-row-bar { height: 100%; border-radius: 99px; transition: width .3s; }
+    .stat-row-val { font-size: 12px; font-weight: 700; color: var(--text-mid); width: 28px; text-align: right; flex-shrink: 0; }
+    .stat-row-val.stat-top { color: var(--teal); }
 
     .podium-row {
       display: flex; align-items: flex-end; justify-content: center;
@@ -1104,7 +1117,7 @@
         </div>
         <div class="sb-tabs" style="display:flex;align-items:center">
           <button class="sb-tab-btn active" data-sbtab="stand">Stand</button>
-          <button class="sb-tab-btn" data-sbtab="historie">Historie</button>
+          <button class="sb-tab-btn" data-sbtab="historie">Statistieken</button>
           <button class="sb-tab-btn" data-sbtab="regels" style="margin-left:auto">Regels</button>
         </div>
         <div id="sbtab-stand">
@@ -1114,6 +1127,7 @@
         <div id="sbtab-historie" class="hidden">
           <div class="chart-legend" id="chart-legend"></div>
           <div class="chart-wrap" id="chart-wrap"></div>
+          <div id="stats-sections"></div>
         </div>
         <div id="sbtab-regels" class="hidden">
           <div class="rules-header">
