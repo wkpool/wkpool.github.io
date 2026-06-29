@@ -1405,7 +1405,7 @@ function buildLbItem(p, rank, rankDelta = 0, roundGlobal = {}) {
     ${roundHtml}
     <div class="lb-right">
       <div class="lb-pts-val${isMe ? ' is-me' : ''}">${p.points}</div>
-      <div class="lb-pts-lbl">punten</div>
+      <div class="lb-pts-lbl">ptn</div>
     </div>
   `
   return item
@@ -1836,7 +1836,7 @@ function calcScores(participants, playedMatches, predictions) {
       if (calcPoints(sorted[i], pred) >= 3) streak++
       else break
     }
-    const flames = Math.max(0, Math.floor((streak - 3) / 2))
+    const flames = Math.max(0, Math.floor((streak - 2) / 2))
 
     let coldStreak = 0
     for (let i = sorted.length - 1; i >= 0; i--) {
