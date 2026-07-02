@@ -1180,7 +1180,6 @@ const GROUP_COLORS = [
 ]
 
 async function loadMatches() {
-  switchMatchTab('knockout')
   const container = document.getElementById('all-matches-list')
   container.innerHTML = '<p class="empty-state">Laden…</p>'
 
@@ -1237,7 +1236,7 @@ async function loadMatches() {
   startCountdown(knockoutLockDate, knockoutLocked, 'ko-countdown', nextKoLabel)
 
   container.innerHTML = ''
-  let firstUpcomingCard = null
+  let firstUpcomingPoule = null
   groupMatches.forEach(match => {
     const pred     = predMap[match.id] || {}
     const isPlayed = match.score_home !== null && match.score_away !== null
@@ -1245,11 +1244,12 @@ async function loadMatches() {
     const card = buildMatchCard(match, pred, isPlayed, isLocked)
     card.dataset.group = match.poule || ''
     if (activeGroupFilter && match.poule !== activeGroupFilter) card.classList.add('hidden')
-    if (!isPlayed && !firstUpcomingCard) firstUpcomingCard = card
+    if (!isPlayed && !firstUpcomingPoule) firstUpcomingPoule = card
     container.appendChild(card)
   })
 
   const koContainer = document.getElementById('knockout-matches-list')
+  let firstUpcomingKo = null
   if (koContainer) {
     koContainer.innerHTML = ''
     if (knockoutMatches.length === 0) {
@@ -1262,16 +1262,22 @@ async function loadMatches() {
         const teamsKnown = match.home && match.home !== '?' && match.away && match.away !== '?'
         const isLocked = !isPlayed && (matchStarted || !teamsKnown)
         const card = buildMatchCard(match, pred, isPlayed, isLocked)
+        if (!isPlayed && !firstUpcomingKo) firstUpcomingKo = card
         koContainer.appendChild(card)
       })
     }
   }
 
-  if (firstUpcomingCard) {
+  // Switch to whichever tab has the next upcoming match
+  const scrollTarget = firstUpcomingPoule || firstUpcomingKo
+  if (firstUpcomingPoule) switchMatchTab('poule')
+  else switchMatchTab('knockout')
+
+  if (scrollTarget) {
     requestAnimationFrame(() => {
       const appContent = document.getElementById('app-content')
       if (!appContent) return
-      const cardRect = firstUpcomingCard.getBoundingClientRect()
+      const cardRect = scrollTarget.getBoundingClientRect()
       const containerRect = appContent.getBoundingClientRect()
       appContent.scrollTo({ top: appContent.scrollTop + cardRect.top - containerRect.top - 16, behavior: 'smooth' })
     })
