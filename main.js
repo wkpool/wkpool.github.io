@@ -1065,6 +1065,7 @@ function renderStats({ participants, played, predictions, scores }) {
     if (!byDate[d]) byDate[d] = []
     byDate[d].push(m)
   })
+  let totalDays = 0
   Object.values(byDate).forEach(dayMatches => {
     if (dayMatches.some(m => m.score_home === null)) return
     const dayScores = activeP.map(p => {
@@ -1074,29 +1075,52 @@ function renderStats({ participants, played, predictions, scores }) {
     })
     const maxPts = Math.max(...dayScores.map(d => d.pts))
     if (!maxPts) return
+    totalDays++
     dayScores.filter(d => d.pts === maxPts).forEach(d => { dagWins[d.id]++ })
   })
 
-  const barCard = (title, items, key, suffix = '') => {
+  // Max possible points per round (same indexing as calcScores)
+  const sortedPlayed = [...played].sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1)
+  const groupMatches = sortedPlayed.filter(m => m.poule)
+  const roundMaxPts = {}
+  groupMatches.forEach((m, i) => {
+    const r = i < 24 ? 'GF R1' : i < 48 ? 'GF R2' : 'GF R3'
+    roundMaxPts[r] = (roundMaxPts[r] || 0) + 5
+  })
+  sortedPlayed.filter(m => !m.poule && m.phase).forEach(m => {
+    roundMaxPts[m.phase] = (roundMaxPts[m.phase] || 0) + 10
+  })
+
+  const meId = currentParticipant?.id
+  const barCard = (title, items, key, suffix = '', scale = null) => {
     const sorted = [...items].sort((a, b) => (b[key] || 0) - (a[key] || 0) || a.name.localeCompare(b.name, 'nl'))
     const max = sorted[0]?.[key] || 0
     if (!max) return ''
+    const barMax = scale ?? max
     const rows = sorted.filter(p => (p[key] || 0) > 0).map(p => {
       const v = p[key] || 0
       const top = v === max
-      return `<div class="stat-row">
-        <div class="stat-row-name">${p.name.split(' ')[0]}</div>
-        <div class="stat-row-bar-wrap"><div class="stat-row-bar" style="width:${Math.round(v/max*100)}%;background:${top ? 'var(--teal)' : 'rgba(255,255,255,0.15)'}"></div></div>
-        <div class="stat-row-val${top ? ' stat-top' : ''}">${v}${suffix}</div>
+      const isMe = p.id === meId
+      const pct = Math.round(v/barMax*100)
+      const alpha = (0.15 + (v / max) * 0.85).toFixed(2)
+      const barColor = isMe ? 'var(--purple-l)' : `rgba(0,212,170,${alpha})`
+      return `<div class="stat-row${isMe ? ' stat-row-me' : ''}">
+        <div class="stat-row-name">${p.name.split(' ')[0]}${isMe ? ' <span class="stat-me-tag">jij</span>' : ''}</div>
+        <div class="stat-row-bar-wrap">
+          <div class="stat-row-bar" style="width:${pct}%;background:${barColor}"></div>
+          ${scale != null ? `<span class="stat-bar-pct" style="left:${pct}%">${pct}%</span>` : ''}
+        </div>
+        <div class="stat-row-val${top ? ' stat-top' : ''}" style="${isMe ? 'color:var(--purple-l)' : ''}">${v}${suffix}</div>
       </div>`
     }).join('')
     return `<div class="stat-card"><div class="stat-card-title">${title}</div>${rows}</div>`
   }
 
-  const exactHtml = barCard('🎯 Meeste exact voorspeld', activeP, 'exact', 'x')
-  const goedHtml  = barCard('✓ Meeste toto\'s goed',    activeP, 'goed',  'x')
+  const totalPlayed = played.length
+  const exactHtml = barCard('🎯 Meeste exact voorspeld', activeP, 'exact', 'x', totalPlayed)
+  const goedHtml  = barCard('✓ Meeste toto\'s goed',    activeP, 'goed',  'x', totalPlayed)
   const dagItems  = activeP.map(p => ({ ...p, dagWins: dagWins[p.id] || 0 }))
-  const dagHtml   = barCard('🏆 Meest dagzeges',         dagItems, 'dagWins', 'x')
+  const dagHtml   = barCard('🏆 Meest dagzeges', dagItems, 'dagWins', 'x', totalDays || null)
 
   const ROUND_ORDER = ['GF R1', 'GF R2', 'GF R3', 'zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
   const ROUND_LABEL = { 'GF R1': 'Groepsfase R1', 'GF R2': 'Groepsfase R2', 'GF R3': 'Groepsfase R3', 'zestiende finale': 'Zestiende finales', 'achtste finale': 'Achtste finales', 'kwartfinale': 'Kwartfinales', 'halve finale': 'Halve finales', 'kleine finale': 'Kleine finale', 'finale': 'Finale' }
@@ -1109,12 +1133,20 @@ function renderStats({ participants, played, predictions, scores }) {
         .sort((a, b) => b.rPts - a.rPts || a.name.localeCompare(b.name, 'nl'))
       const max = items[0]?.rPts || 0
       if (!max) return ''
+      const rMax = roundMaxPts[r] || max
       const rows = items.filter(p => p.rPts > 0).map(p => {
         const top = p.rPts === max
-        return `<div class="stat-row">
-          <div class="stat-row-name">${p.name.split(' ')[0]}</div>
-          <div class="stat-row-bar-wrap"><div class="stat-row-bar" style="width:${Math.round(p.rPts/max*100)}%;background:${top ? 'var(--teal)' : 'rgba(255,255,255,0.15)'}"></div></div>
-          <div class="stat-row-val${top ? ' stat-top' : ''}">${p.rPts}</div>
+        const isMe = p.id === meId
+        const pct = Math.round(p.rPts / rMax * 100)
+        const alpha = (0.15 + (p.rPts / max) * 0.85).toFixed(2)
+        const barColor = isMe ? 'var(--purple-l)' : `rgba(0,212,170,${alpha})`
+        return `<div class="stat-row${isMe ? ' stat-row-me' : ''}">
+          <div class="stat-row-name">${p.name.split(' ')[0]}${isMe ? ' <span class="stat-me-tag">jij</span>' : ''}</div>
+          <div class="stat-row-bar-wrap">
+            <div class="stat-row-bar" style="width:${pct}%;background:${barColor}"></div>
+            <span class="stat-bar-pct" style="left:${pct}%">${pct}%</span>
+          </div>
+          <div class="stat-row-val${top ? ' stat-top' : ''}" style="${isMe ? 'color:var(--purple-l)' : ''}">${p.rPts}</div>
         </div>`
       }).join('')
       return `<div class="stat-ronde"><div class="stat-ronde-label">${ROUND_LABEL[r]}</div>${rows}</div>`
@@ -1879,7 +1911,7 @@ function calcScores(participants, playedMatches, predictions) {
       const base     = ko ? 6  : 3
       if (pred) {
         if (pts === maxExact) exact++
-        else if (pts >= base) goed++
+        if (pts >= base) goed++
       }
       allPts.push(pts)
       const rnd = roundMap[match.id]

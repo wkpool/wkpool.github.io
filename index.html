@@ -353,10 +353,13 @@
     .stat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
     .stat-row:last-child { margin-bottom: 0; }
     .stat-row-name { font-size: 12px; font-weight: 600; color: var(--text-mid); width: 60px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .stat-row-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+    .stat-row-bar-wrap { position: relative; flex: 1; height: 14px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: visible; }
     .stat-row-bar { height: 100%; border-radius: 99px; transition: width .3s; }
+    .stat-bar-pct { position: absolute; top: 50%; transform: translateY(-50%); padding-left: 5px; font-size: 10px; font-weight: 500; color: var(--text-dim); white-space: nowrap; pointer-events: none; }
     .stat-row-val { font-size: 12px; font-weight: 700; color: var(--text-mid); width: 28px; text-align: right; flex-shrink: 0; }
     .stat-row-val.stat-top { color: var(--teal); }
+    .stat-row-me .stat-row-name { color: var(--text); font-weight: 700; }
+    .stat-me-tag { font-size: 9px; font-weight: 600; color: var(--purple-l); opacity: 0.8; vertical-align: middle; }
 
     .podium-row {
       display: flex; align-items: flex-end; justify-content: center;
