@@ -1637,6 +1637,7 @@ function calcActualBonus(matches) {
   let winner = null
   const finalists = new Set()
   const semis = new Set()
+  const eliminated = new Set()
   halve.forEach(m => {
     if (m.home && m.home !== '?') semis.add(m.home)
     if (m.away && m.away !== '?') semis.add(m.away)
@@ -1648,7 +1649,36 @@ function calcActualBonus(matches) {
       winner = m.score_home > m.score_away ? m.home : m.away
     }
   })
-  return { winner, finalists, semis }
+  const KO_ORDER = ['zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale']
+  const koByPhase = {}
+  KO_ORDER.forEach(p => { koByPhase[p] = [] })
+  ;(matches || []).filter(m => KNOCKOUT_PHASES.has(m.phase)).forEach(m => { koByPhase[m.phase]?.push(m) })
+  // Teams that appear in any KO match in a later phase (i.e. they advanced)
+  const advanced = new Set()
+  KO_ORDER.slice(1).forEach(phase => {
+    koByPhase[phase].forEach(m => {
+      if (m.home && m.home !== '?') advanced.add(m.home)
+      if (m.away && m.away !== '?') advanced.add(m.away)
+    })
+  })
+  KO_ORDER.forEach((phase, i) => {
+    const nextPhase = KO_ORDER[i + 1]
+    const nextHasTeams = nextPhase && koByPhase[nextPhase].some(m => (m.home && m.home !== '?') || (m.away && m.away !== '?'))
+    koByPhase[phase].forEach(m => {
+      if (m.score_home === null) return
+      if (m.score_home !== m.score_away) {
+        if (m.score_home > m.score_away && m.away && m.away !== '?') eliminated.add(m.away)
+        if (m.score_away > m.score_home && m.home && m.home !== '?') eliminated.add(m.home)
+      } else {
+        // Score is equal (penalty match stored as draw) — only eliminate if the other team has confirmed advanced
+        const homeAdv = m.home && m.home !== '?' && advanced.has(m.home)
+        const awayAdv = m.away && m.away !== '?' && advanced.has(m.away)
+        if (homeAdv && m.away && m.away !== '?') eliminated.add(m.away)
+        if (awayAdv && m.home && m.home !== '?') eliminated.add(m.home)
+      }
+    })
+  })
+  return { winner, finalists, semis, eliminated }
 }
 
 function calcBonusPoints(pred, actual) {
@@ -1724,7 +1754,8 @@ async function loadBonus() {
           tagLabel = hit ? `+${pts}` : '0'
         }
         const flagHtml = val ? flag(val) + ' ' : ''
-        slotsHtml += `<div class="bonus-slot"><div class="bonus-locked-val">${flagHtml}${val || '—'}<span class="bonus-pts-tag ${tagClass}">${tagLabel}</span></div></div>`
+        const isElim = val && actual.eliminated.has(val)
+        slotsHtml += `<div class="bonus-slot"><div class="bonus-locked-val${isElim ? ' bonus-elim' : ''}">${flagHtml}${val || '—'}<span class="bonus-pts-tag ${tagClass}">${tagLabel}</span></div></div>`
       })
       html += `<div class="bonus-card">
         <div class="bonus-card-title">${title}</div>
@@ -1791,7 +1822,8 @@ async function loadBonus() {
       } else if (mostPicked[key] && val !== mostPicked[key]) {
         cls = ' bk-alt'
       }
-      return `<div class="bk-team${cls}">${flag(val)}<span>${val}</span></div>`
+      const elim = actual.eliminated.has(val)
+      return `<div class="bk-team${cls}${elim ? ' bk-elim' : ''}">${flag(val)}<span>${val}</span></div>`
     }
     const rows = bonusRows.map(({ p, b, pts }) => {
       return `<div class="bonus-all-row">
