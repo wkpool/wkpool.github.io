@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dagscores · WK Pool 2026</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #111118; --bg2: #1a1a24; --bg3: #22222e;
+      --card: #1e1e2a; --card2: #252534;
+      --pink: #ff4d6d; --teal: #00d4aa;
+      --purple-l: #b48af5;
+      --text: rgba(255,255,255,0.92);
+      --text-mid: rgba(255,255,255,0.55);
+      --text-dim: rgba(255,255,255,0.28);
+      --border: rgba(255,255,255,0.07);
+      --font: 'Poppins', -apple-system, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 10%, rgba(124,92,191,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,77,109,0.08) 0%, transparent 55%);
+    }
+    .hidden { display: none !important; }
+
+    /* Layout */
+    #main { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding-bottom: 48px; }
+
+    .page-header {
+      padding: 28px 20px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .page-sub { font-size: 12px; color: var(--text-mid); margin-top: 3px; }
+    .back-link {
+      font-size: 12px; font-weight: 600; color: var(--text-mid);
+      text-decoration: none; background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 5px 12px; transition: color .15s; white-space: nowrap;
+    }
+    .back-link:hover { color: var(--text); }
+
+    #loading { padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 14px; }
+
+    #days { padding: 0 16px; }
+
+    /* Day card */
+    .day-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; margin-bottom: 12px; overflow: hidden;
+    }
+    .day-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px 10px; border-bottom: 1px solid var(--border);
+    }
+    .day-date { font-size: 13px; font-weight: 700; }
+    .day-matches { font-size: 11px; color: var(--text-mid); margin-top: 2px; }
+    .day-winner-badge {
+      font-size: 11px; font-weight: 700; color: var(--teal);
+      background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2);
+      border-radius: 6px; padding: 2px 8px; white-space: nowrap;
+    }
+
+    /* Score rows */
+    .day-rows { padding: 6px 0; }
+    .day-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 16px; transition: background .1s;
+    }
+    .day-row.is-winner { background: rgba(0,212,170,0.05); }
+    .day-row.is-me { background: rgba(180,138,245,0.06); }
+    .day-rank { font-size: 12px; font-weight: 700; color: var(--text-dim); width: 16px; text-align: center; flex-shrink: 0; }
+    .day-avatar { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #1a1a24; }
+    .day-name { flex: 1; font-size: 13px; font-weight: 600; min-width: 0; }
+    .day-name.is-winner { color: var(--teal); }
+    .day-name.is-me { color: var(--purple-l); }
+    .day-pts { font-size: 15px; font-weight: 800; color: var(--text-mid); flex-shrink: 0; min-width: 32px; text-align: right; }
+    .day-pts.is-winner { color: var(--teal); }
+    .day-pts.is-me { color: var(--purple-l); }
+    .day-pts-zero { color: var(--text-dim) !important; font-weight: 400 !important; font-size: 13px !important; }
+    .crown { font-size: 13px; margin-left: 2px; }
+  </style>
+</head>
+<body>
+
+<div id="main">
+  <div class="page-header">
+    <div>
+      <div class="page-title">📅 Dagscores</div>
+      <div class="page-sub">Punten per speeldag voor iedereen</div>
+    </div>
+    <a href="/" class="back-link">← Terug</a>
+  </div>
+  <div id="loading">Laden…</div>
+  <div id="days" class="hidden"></div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const SUPABASE_URL      = 'https://jqomnywegtyvgnxtbnjl.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxb21ueXdlZ3R5dmdueHRibmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTc2OTUsImV4cCI6MjA5NDQ3MzY5NX0.VjOXsDHRcDrXO2EaZPTLzw5iBSlHFan9FrNW2HJO2cY'
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+loadData()
+
+// ── Utilities ──────────────────────────────────────────────
+let _clipId = 0
+
+const SHIRT_DESIGNS = [
+  { type:'solid',    c1:'#e63950', c2:'#ffffff', collar:'#a8001e' },
+  { type:'hstripes', c1:'#0369a1', c2:'#ffffff', collar:'#075985' },
+  { type:'vstripes', c1:'#1c1c24', c2:'#ffffff', collar:'#333'    },
+  { type:'sash',     c1:'#22c55e', c2:'#ffffff', collar:'#15803d' },
+  { type:'half',     c1:'#9b6de8', c2:'#f97316', collar:'#6a3bc4' },
+  { type:'solid',    c1:'#f59e0b', c2:'#b45309', collar:'#92400e' },
+  { type:'hstripes', c1:'#e84393', c2:'#ffffff', collar:'#9d1c5e' },
+  { type:'panel',    c1:'#38bdf8', c2:'#0369a1', collar:'#075985' },
+  { type:'vstripes', c1:'#e63950', c2:'#1c1c24', collar:'#a8001e' },
+  { type:'sash',     c1:'#1c1c24', c2:'#f59e0b', collar:'#92400e' },
+  { type:'hoops',    c1:'#e63950', c2:'#ffffff', collar:'#a8001e' },
+  { type:'panel',    c1:'#a78bfa', c2:'#4338ca', collar:'#3730a3' },
+  { type:'chevron',  c1:'#0ea5e9', c2:'#ffffff', collar:'#0369a1' },
+  { type:'hoops',    c1:'#f97316', c2:'#1c1c24', collar:'#c2410c' },
+  { type:'chevron',  c1:'#22c55e', c2:'#f59e0b', collar:'#15803d' },
+  { type:'half',     c1:'#14b8a6', c2:'#6366f1', collar:'#0f766e' },
+]
+
+function strHash(s) {
+  let h = 0
+  for (const c of String(s||'')) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff
+  return Math.abs(h)
+}
+function initials(name) {
+  const parts = (name||'??').trim().split(' ')
+  return parts.length >= 2 ? (parts[0][0]+parts[1][0]).toUpperCase() : (name||'??').slice(0,2).toUpperCase()
+}
+function shirtPattern(type, c1, c2) {
+  switch (type) {
+    case 'solid':    return `<rect width="100" height="100" fill="${c1}"/>`
+    case 'hstripes': return `<rect width="100" height="100" fill="${c1}"/><rect width="100" y="20" height="15" fill="${c2}"/><rect width="100" y="50" height="15" fill="${c2}"/><rect width="100" y="80" height="15" fill="${c2}"/>`
+    case 'vstripes': return `<rect width="100" height="100" fill="${c1}"/><rect x="18" width="11" height="100" fill="${c2}"/><rect x="40" width="11" height="100" fill="${c2}"/><rect x="62" width="11" height="100" fill="${c2}"/><rect x="84" width="11" height="100" fill="${c2}"/>`
+    case 'sash':     return `<rect width="100" height="100" fill="${c1}"/><polygon points="22,0 62,0 78,100 38,100" fill="${c2}"/>`
+    case 'half':     return `<rect width="50" height="100" fill="${c1}"/><rect x="50" width="50" height="100" fill="${c2}"/>`
+    case 'panel':    return `<rect width="100" height="100" fill="${c2}"/><rect x="27" width="46" height="100" fill="${c1}"/>`
+    case 'hoops':    return `<rect width="100" height="100" fill="${c1}"/><rect width="100" y="28" height="16" fill="${c2}"/><rect width="100" y="60" height="16" fill="${c2}"/>`
+    case 'chevron':  return `<rect width="100" height="100" fill="${c1}"/><polygon points="0,48 50,68 100,48 100,62 50,82 0,62" fill="${c2}"/>`
+    default:         return `<rect width="100" height="100" fill="${c1}"/>`
+  }
+}
+function shirtSvg(name, custom = null) {
+  const ini = initials(name)
+  let design
+  if (custom && custom.type && custom.c1) {
+    design = { type: custom.type, c1: custom.c1, c2: custom.c2||'#ffffff', collar: custom.c2||'#ffffff' }
+  } else {
+    design = SHIRT_DESIGNS[strHash(name) % SHIRT_DESIGNS.length]
+  }
+  const clipId = 'sc' + (++_clipId)
+  const shirtPath = 'M35,12 L10,24 L16,42 L28,36 L28,88 L72,88 L72,36 L84,42 L90,24 L65,12 Q50,22 35,12 Z'
+  return `<svg viewBox="-10 -10 120 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
+    <rect x="-10" y="-10" width="120" height="120" rx="60" fill="#1a1a28"/>
+    <defs><clipPath id="${clipId}"><path d="${shirtPath}"/></clipPath></defs>
+    <g clip-path="url(#${clipId})">${shirtPattern(design.type, design.c1, design.c2)}</g>
+    <path d="M35,12 Q50,22 65,12 L57,27 Q50,33 43,27 Z" fill="${design.collar}"/>
+    <text x="50" y="67" text-anchor="middle" dominant-baseline="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="20" fill="white" stroke="rgba(0,0,0,0.5)" stroke-width="3" paint-order="stroke">${ini}</text>
+  </svg>`
+}
+
+const KNOCKOUT_PHASES = new Set(['zestiende finale', 'achtste finale', 'kwartfinale', 'halve finale', 'kleine finale', 'finale', 'knockout'])
+function isKnockout(match) { return KNOCKOUT_PHASES.has(match.phase) }
+
+function calcPoints(match, pred) {
+  if (pred.pred_home == null || pred.pred_away == null) return 0
+  const ko = isKnockout(match)
+  const base = ko ? 6 : 3
+  if (match.score_home === pred.pred_home && match.score_away === pred.pred_away) return base + (ko ? 4 : 2)
+  const mw = Math.sign(match.score_home - match.score_away)
+  const pw = Math.sign(pred.pred_home - pred.pred_away)
+  if (mw !== pw) return 0
+  const mDiff = match.score_home - match.score_away
+  const pDiff = pred.pred_home - pred.pred_away
+  return base + (mDiff === pDiff ? (ko ? 2 : 1) : 0)
+}
+
+function parseMatchDate(str) {
+  return str ? new Date(str.includes('+') || str.endsWith('Z') ? str : str + '+02:00') : null
+}
+function formatDayLabel(dateStr) {
+  const d = parseMatchDate(dateStr)
+  return d.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+function tla(name) {
+  const map = {
+    'nederland':'NED','duitsland':'GER','frankrijk':'FRA','engeland':'ENG','spanje':'ESP',
+    'portugal':'POR','belgië':'BEL','argentinië':'ARG','brazilië':'BRA','verenigde staten':'USA',
+    'denemarken':'DEN','zwitserland':'SUI','polen':'POL','turkije':'TUR','kroatië':'CRO',
+    'servië':'SRB','oekraïne':'UKR','schotland':'SCO','albanië':'ALB','slovenië':'SVN',
+    'roemenië':'ROU','georgië':'GEO','oostenrijk':'AUT','hongarije':'HUN','slowakije':'SVK',
+    'tsjechië':'CZE','saoedi-arabië':'KSA','iran':'IRN','irak':'IRQ','jordanië':'JOR',
+    'oezbekistan':'UZB','australië':'AUS','nieuw-zeeland':'NZL','marokko':'MAR','egypte':'EGY',
+    'kameroen':'CMR','ivoorkust':'CIV','algerije':'ALG','tunesië':'TUN','zuid-afrika':'RSA',
+    'ghana':'GHA','nigeria':'NGA','senegal':'SEN','mali':'MLI','congo':'COD','haïti':'HAI',
+    'curaçao':'CUW','kaapverdië':'CPV','mexico':'MEX','canada':'CAN','japan':'JPN',
+    'uruguay':'URU','colombia':'COL','ecuador':'ECU','venezuela':'VEN','paraguay':'PAR',
+    'bolivia':'BOL','peru':'PER','chili':'CHI','panama':'PAN','honduras':'HON',
+    'costa rica':'CRC','wales':'WAL','ierland':'IRL','finland':'FIN','noorwegen':'NOR',
+    'zweden':'SWE','ijsland':'ISL','griekenland':'GRE','israël':'ISR','rusland':'RUS',
+    'china':'CHN','zuid-korea':'KOR',
+  }
+  return map[(name||'').toLowerCase()] || (name||'').slice(0,3).toUpperCase()
+}
+
+// ── Data ───────────────────────────────────────────────────
+async function fetchAllPredictions() {
+  const all = []
+  let from = 0
+  const pageSize = 1000
+  while (true) {
+    const { data } = await supabase.from('predictions').select('*').range(from, from + pageSize - 1)
+    if (data) all.push(...data)
+    if (!data || data.length < pageSize) break
+    from += pageSize
+  }
+  return all
+}
+
+async function loadData() {
+  const meRaw = localStorage.getItem('wkpool_participant')
+  const meId = meRaw ? JSON.parse(meRaw).id : null
+
+  const [{ data: rawParticipants }, { data: rawMatches }, allPredictions] = await Promise.all([
+    supabase.from('participants').select('*'),
+    supabase.from('matches').select('*').order('date'),
+    fetchAllPredictions(),
+  ])
+
+  const activeP = (rawParticipants || []).filter(p => p.id !== 22)
+  const played = (rawMatches || []).filter(m => m.score_home !== null && m.date)
+    .sort((a, b) => parseMatchDate(a.date) - parseMatchDate(b.date))
+
+  const predsByP = {}
+  activeP.forEach(p => { predsByP[p.id] = {} })
+  ;(allPredictions || []).forEach(pr => {
+    if (predsByP[pr.participant_id]) predsByP[pr.participant_id][pr.match_id] = pr
+  })
+
+  // Group matches by calendar day
+  const byDay = {}
+  played.forEach(m => {
+    const day = m.date.slice(0, 10)
+    if (!byDay[day]) byDay[day] = []
+    byDay[day].push(m)
+  })
+
+  const days = Object.entries(byDay).sort((a, b) => b[0].localeCompare(a[0])) // newest first
+
+  document.getElementById('loading').classList.add('hidden')
+  const daysEl = document.getElementById('days')
+  daysEl.classList.remove('hidden')
+  daysEl.innerHTML = ''
+
+  days.forEach(([day, matches]) => {
+    // Compute scores per participant for this day
+    const scores = activeP.map(p => {
+      let pts = 0
+      matches.forEach(m => {
+        const pr = predsByP[p.id]?.[m.id]
+        if (pr) pts += calcPoints(m, pr)
+      })
+      return { ...p, pts }
+    }).sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name, 'nl'))
+
+    const maxPts = scores[0]?.pts ?? 0
+    const winnerNames = maxPts > 0 ? scores.filter(p => p.pts === maxPts).map(p => p.name.split(' ')[0]) : []
+
+    const matchSummary = matches.map(m => `${tla(m.home)} ${m.score_home}–${m.score_away} ${tla(m.away)}`).join(' · ')
+
+    const card = document.createElement('div')
+    card.className = 'day-card'
+
+    let headerHtml = `
+      <div class="day-header">
+        <div>
+          <div class="day-date">${formatDayLabel(day + 'T12:00:00')}</div>
+          <div class="day-matches">${matchSummary}</div>
+        </div>
+        ${winnerNames.length ? `<div class="day-winner-badge">🏆 ${winnerNames.join(', ')}</div>` : ''}
+      </div>`
+
+    let rank = 1
+    let rowsHtml = '<div class="day-rows">'
+    scores.forEach((p, i) => {
+      if (i > 0 && p.pts < scores[i - 1].pts) rank = i + 1
+      const isWinner = p.pts === maxPts && maxPts > 0
+      const isMe = p.id === meId
+      const rowCls = isWinner ? ' is-winner' : isMe ? ' is-me' : ''
+      const nameCls = isWinner ? ' is-winner' : isMe ? ' is-me' : ''
+      const ptsCls = (isWinner ? ' is-winner' : isMe ? ' is-me' : '') + (p.pts === 0 ? ' day-pts-zero' : '')
+      rowsHtml += `
+        <div class="day-row${rowCls}">
+          <div class="day-rank">${rank}</div>
+          <div class="day-avatar">${shirtSvg(p.name, p.shirt)}</div>
+          <div class="day-name${nameCls}">${p.name.split(' ')[0]}${isWinner ? ' <span class="crown">👑</span>' : ''}</div>
+          <div class="day-pts${ptsCls}">${p.pts > 0 ? '+' + p.pts : '—'}</div>
+        </div>`
+    })
+    rowsHtml += '</div>'
+
+    card.innerHTML = headerHtml + rowsHtml
+    daysEl.appendChild(card)
+  })
+
+  if (days.length === 0) {
+    daysEl.innerHTML = '<p style="padding:24px 20px;color:var(--text-dim);font-size:14px">Nog geen gespeelde wedstrijden.</p>'
+  }
+}
+</script>
+</body>
+</html>
