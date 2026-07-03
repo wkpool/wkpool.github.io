@@ -1,0 +1,4 @@
+project_id = "jqomnywegtyvgnxtbnjl"
+
+[functions.sync-scores]
+verify_jwt = false
