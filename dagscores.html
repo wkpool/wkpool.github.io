@@ -87,6 +87,20 @@
     .day-pts.is-me { color: var(--purple-l); }
     .day-pts-zero { color: var(--text-dim) !important; font-weight: 400 !important; font-size: 13px !important; }
     .crown { font-size: 13px; margin-left: 2px; }
+
+    /* Match breakdown */
+    .day-breakdown { border-top: 1px solid var(--border); padding: 8px 16px 10px; }
+    .breakdown-match { margin-bottom: 6px; }
+    .breakdown-match-name { font-size: 11px; font-weight: 700; color: var(--text-mid); margin-bottom: 3px; }
+    .breakdown-preds { display: flex; flex-wrap: wrap; gap: 4px; }
+    .breakdown-pred {
+      font-size: 10px; padding: 2px 6px; border-radius: 5px;
+      background: var(--bg3); border: 1px solid var(--border);
+    }
+    .breakdown-pred.exact { background: rgba(0,212,170,0.12); border-color: rgba(0,212,170,0.25); color: var(--teal); }
+    .breakdown-pred.goed  { background: rgba(56,189,248,0.1);  border-color: rgba(56,189,248,0.2);  color: #38bdf8; }
+    .breakdown-pred.fout  { background: rgba(255,77,109,0.08); border-color: rgba(255,77,109,0.2);  color: var(--pink); }
+    .breakdown-pred.me    { font-weight: 700; }
   </style>
 </head>
 <body>
@@ -244,7 +258,7 @@ async function loadData() {
   ])
 
   const activeP = (rawParticipants || []).filter(p => p.id !== 22)
-  const played = (rawMatches || []).filter(m => m.score_home !== null && m.date)
+  const played = (rawMatches || []).filter(m => m.score_home !== null && m.score_away !== null && m.date)
     .sort((a, b) => parseMatchDate(a.date) - parseMatchDate(b.date))
 
   const predsByP = {}
@@ -315,7 +329,30 @@ async function loadData() {
     })
     rowsHtml += '</div>'
 
-    card.innerHTML = headerHtml + rowsHtml
+    // Per-match breakdown: who predicted what
+    let breakdownHtml = '<div class="day-breakdown">'
+    matches.forEach(m => {
+      const ko = KNOCKOUT_PHASES.has(m.phase)
+      const maxExact = ko ? 10 : 5
+      const base = ko ? 6 : 3
+      const predsHtml = activeP.map(p => {
+        const pr = predsByP[p.id]?.[m.id]
+        if (!pr || pr.pred_home == null) return ''
+        const pts = calcPoints(m, pr)
+        const isExact = pts === maxExact
+        const isGoed  = !isExact && pts >= base
+        const cls = isExact ? 'exact' : isGoed ? 'goed' : 'fout'
+        const me = p.id === meId ? ' me' : ''
+        return `<span class="breakdown-pred ${cls}${me}" title="${p.name.split(' ')[0]}: ${pr.pred_home}-${pr.pred_away} (+${pts})">${p.name.split(' ')[0]} ${pr.pred_home}–${pr.pred_away}</span>`
+      }).filter(Boolean).join('')
+      breakdownHtml += `<div class="breakdown-match">
+        <div class="breakdown-match-name">${tla(m.home)} ${m.score_home}–${m.score_away} ${tla(m.away)}</div>
+        <div class="breakdown-preds">${predsHtml || '<span style="color:var(--text-dim);font-size:10px">geen voorspellingen</span>'}</div>
+      </div>`
+    })
+    breakdownHtml += '</div>'
+
+    card.innerHTML = headerHtml + rowsHtml + breakdownHtml
     daysEl.appendChild(card)
   })
 

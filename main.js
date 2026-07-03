@@ -918,7 +918,7 @@ function switchSbTab(tab) {
   document.getElementById('sbtab-stand')?.classList.toggle('hidden', tab !== 'stand')
   document.getElementById('sbtab-historie')?.classList.toggle('hidden', tab !== 'historie')
   document.getElementById('sbtab-regels')?.classList.toggle('hidden', tab !== 'regels')
-  if (tab === 'historie' && sbCache) renderHistorieChart(sbCache)
+  if (tab === 'historie') loadScoreboard(true).then(() => { if (sbCache) renderHistorieChart(sbCache) })
 }
 
 function renderHistorieChart({ participants, played, predictions, scores }) {
@@ -1976,7 +1976,7 @@ function calcScores(participants, playedMatches, predictions) {
     let rocketStreak = 0
     for (let i = sorted.length - 1; i >= 0; i--) {
       const pred = predMap[sorted[i].id]
-      if (pred && calcPoints(sorted[i], pred) === 5) rocketStreak++
+      if (pred && calcPoints(sorted[i], pred) === 10) rocketStreak++
       else break
     }
     const rocket = rocketStreak >= 3
