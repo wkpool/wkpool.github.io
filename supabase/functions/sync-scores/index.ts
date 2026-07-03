@@ -129,47 +129,18 @@ Deno.serve(async (req) => {
     existingByExtId[m.external_id] = m
   }
 
-  // Determine the correct final score to store.
-  // For REGULAR matches fullTime is the 90-min result.
-  // For EXTRA_TIME/PENALTY_SHOOTOUT the API may roll ET or penalty goals into
-  // fullTime; we use regularTime (90-min) + extraTime (ET goals) when available
-  // so we capture who actually won. If the ET score is still a draw (penalties),
-  // we add 1 to the winning side to preserve the direction.
+  // Store the 90-minute score for all matches.
+  // For ET/penalty matches, regularTime holds the 90-min score.
+  // fullTime in v4 can be the ET score or even the penalty tally — don't use it for those.
   function getFinalScore(score: any): { home: number; away: number } | null {
     if (!score) return null
-    const duration: string = score.duration ?? 'REGULAR'
     const ft = score.fullTime
     if (!ft || ft.home == null) return null
-
-    if (duration === 'REGULAR') {
-      return { home: ft.home, away: ft.away }
+    const duration: string = score.duration ?? 'REGULAR'
+    if (duration !== 'REGULAR') {
+      const reg = score.regularTime
+      if (reg?.home != null) return { home: reg.home, away: reg.away }
     }
-
-    // Extra time: prefer regularTime + extraTime if available, else fall back to fullTime
-    const reg = score.regularTime
-    const et  = score.extraTime
-    let h: number, a: number
-    if (reg?.home != null && et?.home != null) {
-      h = reg.home + et.home
-      a = reg.away + et.away
-    } else {
-      // fullTime may already include ET goals in v4
-      h = ft.home
-      a = ft.away
-    }
-
-    if (duration === 'EXTRA_TIME') {
-      return { home: h, away: a }
-    }
-
-    // PENALTY_SHOOTOUT: h/a is still tied — use winner to break the tie
-    if (duration === 'PENALTY_SHOOTOUT') {
-      const winner: string = score.winner ?? ''
-      if (winner === 'HOME_TEAM') return { home: h + 1, away: a }
-      if (winner === 'AWAY_TEAM') return { home: h, away: a + 1 }
-      return { home: h, away: a }
-    }
-
     return { home: ft.home, away: ft.away }
   }
 

@@ -1495,7 +1495,7 @@ function buildLbItem(p, rank, rankDelta = 0, roundGlobal = {}) {
       <div style="width:100%;height:100%;border-radius:50%;background:#1a1a24;overflow:hidden">${shirtSvgForP(p)}</div>
     </div>
     <div class="lb-info">
-      <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}${(p.rocket ? `<span style="font-size:13px;margin-left:3px">🚀</span>` : '') + (p.flames ? `<span style="font-size:13px;margin-left:3px">${'🔥'.repeat(p.flames)}</span>` : p.iceCount ? `<span style="font-size:13px;margin-left:3px">${'🧊'.repeat(p.iceCount)}</span>` : '')}</div>
+      <div class="lb-nm">${p.name}${isMe ? '<span class="lb-me-tag">jij</span>' : ''}${(p.rocket ? `<span style="font-size:13px;margin-left:3px">${'🚀'.repeat(p.rocket)}</span>` : '') + (p.flames ? `<span style="font-size:13px;margin-left:3px">${'🔥'.repeat(p.flames)}</span>` : p.iceCount ? `<span style="font-size:13px;margin-left:3px">${'🧊'.repeat(p.iceCount)}</span>` : '')}</div>
       ${formHtml}
     </div>
     <div class="lb-right">
@@ -1979,7 +1979,7 @@ function calcScores(participants, playedMatches, predictions) {
       if (pred && calcPoints(sorted[i], pred) === 10) rocketStreak++
       else break
     }
-    const rocket = rocketStreak >= 3
+    const rocket = Math.max(0, rocketStreak - 2)
 
     return { ...p, points, exact, goed, form: allPts.slice(-5).reverse(), flames, iceCount, rocket, streak, roundPts }
   }).sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'nl'))
