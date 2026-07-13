@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
       }
     } else if (STAGE_TO_PHASE[m.stage]) {
       const final = isFinished ? getFinalScore(m.score) : null
-      const { error } = await supabase.from('matches').insert({
+      const { error } = await supabase.from('matches').upsert({
         external_id: m.id,
         home:        toNl(homeName),
         away:        toNl(awayName),
@@ -196,8 +196,8 @@ Deno.serve(async (req) => {
         phase:       STAGE_TO_PHASE[m.stage],
         score_home:  final?.home ?? null,
         score_away:  final?.away ?? null,
-      })
-      if (error) errors.push(`insert ext:${m.id} ${homeName}-${awayName}: ${error.message}`)
+      }, { onConflict: 'external_id', ignoreDuplicates: false })
+      if (error) errors.push(`upsert ext:${m.id} ${homeName}-${awayName}: ${error.message}`)
       else inserted++
     } else if (m.stage && !STAGE_TO_PHASE[m.stage]) {
       skipped.push(`unknown stage: ${m.stage}`)
