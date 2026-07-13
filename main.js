@@ -1653,26 +1653,24 @@ function calcActualBonus(matches) {
   const koByPhase = {}
   KO_ORDER.forEach(p => { koByPhase[p] = [] })
   ;(matches || []).filter(m => KNOCKOUT_PHASES.has(m.phase)).forEach(m => { koByPhase[m.phase]?.push(m) })
-  // Teams that appear in any KO match in a later phase (i.e. they advanced)
-  const advanced = new Set()
-  KO_ORDER.slice(1).forEach(phase => {
-    koByPhase[phase].forEach(m => {
-      if (m.home && m.home !== '?') advanced.add(m.home)
-      if (m.away && m.away !== '?') advanced.add(m.away)
-    })
-  })
   KO_ORDER.forEach((phase, i) => {
-    const nextPhase = KO_ORDER[i + 1]
-    const nextHasTeams = nextPhase && koByPhase[nextPhase].some(m => (m.home && m.home !== '?') || (m.away && m.away !== '?'))
+    // For penalty draws: a team "advanced" only if it appears in a LATER phase (not the current one)
+    const advancedFromHere = new Set()
+    KO_ORDER.slice(i + 1).forEach(p => {
+      koByPhase[p].forEach(m => {
+        if (m.home && m.home !== '?') advancedFromHere.add(m.home)
+        if (m.away && m.away !== '?') advancedFromHere.add(m.away)
+      })
+    })
     koByPhase[phase].forEach(m => {
       if (m.score_home === null) return
       if (m.score_home !== m.score_away) {
         if (m.score_home > m.score_away && m.away && m.away !== '?') eliminated.add(m.away)
         if (m.score_away > m.score_home && m.home && m.home !== '?') eliminated.add(m.home)
       } else {
-        // Score is equal (penalty match stored as draw) — only eliminate if the other team has confirmed advanced
-        const homeAdv = m.home && m.home !== '?' && advanced.has(m.home)
-        const awayAdv = m.away && m.away !== '?' && advanced.has(m.away)
+        // Score is equal (penalty match stored as draw) — eliminate the team that did NOT advance further
+        const homeAdv = m.home && m.home !== '?' && advancedFromHere.has(m.home)
+        const awayAdv = m.away && m.away !== '?' && advancedFromHere.has(m.away)
         if (homeAdv && m.away && m.away !== '?') eliminated.add(m.away)
         if (awayAdv && m.home && m.home !== '?') eliminated.add(m.home)
       }
